@@ -23,7 +23,6 @@ if data_input_option == 1:
     draw_data()
     l, t, x, y = load_data()
     Data = add_directional_features(l, t, x, y, if_normalize=True)
-
 else:
     print('Not a valid option')
 

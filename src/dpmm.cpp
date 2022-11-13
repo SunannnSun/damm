@@ -66,21 +66,34 @@ int main(int argc, char **argv)
         // cout <<"theta="<<theta<<endl;
         // cout <<"Delta="<<Delta<<endl;
     }
-
-    string input_path ="";
+    // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));
+    // Eigen::MatrixXd& data(*spx);
     Eigen::MatrixXd data(num, dim);
-    if (vm.count("input")) input_path = vm["input"].as<string>();
-    if (!input_path.compare("")){
+    string pathIn ="";
+    if(vm.count("input")) pathIn = vm["input"].as<string>();
+    if (!pathIn.compare("")){
         cout<<"please specify an input dataset"<<endl;
         exit(1);
     }
     else{
-        cout<<"loading data from "<<input_path<<endl;
-        fin.open("reportcard.csv", ios::in);
-
+        ifstream  data(pathIn);
+        string line;
+        vector<vector<string> > parsedCsv;
+        while(getline(data,line))
+        {
+            stringstream lineStream(line);
+            string cell;
+            vector<string> parsedRow;
+            while(getline(lineStream,cell,','))
+            {
+                parsedRow.push_back(cell);
+            }
+            parsedCsv.push_back(parsedRow);
+        }
+    data.close();
+    for (uint32_t i=0; i<num; ++i)
+        for (uint32_t j=0; j<dim; ++j)
+            data(i, j) = stod(parsedCsv[i][j]);
     }
-
-    string output_path ="";
-    if (vm.count("output")) output_path = vm["output"].as<string>();
-
+    cout << data<< endl;
 }
