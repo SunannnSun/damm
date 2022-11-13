@@ -4,11 +4,13 @@ cmake_minimum_required(VERSION 3.10)
 
 project(dpmm)
 
-
 find_package(Boost REQUIRED COMPONENTS program_options
 )
 find_package (Eigen3 3.3 REQUIRED NO_MODULE
 )
+
+message("My test's working directory:  ${Boost_INCLUDE_DIRS}")
+
 
 include_directories(
     ../include
@@ -23,7 +25,16 @@ link_directories(
 add_executable("${PROJECT_NAME}" dpmm.cpp
 )
 
+
 target_link_libraries("${PROJECT_NAME}"
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    Eigen3::Eigen
+)
+
+add_executable(main main.cpp
+)
+
+target_link_libraries(main
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     Eigen3::Eigen
 )

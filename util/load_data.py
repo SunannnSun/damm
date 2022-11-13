@@ -6,6 +6,8 @@ from util.mousetrajectory_gui import MouseTrajectory
 import util.mousetrajectory_gui as mt
 from scipy.io import loadmat
 import numpy as np
+import csv
+
 
 
 rc('font', **{'family': 'serif', 'serif': ['Times']})
