@@ -3,6 +3,8 @@
 #include <boost/program_options.hpp>
 #include <Eigen/Dense>
  
+#include "niw.hpp"
+
 
 namespace po = boost::program_options;
 using namespace std;
@@ -66,6 +68,10 @@ int main(int argc, char **argv)
         // cout <<"theta="<<theta<<endl;
         // cout <<"Delta="<<Delta<<endl;
     }
+
+    NIW<double> niw(Delta, theta, nu, kappa);
+    // NIW<double> a;
+
     // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));
     // Eigen::MatrixXd& data(*spx);
     Eigen::MatrixXd data(num, dim);
@@ -76,10 +82,10 @@ int main(int argc, char **argv)
         exit(1);
     }
     else{
-        ifstream  data(pathIn);
+        ifstream  fin(pathIn);
         string line;
         vector<vector<string> > parsedCsv;
-        while(getline(data,line))
+        while(getline(fin,line))
         {
             stringstream lineStream(line);
             string cell;
@@ -90,7 +96,7 @@ int main(int argc, char **argv)
             }
             parsedCsv.push_back(parsedRow);
         }
-    data.close();
+    fin.close();
     for (uint32_t i=0; i<num; ++i)
         for (uint32_t j=0; j<dim; ++j)
             data(i, j) = stod(parsedCsv[i][j]);

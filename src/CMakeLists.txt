@@ -14,6 +14,7 @@ message("My test's working directory:  ${Boost_INCLUDE_DIRS}")
 
 include_directories(
     ../include
+    ${PROJECT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
 )
@@ -22,6 +23,12 @@ link_directories(
   ${Boost_LIBRARY_DIRS}
 )
 
+
+add_library(distribution
+  ${PROJECT_SOURCE_DIR}/niw.cpp
+)
+
+
 add_executable("${PROJECT_NAME}" dpmm.cpp
 )
 
@@ -29,12 +36,15 @@ add_executable("${PROJECT_NAME}" dpmm.cpp
 target_link_libraries("${PROJECT_NAME}"
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     Eigen3::Eigen
+    distribution
 )
 
-add_executable(main main.cpp
-)
 
-target_link_libraries(main
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    Eigen3::Eigen
-)
+
+# add_executable(main main.cpp
+# )
+
+# target_link_libraries(main
+#     ${Boost_PROGRAM_OPTIONS_LIBRARY}
+#     Eigen3::Eigen
+# )

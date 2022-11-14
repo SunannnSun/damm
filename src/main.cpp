@@ -1,6 +1,6 @@
-#include "normal.hpp"
+#include "niw.hpp"
 
 int main (){
-    Normal<int> normal_obj(int a = 2);
+    NIW<double> niw;
     return 0;
 }
