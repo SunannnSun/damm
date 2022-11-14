@@ -5,6 +5,8 @@
 #include <Eigen/Dense>
  
 #include "niw.hpp"
+#include "dpmm.hpp"
+
 
 
 namespace po = boost::program_options;
@@ -26,6 +28,7 @@ int main(int argc, char **argv)
         ("input,i", po::value<string>(), "path to input dataset .csv file rows: dimensions; cols: numbers")
         ("onput,o", po::value<string>(), "path to output dataset .csv file rows: dimensions; cols: numbers")
         ("iteration,t", po::value<int>(), "Numer of Sampler Iteration")
+        ("alpha,a", po::value<double>(), "Concentration value")
         ("params,p", po::value< vector<double> >()->multitoken(), "parameters of the base measure")
     ;
 
@@ -40,9 +43,12 @@ int main(int argc, char **argv)
     boost::mt19937 rndGen(seed);
     std::srand(seed);
 
-    cout << rndGen << endl;
+    // cout << rndGen << endl;
     // cout << rndGen& << endl;
 
+
+    double alpha = 1;
+    if(vm.count("alpha")) alpha = vm["alpha"].as<double>();
 
     uint16_t num = 0;
     if (vm.count("number")) num = vm["number"].as<int>();
@@ -84,18 +90,23 @@ int main(int argc, char **argv)
     }
 
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
-    // NIW<double> a;
+    DPMM<NIW<double>> dpmm(alpha, niw);
+
 
     // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));
     // Eigen::MatrixXd& data(*spx);
+
     Eigen::MatrixXd data(num, dim);
+
     string pathIn ="";
     if(vm.count("input")) pathIn = vm["input"].as<string>();
-    if (!pathIn.compare("")){
+    if (!pathIn.compare(""))
+    {
         cout<<"please specify an input dataset"<<endl;
         exit(1);
     }
-    else{
+    else
+    {
         ifstream  fin(pathIn);
         string line;
         vector<vector<string> > parsedCsv;
@@ -115,5 +126,17 @@ int main(int argc, char **argv)
         for (uint32_t j=0; j<dim; ++j)
             data(i, j) = stod(parsedCsv[i][j]);
     }
-    cout << data<< endl;
+    // cout << data<< endl;
+
+
+
+
+    // assert(dpmm!=NULL);
+    // dpmm->initialize(x);
+    // for (uint32_t t=0; t<T; ++t)
+    // {
+    //   cout<<"------------ t="<<t<<" -------------"<<endl;
+    //   dpmm->sampleParameters();
+
+    // }
 }
