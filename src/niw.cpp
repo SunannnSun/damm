@@ -1,17 +1,17 @@
 #include "niw.hpp"
 
 
-template<typename T>
-NIW<T>::NIW(){};
+// template<typename T>
+// NIW<T>::NIW(){};
 
 
 template<typename T>
-NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& Delta, 
-  const Matrix<T,Dynamic,Dynamic>& theta, T nu,  T kappa)
-: Delta_(Delta), theta_(theta), nu_(nu), kappa_(kappa)
+NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& sigma, 
+  const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, boost::mt19937 *pRndGen)
+: Distribution<T>(pRndGen), sigma_0(sigma), mu_0(mu), nu_0(nu), kappa_0(kappa)
 {
-  assert(Delta_.rows()==theta_.size()); 
-  assert(Delta_.cols()==theta_.size());
+  assert(sigma_0.rows()==mu_0.size()); 
+  assert(sigma_0.cols()==mu_0.size());
 };
 
 

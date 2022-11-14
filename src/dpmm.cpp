@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
  
 #include "niw.hpp"
@@ -11,7 +12,9 @@ using namespace std;
 
 
 int main(int argc, char **argv)
-{
+{   
+    
+
     cout << "Hello World" << endl;
 
     // Declare the supported options.
@@ -29,6 +32,17 @@ int main(int argc, char **argv)
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);    
+
+
+    uint64_t seed = time(0);
+    if(vm.count("seed"))
+        seed = static_cast<uint64_t>(vm["seed"].as<int>());
+    boost::mt19937 rndGen(seed);
+    std::srand(seed);
+
+    cout << rndGen << endl;
+    // cout << rndGen& << endl;
+
 
     uint16_t num = 0;
     if (vm.count("number")) num = vm["number"].as<int>();
@@ -50,8 +64,8 @@ int main(int argc, char **argv)
 
     double nu = 0;
     double kappa = 0;
-    Eigen::MatrixXd Delta(dim,dim);
-    Eigen::VectorXd theta(dim);
+    Eigen::MatrixXd sigma(dim,dim);
+    Eigen::VectorXd mu(dim);
     if(vm.count("params")){
         cout << "Parameters received.\n";
         vector<double> params = vm["params"].as< vector<double> >();
@@ -59,17 +73,17 @@ int main(int argc, char **argv)
         nu = params[0];
         kappa = params[1];
         for(uint8_t i=0; i<dim; ++i)
-            theta(i) = params[4+i];
+            mu(i) = params[2+i];
         for(uint8_t i=0; i<dim; ++i)
             for(uint8_t j=0; j<dim; ++j)
-                Delta(i,j) = params[4+dim+i+dim*j];
+                sigma(i,j) = params[2+dim+i+dim*j];
         // cout <<"nu="<<nu<<endl;
         // cout <<"kappa="<<kappa<<endl;
         // cout <<"theta="<<theta<<endl;
         // cout <<"Delta="<<Delta<<endl;
     }
 
-    NIW<double> niw(Delta, theta, nu, kappa);
+    NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
     // NIW<double> a;
 
     // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));

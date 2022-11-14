@@ -1,18 +1,25 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <boost/random/mersenne_twister.hpp>
+#include "distribution.hpp"
+
 
 using namespace Eigen;
 
 template<typename T>
-class NIW{
+class NIW: public Distribution<T>
+{
     public:
-        Matrix<T,Dynamic,Dynamic> Delta_;
-        Matrix<T,Dynamic,1> theta_;
-        T nu_,kappa_;
-        uint32_t D_;
-        NIW();
-        NIW(const Matrix<T,Dynamic,Dynamic>& Delta, const Matrix<T,Dynamic,Dynamic>& theta, T nu,  T kappa);
+        Matrix<T,Dynamic,Dynamic> sigma_0;
+        Matrix<T,Dynamic,1> mu_0;
+        T nu_0,kappa_0;
+        uint32_t dim;
+
+
+        // NIW();
+        NIW(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, 
+            boost::mt19937 *pRndGen);
         ~NIW();
 };
 

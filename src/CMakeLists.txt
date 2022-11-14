@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(dpmm)
 
-find_package(Boost REQUIRED COMPONENTS program_options
+find_package(Boost REQUIRED COMPONENTS program_options random
 )
 find_package (Eigen3 3.3 REQUIRED NO_MODULE
 )
@@ -16,7 +16,7 @@ include_directories(
     ../include
     ${PROJECT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
+    ${EIGEN3_INCLUDE_DIR} 
 )
 
 link_directories(
@@ -24,8 +24,10 @@ link_directories(
 )
 
 
-add_library(distribution
+add_library(distribution_module
+  # ${PROJECT_SOURCE_DIR}/niw.cpp
   ${PROJECT_SOURCE_DIR}/niw.cpp
+  # ${PROJECT_SOURCE_DIR}/distribution.cpp
 )
 
 
@@ -36,7 +38,7 @@ add_executable("${PROJECT_NAME}" dpmm.cpp
 target_link_libraries("${PROJECT_NAME}"
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     Eigen3::Eigen
-    distribution
+    distribution_module
 )
 
 
