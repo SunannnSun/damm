@@ -1,6 +1,5 @@
-#include "niw.hpp"
+#include <Eigen/Core>
 
 int main (){
-    NIW<double> niw;
     return 0;
 }

@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
  
 #include "niw.hpp"
+// #include "normal.hpp"
 #include "dpmm.hpp"
 
 
@@ -90,7 +91,9 @@ int main(int argc, char **argv)
     }
 
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+    // DPMM<NIW<double>>* ptr_dpmm;
     DPMM<NIW<double>> dpmm(alpha, niw);
+    // ptr_dpmm = &dpmm;
 
 
     // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));
@@ -127,16 +130,15 @@ int main(int argc, char **argv)
             data(i, j) = stod(parsedCsv[i][j]);
     }
     // cout << data<< endl;
-
-
-
+    // ptr_dpmm->initialize(data);
+    dpmm.initialize(data);
 
     // assert(dpmm!=NULL);
     // dpmm->initialize(x);
-    // for (uint32_t t=0; t<T; ++t)
-    // {
-    //   cout<<"------------ t="<<t<<" -------------"<<endl;
-    //   dpmm->sampleParameters();
-
-    // }
+    for (uint32_t t=0; t<T; ++t)
+    {
+      cout<<"------------ t="<<t<<" -------------"<<endl;
+      
+      dpmm.sampleLabels();
+    }
 }

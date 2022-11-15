@@ -6,8 +6,8 @@ project(dpmm)
 
 find_package(Boost REQUIRED COMPONENTS program_options random
 )
-find_package (Eigen3 3.3 REQUIRED NO_MODULE
-)
+# find_package (Eigen3 3.3 REQUIRED NO_MODULE
+# )
 
 message("My test's working directory:  ${Boost_INCLUDE_DIRS}")
 
@@ -16,6 +16,7 @@ include_directories(
     ../include
     ${PROJECT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}/eigen3.4
     ${EIGEN3_INCLUDE_DIR} 
 )
 
@@ -37,7 +38,6 @@ add_executable("${PROJECT_NAME}" dpmm.cpp
 
 target_link_libraries("${PROJECT_NAME}"
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    Eigen3::Eigen
     distribution_module
 )
 

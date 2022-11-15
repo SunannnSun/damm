@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(
                     epilog = '2022, Sunan Sun <sunan@seas.upenn.edu>')
 
 parser.add_argument('-i', '--input', type=int, default=1, help='Choose Data Input Option')
-parser.add_argument('-t', '--iteration', type=int, default=100, help='Number of Sampler Iterations')
+parser.add_argument('-t', '--iteration', type=int, default=2, help='Number of Sampler Iterations')
 
 args = parser.parse_args()
 

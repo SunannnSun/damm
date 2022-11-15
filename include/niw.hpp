@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <boost/random/mersenne_twister.hpp>
 #include "distribution.hpp"
+#include "global.hpp"
 
 
 using namespace Eigen;
@@ -21,6 +22,8 @@ class NIW: public Distribution<T>
         NIW(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, 
             boost::mt19937 *pRndGen);
         ~NIW();
+
+        double logPosteriorProb();
 };
 
 template class NIW<double>;
