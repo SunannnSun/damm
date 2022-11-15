@@ -16,8 +16,8 @@ parser = argparse.ArgumentParser(
                     description = 'run dpmm cluster',
                     epilog = '2022, Sunan Sun <sunan@seas.upenn.edu>')
 
-parser.add_argument('-i', '--input', type=int, default=1, help='Choose Data Input Option')
-parser.add_argument('-t', '--iteration', type=int, default=2, help='Number of Sampler Iterations')
+parser.add_argument('-i', '--input', type=int, default=2, help='Choose Data Input Option')
+parser.add_argument('-t', '--iteration', type=int, default=50, help='Number of Sampler Iterations')
 
 args = parser.parse_args()
 
@@ -28,10 +28,22 @@ if data_input_option == 1:
     draw_data()
     l, t, x, y = load_data()
     Data = add_directional_features(l, t, x, y, if_normalize=True)
+elif data_input_option == 2:
+    data_name = 'human_demonstrated_trajectories_1.dat'
+    l, t, x, y = load_data(data_name)
+    Data = add_directional_features(l, t, x, y, if_normalize=True)
 else:
+    pkg_dir = './data/'
+    chosen_data_set = 8
+    sub_sample = 4
+    nb_trajectories = 7
+    Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
+    Data = normalize_velocity_vector(Data)
     print('Not a valid option')
 
+Data = Data[:, 0:2]
 n, m = Data.shape
+print("Data dimension: ", (n, m))
 
 input_path = './data/human_demonstrated_trajectories.csv'
 output_path = './data'

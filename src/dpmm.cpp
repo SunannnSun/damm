@@ -141,5 +141,9 @@ int main(int argc, char **argv)
       cout<<"------------ t="<<t<<" -------------"<<endl;
       
       dpmm.sampleLabels();
+    //   dpmm.printLabels();
+      cout << "done" << endl;
     }
+    dpmm.printLabels();
+
 }

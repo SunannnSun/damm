@@ -33,6 +33,7 @@ public:
   void initialize(const MatrixXd& x);
   void sampleLabels();
   void reorderAssignments();
+  void printLabels(){cout<< z_ << endl;};
 
 private:
   double alpha_; 
@@ -85,13 +86,15 @@ void DPMM<Dist_t>::sampleLabels()
   // cout << K_ << endl;
   for(uint32_t i=0; i<N_; ++i)
   {
+    // cout << "Data Number: " << i << endl;
+
     // cout << i << endl;
     // compute clustercounts 
     VectorXu Nk(K_);
     Nk.setZero(K_);
     for(uint32_t ii=0; ii<N_; ++ii)
       Nk(z_(ii))++;
-    
+    // cout << "first"  << endl;
     VectorXd pi(K_+1); 
     VectorXd x_i;
     x_i = x_(i, all);
@@ -103,7 +106,7 @@ void DPMM<Dist_t>::sampleLabels()
       // x.push_back(2);
       // cout << x_(x, all) << endl;
       // cout << z_(x) << endl;
-      cout << "Data Number: " << i << endl;
+      // cout << "Data Number: " << i << endl;
 
 
       // uint32_t z_i = z_(i);
@@ -139,6 +142,7 @@ void DPMM<Dist_t>::sampleLabels()
       // cout << pi(N_) << endl;
     }
     // cout << H_.nu_- H_.dim_+1 << endl;
+    // cout << "i here" << endl;
     pi(K_) = log(alpha_)-log(N_+alpha_) + H_.logProb(x_i);
     // cout << pi << endl;
     // normalize pi and exponentiate it; redo it later to comply with new eigen library
@@ -164,6 +168,8 @@ void DPMM<Dist_t>::sampleLabels()
     for (uint32_t ii = 1; ii < pi.size(); ++ii){
       pi[ii] = pi[ii-1]+ pi[ii];
     }
+        // cout << "i here" << endl;
+
     // cout << pi[0] << endl;
     // cout << pi[1] << endl;
   
@@ -193,9 +199,22 @@ void DPMM<Dist_t>::sampleLabels()
     // cout << k << endl;
     // }
     z_[i] = k;
-    if(z_(i)==components_.size())
-    components_.push_back(H_);
+      // cout << "i here" << endl;
+
+    // vector<uint8_t> rearrange_list;
+    // if (rearrange_list.empty()) rearrange_list.push_back(0);
+    // rearrange_list.push_back(10);
+    // cout << rearrange_list <<endl;
+    // std::vector<uint8_t>::iterator it;
+    // it = find (rearrange_list.begin(), rearrange_list.end(), 30);
+    // if (it != rearrange_list.end())
+    // std::cout << "Element found in myvector: " << *it << '\n';
+    // else
+    // std::cout << "Element not found in myvector\n";
+
+
     this -> reorderAssignments();
+    // cout << z_ << endl;
     // this->removeEmptyClusters();
 
     // cout << uni_(gen) << endl;
@@ -208,13 +227,38 @@ void DPMM<Dist_t>::sampleLabels()
 template <class Dist_t>
 void DPMM<Dist_t>::reorderAssignments()
 { 
+  // cout << z_ << endl;
   vector<uint8_t> rearrange_list;
   for (uint32_t i=0; i<N_; ++i)
   {
-    // cout << i;
-    // if (find (rearrange_list.begin(), rearrange_list.end(), 30) != rearrange_list.end());
+    if (rearrange_list.empty()) rearrange_list.push_back(z_[i]);
+    // cout << *rearrange_list.begin() << endl;
+    // cout << *rearrange_list.end()  << endl;
+    std::vector<uint8_t>::iterator it;
+    it = find (rearrange_list.begin(), rearrange_list.end(), z_[i]);
+    if (it == rearrange_list.end())
+    {
+      rearrange_list.push_back(z_[i]);
+      // z_[i] = rearrange_list.end() - rearrange_list.begin();
+      z_[i] = rearrange_list.size() - 1;
+    }
+    else if (it != rearrange_list.end())
+    {
+      int index = it - rearrange_list.begin();
+      z_[i] = index;
+    }
   }
-};
+  K_ = z_.maxCoeff() + 1;
+  if(K_>components_.size())
+  components_.push_back(H_);
+  else if(K_<components_.size())
+  components_.pop_back();
+    // std::cout << "Element found in myvector: " << *it << '\n';
+    // else
+    // std::cout << "Element not found in myvector\n";
+}
+    // cout << z_ << endl;
+
 
 
 
