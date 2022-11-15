@@ -36,10 +36,12 @@ private:
   double alpha_; 
   Dist_t H_; 
   MatrixXd x_;
-  VectorXu z_; 
+  // MatrixXu z_; 
+
+  VectorXi z_; 
   uint16_t N_;
   uint16_t K_;
-  std::vector<Dist_t> components_;
+  vector<Dist_t> components_;
 };
 
 // ---------------- impl -----------------------------------------------------
@@ -48,8 +50,11 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x)
 {
   uint32_t K0=1;
   x_ = x;
-  z_.setZero(x.rows());
-  N_ = z_.size();
+  VectorXi z(x.rows());
+  z.setZero();
+  z_ = z;
+  // z_.setZero(x_.rows());
+  N_ = x_.rows();
   K_ = z_.maxCoeff() + 1;
   for (uint32_t k=0; k<K0; ++k)
     components_.push_back(H_);
@@ -84,14 +89,35 @@ void DPMM<Dist_t>::sampleLabels()
     Nk.setZero(K_);
     for(uint32_t ii=0; ii<N_; ++ii)
       Nk(z_(ii))++;
-
+    
     VectorXd pi(K_+1); 
     for (uint32_t k=0; k<K_; ++k)
-    { cout << "Data Number: " << i << endl;
+    { 
+      // int x[] = {1, 2 , 3};
+      // vector<int> x;
+      // x.push_back(1);
+      // x.push_back(2);
+      // cout << x_(x, all) << endl;
+      // cout << z_(x) << endl;
+      cout << "Data Number: " << i << endl;
 
-      MatrixXd x_i = x_(i, all);
-      uint32_t z_i = z_[i];
-      z_[i] = -1;
+      VectorXd x_i = x_(i, all);
+      // uint32_t z_i = z_(i);
+      // x_(1, 1) = -1;
+      cout << Nk << endl;
+      // z_[5] = 33; 
+      // cout << z_ << endl;
+      vector<int> xk_index;
+      for (uint32_t ii = 0; ii<N_; ++ii)
+      {
+        // cout << ii;
+        // cout << z_[ii];
+        if (ii!= i && z_[ii] == k) xk_index.push_back(ii); 
+      }
+      cout << xk_index.size() << endl;
+
+      // cout << xk_index << endl;
+      Nk(0) = 1;
 
 
       // cout << x_(i, all) << endl;
