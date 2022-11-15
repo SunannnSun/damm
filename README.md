@@ -1,6 +1,6 @@
 # Dirichlet Process Mixture Model
 
-C++ Implementation of DPMM 
+C++ Implementation of DPMM with Python GUI interface
 
 Requirement: Eigen 3.4 (more convenient indexing)
 

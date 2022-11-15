@@ -33,7 +33,7 @@ public:
   void initialize(const MatrixXd& x);
   void sampleLabels();
   void reorderAssignments();
-  void printLabels(){cout<< z_ << endl;};
+  const VectorXi & getLabels(){return z_;};
 
 private:
   double alpha_; 
@@ -98,6 +98,8 @@ void DPMM<Dist_t>::sampleLabels()
     VectorXd pi(K_+1); 
     VectorXd x_i;
     x_i = x_(i, all);
+    // #pragma omp parallel for
+
     for (uint32_t k=0; k<K_; ++k)
     { 
       // int x[] = {1, 2 , 3};

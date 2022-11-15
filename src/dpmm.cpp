@@ -3,7 +3,6 @@
 #include <boost/program_options.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
- 
 #include "niw.hpp"
 // #include "normal.hpp"
 #include "dpmm.hpp"
@@ -27,7 +26,7 @@ int main(int argc, char **argv)
         ("number,n", po::value<int>(), "number of data points")
         ("dimension,m", po::value<int>(), "dimension of data points")
         ("input,i", po::value<string>(), "path to input dataset .csv file rows: dimensions; cols: numbers")
-        ("onput,o", po::value<string>(), "path to output dataset .csv file rows: dimensions; cols: numbers")
+        ("output,o", po::value<string>(), "path to output dataset .csv file rows: dimensions; cols: numbers")
         ("iteration,t", po::value<int>(), "Numer of Sampler Iteration")
         ("alpha,a", po::value<double>(), "Concentration value")
         ("params,p", po::value< vector<double> >()->multitoken(), "parameters of the base measure")
@@ -144,6 +143,26 @@ int main(int argc, char **argv)
     //   dpmm.printLabels();
       cout << "done" << endl;
     }
-    dpmm.printLabels();
+    // dpmm.printLabels();
 
-}
+
+    const VectorXi& z = dpmm.getLabels();
+    string pathOut;
+    if(vm.count("output")) 
+    pathOut = vm["output"].as<string>();
+    if (!pathOut.compare(""))
+    {
+        cout<<"please specify an output data file"<<endl;
+        exit(1);
+    }
+    else cout<<"output to "<<pathOut<<endl;
+    ofstream fout(pathOut.data(),ofstream::out);
+    for (uint16_t i=0; i < z.size(); ++i)
+        fout << z[i] << endl;
+    fout.close();
+
+
+    
+
+    return 0;
+}   
