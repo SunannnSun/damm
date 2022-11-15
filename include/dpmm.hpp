@@ -4,7 +4,9 @@
 // #include <stdint.h>
 // #include <vector>
 // #include <Eigen/Dense>
-	
+#include <boost/random/uniform_01.hpp>
+#include <boost/random/variate_generator.hpp>
+
 #include <Eigen/Eigen>
 #include "niw.hpp"
 #include "global.hpp"
@@ -91,6 +93,8 @@ void DPMM<Dist_t>::sampleLabels()
       Nk(z_(ii))++;
     
     VectorXd pi(K_+1); 
+    VectorXd x_i;
+    x_i = x_(i, all);
     for (uint32_t k=0; k<K_; ++k)
     { 
       // int x[] = {1, 2 , 3};
@@ -101,8 +105,7 @@ void DPMM<Dist_t>::sampleLabels()
       // cout << z_(x) << endl;
       cout << "Data Number: " << i << endl;
 
-      VectorXd x_i;
-      x_i = x_(i, all);
+
       // uint32_t z_i = z_(i);
       // x_(1, 1) = -1;
       // cout << Nk << endl;
@@ -127,15 +130,37 @@ void DPMM<Dist_t>::sampleLabels()
       // cout << x_(i, all) << endl;
       // cout << seq(2,5) << endl;
       // pi(k) = log(Nk(k))-log(N_+alpha_) + components_[k].logPosteriorProb(x_i, x_k);
-      pi(k) = components_[k].logPosteriorProb(x_i, x_k);
+      pi(k) = log(Nk(k))-log(N_+alpha_) + components_[k].logPosteriorProb(x_i, x_k);
 
-      cout << pi(k) << endl;
+      // cout << pi(k) << endl;
       // cout << x_k.rowwise() - x_k.colwise().mean() << endl;
 
       // cout << x_k.colwise().mean() << endl;
       // cout << pi(N_) << endl;
     }
-    pi(K_) = log(alpha_)-log(N_+alpha_);
+    // cout << H_.nu_- H_.dim_+1 << endl;
+    pi(K_) = log(alpha_)-log(N_+alpha_) + H_.logProb(x_i);
+    cout << pi << endl;
+    // normalize pi and exponentiate it; redo it later to comply with new eigen library
+    // https://dev.to/seanpgallivan/solution-running-sum-of-1d-array-34na#c-code
+    double pi_max = pi.maxCoeff();
+    pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
+    cout << pi << endl;
+
+    // Generate a uniform number from [0, 1]
+    boost::random::uniform_01<> uni_;
+    // boost::random::mt19937 gen = ;
+    // https://www.boost.org/doc/libs/1_80_0/doc/html/boost_random/tutorial.html
+    // note: Distinguish boost::math::uniform vs. boost::random::uniform
+    
+    boost::random::variate_generator<boost::random::mt19937&, 
+                           boost::random::uniform_01<> > var_nor(*H_.pRndGen_, uni_);
+    double uni_draw = var_nor();
+    uint32_t k = 0;
+    while (uni_draw < pi[k]) k++;
+    z_[i] = k;
+
+    // cout << uni_(gen) << endl;
   }
 };
 

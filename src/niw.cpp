@@ -7,7 +7,7 @@
 template<typename T>
 NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& sigma, 
   const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, boost::mt19937 *pRndGen)
-: Distribution<T>(pRndGen), sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa)
+: Distribution<T>(pRndGen), sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size())
 {
   assert(sigma_.rows()==mu_.size()); 
   assert(sigma_.cols()==mu_.size());

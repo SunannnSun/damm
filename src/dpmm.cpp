@@ -89,8 +89,9 @@ int main(int argc, char **argv)
         // cout <<"theta="<<theta<<endl;
         // cout <<"Delta="<<Delta<<endl;
     }
-
+    // cout << nu << endl;
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+    // cout << niw.nu_ << endl;
     // DPMM<NIW<double>>* ptr_dpmm;
     DPMM<NIW<double>> dpmm(alpha, niw);
     // ptr_dpmm = &dpmm;
