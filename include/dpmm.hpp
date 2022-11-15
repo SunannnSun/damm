@@ -118,7 +118,7 @@ void DPMM<Dist_t>::sampleLabels()
         // cout << z_[ii];
         if (ii!= i && z_[ii] == k) x_k_index.push_back(ii); 
       }
-      cout << x_k_index.size() << endl;
+      // cout << x_k_index.size() << endl;
       MatrixXd x_k(x_k_index.size(), x_.cols()); 
       x_k = x_(x_k_index, all);
       // cout << xk_index << endl;
@@ -140,12 +140,20 @@ void DPMM<Dist_t>::sampleLabels()
     }
     // cout << H_.nu_- H_.dim_+1 << endl;
     pi(K_) = log(alpha_)-log(N_+alpha_) + H_.logProb(x_i);
-    cout << pi << endl;
+    // cout << pi << endl;
     // normalize pi and exponentiate it; redo it later to comply with new eigen library
     // https://dev.to/seanpgallivan/solution-running-sum-of-1d-array-34na#c-code
     double pi_max = pi.maxCoeff();
-    pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
-    cout << pi << endl;
+    // cout << pi.size() <<endl;
+    // pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
+    pi = pi / pi.sum();
+    for (uint32_t i = 1; i < pi.size(); ++i){
+      pi[i] = pi[i-1]+ pi[i];
+    }
+    cout << pi[0] << endl;
+    cout << pi[1] << endl;
+  
+
 
     // Generate a uniform number from [0, 1]
     boost::random::uniform_01<> uni_;
@@ -156,9 +164,21 @@ void DPMM<Dist_t>::sampleLabels()
     boost::random::variate_generator<boost::random::mt19937&, 
                            boost::random::uniform_01<> > var_nor(*H_.pRndGen_, uni_);
     double uni_draw = var_nor();
+    cout << uni_draw << endl;
     uint32_t k = 0;
-    while (uni_draw < pi[k]) k++;
-    z_[i] = k;
+    // uni_draw = 0.999;
+    // cout << (pi[0] < uni_draw) << endl;
+    while (pi[k] < uni_draw) k++;
+    cout << k << endl;
+    // while (k < pi.size()){
+    //   cout << pi[k] << endl;
+    //   k++;
+    // }
+    // for (int k = 0; k< pi.size(); k++)
+    // {
+    //   cout << k << endl;;
+    // }
+    // z_[i] = k;
 
     // cout << uni_(gen) << endl;
   }
