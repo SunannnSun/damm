@@ -32,7 +32,7 @@ public:
 
   void initialize(const MatrixXd& x);
   void sampleLabels();
-
+  void reorderAssignments();
 
 private:
   double alpha_; 
@@ -143,15 +143,29 @@ void DPMM<Dist_t>::sampleLabels()
     // cout << pi << endl;
     // normalize pi and exponentiate it; redo it later to comply with new eigen library
     // https://dev.to/seanpgallivan/solution-running-sum-of-1d-array-34na#c-code
+    // https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/
+
     double pi_max = pi.maxCoeff();
     // cout << pi.size() <<endl;
-    // pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
+    // VectorXd a {{-10, 2}};
+    // cout << a << endl;
+    // double a_max = a.maxCoeff();
+    // a = (a.array()-(a_max + log((pi.array() - a_max).exp().sum()))).exp().matrix();
+    // double b;
+    // b = a_max + log((a.array() - a_max).exp().sum());
+    // cout << b << endl;
+    pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
+
+    // cout << pi << endl;
+    // VectorXd n_pi(K_+1); 
+    // n_pi = (pi.array() - pi_max).exp().matrix();
+    // cout << n_pi << endl;
     pi = pi / pi.sum();
-    for (uint32_t i = 1; i < pi.size(); ++i){
-      pi[i] = pi[i-1]+ pi[i];
+    for (uint32_t ii = 1; ii < pi.size(); ++ii){
+      pi[ii] = pi[ii-1]+ pi[ii];
     }
-    cout << pi[0] << endl;
-    cout << pi[1] << endl;
+    // cout << pi[0] << endl;
+    // cout << pi[1] << endl;
   
 
 
@@ -164,23 +178,64 @@ void DPMM<Dist_t>::sampleLabels()
     boost::random::variate_generator<boost::random::mt19937&, 
                            boost::random::uniform_01<> > var_nor(*H_.pRndGen_, uni_);
     double uni_draw = var_nor();
-    cout << uni_draw << endl;
+    // cout << uni_draw << endl;
     uint32_t k = 0;
     // uni_draw = 0.999;
     // cout << (pi[0] < uni_draw) << endl;
     while (pi[k] < uni_draw) k++;
-    cout << k << endl;
+    // cout << k << endl;
     // while (k < pi.size()){
     //   cout << pi[k] << endl;
     //   k++;
     // }
     // for (int k = 0; k< pi.size(); k++)
     // {
-    //   cout << k << endl;;
+    // cout << k << endl;
     // }
-    // z_[i] = k;
+    z_[i] = k;
+    if(z_(i)==components_.size())
+    components_.push_back(H_);
+    this -> reorderAssignments();
+    // this->removeEmptyClusters();
 
     // cout << uni_(gen) << endl;
   }
+  // cout << components_[0].nu_ << endl;
+
 };
+
+
+template <class Dist_t>
+void DPMM<Dist_t>::reorderAssignments()
+{ 
+  vector<uint8_t> rearrange_list;
+  for (uint32_t i=0; i<N_; ++i)
+  {
+    // cout << i;
+    // if (find (rearrange_list.begin(), rearrange_list.end(), 30) != rearrange_list.end());
+  }
+};
+
+
+
+// template <class Dist_t>
+// void DPMM<Dist_t>::removeEmptyClusters()
+// {
+//   for(uint32_t k=components_.size()-1; k>=0; --k)
+//   {
+//     bool haveCluster_k = false;
+//     for(uint32_t i=0; i<z_.size(); ++i)
+//       if(z_(i)==k)
+//       {
+//         haveCluster_k = true;
+//         break;
+//       }
+//     if (!haveCluster_k)
+//     {
+//       for (uint32_t i=0; i<z_.size(); ++i)
+//         if(z_(i) >= k) z_(i) --;
+//       components_.erase(components_.begin()+k);
+//     }
+//   }
+// }
 

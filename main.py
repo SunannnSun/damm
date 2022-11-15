@@ -6,6 +6,11 @@ import subprocess
 import os
 import csv
 
+from scipy.special import logsumexp
+a = np.array([-10, 2])
+# print(np.log(np.sum(np.exp(a))))
+# print(max(a) - logsumexp(a - max(a)))
+
 parser = argparse.ArgumentParser(
                     prog = 'DPMM',
                     description = 'run dpmm cluster',

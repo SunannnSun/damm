@@ -10,7 +10,7 @@ import csv
 
 
 
-rc('font', **{'family': 'serif', 'serif': ['Times']})
+# rc('font', **{'family': 'serif', 'serif': ['Times']})
 rc('text')
 
 '''
