@@ -101,31 +101,38 @@ void DPMM<Dist_t>::sampleLabels()
       // cout << z_(x) << endl;
       cout << "Data Number: " << i << endl;
 
-      VectorXd x_i = x_(i, all);
+      VectorXd x_i;
+      x_i = x_(i, all);
       // uint32_t z_i = z_(i);
       // x_(1, 1) = -1;
-      cout << Nk << endl;
+      // cout << Nk << endl;
       // z_[5] = 33; 
       // cout << z_ << endl;
-      vector<int> xk_index;
+      vector<int> x_k_index;
       for (uint32_t ii = 0; ii<N_; ++ii)
       {
         // cout << ii;
         // cout << z_[ii];
-        if (ii!= i && z_[ii] == k) xk_index.push_back(ii); 
+        if (ii!= i && z_[ii] == k) x_k_index.push_back(ii); 
       }
-      cout << xk_index.size() << endl;
-
+      cout << x_k_index.size() << endl;
+      MatrixXd x_k(x_k_index.size(), x_.cols()); 
+      x_k = x_(x_k_index, all);
       // cout << xk_index << endl;
-      Nk(0) = 1;
+      // Nk(0) = 1;
 
 
       // cout << x_(i, all) << endl;
       // x_i = x(i, );
       // cout << x_(i, all) << endl;
       // cout << seq(2,5) << endl;
-      // pi(k) = log(Nk(k))-log(N_+alpha_) + components_[k].logPosteriorProb(x_, z_, k, i);
-      // cout << pi(k) << endl;
+      // pi(k) = log(Nk(k))-log(N_+alpha_) + components_[k].logPosteriorProb(x_i, x_k);
+      pi(k) = components_[k].logPosteriorProb(x_i, x_k);
+
+      cout << pi(k) << endl;
+      // cout << x_k.rowwise() - x_k.colwise().mean() << endl;
+
+      // cout << x_k.colwise().mean() << endl;
       // cout << pi(N_) << endl;
     }
     pi(K_) = log(alpha_)-log(N_+alpha_);

@@ -12,10 +12,10 @@ template<typename T>
 class NIW: public Distribution<T>
 {
     public:
-        Matrix<T,Dynamic,Dynamic> sigma_0;
-        Matrix<T,Dynamic,1> mu_0;
-        T nu_0,kappa_0;
-        uint32_t dim;
+        Matrix<T,Dynamic,Dynamic> sigma_;
+        Matrix<T,Dynamic,1> mu_;
+        T nu_,kappa_;
+        uint32_t dim_;
 
 
         // NIW();
@@ -23,7 +23,15 @@ class NIW: public Distribution<T>
             boost::mt19937 *pRndGen);
         ~NIW();
 
-        double logPosteriorProb();
+        T logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
+        T logProb(const Matrix<T,Dynamic,1>& x_i);
+        NIW<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
+        void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
+
+    private:
+        Matrix<T,Dynamic,Dynamic> scatter_;
+        Matrix<T,Dynamic,1> mean_;
+        uint16_t count_;
 };
 
 template class NIW<double>;
