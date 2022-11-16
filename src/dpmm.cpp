@@ -52,18 +52,22 @@ int main(int argc, char **argv)
     if(vm.count("alpha")) 
     {
         alpha = vm["alpha"].as<double>();
-        cout << "Concentration factor set to " << vm["alpha"].as<double>() << ".\n";
+        cout << "Concentration factor: " << vm["alpha"].as<double>() << ".\n";
     }
     int num = 0;
     if (vm.count("number")) num = vm["number"].as<int>();
+    assert(num != 0);
+    cout << "Number of data point: " << num << endl;
 
     int dim = 0;
     if (vm.count("dimension")) dim = vm["dimension"].as<int>();
+    assert(dim != 0);
+    cout << "Dimension of data: " << dim << endl;
 
     int T = 0;
     if (vm.count("iteration")) 
     {
-        cout << "Sampler iteration set to " << vm["iteration"].as<int>() << ".\n";
+        cout << "Sampler iteration: " << vm["iteration"].as<int>() << ".\n";
         T = vm["iteration"].as<int>();
     } 
 
@@ -74,7 +78,7 @@ int main(int argc, char **argv)
     if(vm.count("params")){
         // cout << "Parameters received.\n";
         vector<double> params = vm["params"].as< vector<double> >();
-        cout<<"params length="<<params.size()<<endl;
+        // cout<<"params length="<<params.size()<<endl;
         nu = params[0];
         kappa = params[1];
         for(uint8_t i=0; i<dim; ++i)
@@ -91,14 +95,13 @@ int main(int argc, char **argv)
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
 
     // Log Probability Debugging Test Block
-    VectorXd x_tilde {{0, 0}};
+    // VectorXd x_tilde {{0, 0}};
     // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
-    cout << niw.logProb(x_tilde) << endl;
+    // cout << niw.logProb(x_tilde) << endl;
     // cout << niw.nu_ << endl;
-
     // Sufficient Statistics Test Block
-    MatrixXd x_kkk {{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}};
-    cout << niw.logPosteriorProb(x_tilde, x_kkk) << endl;
+    // MatrixXd x_kkk {{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}};
+    // cout << niw.logPosteriorProb(x_tilde, x_kkk) << endl;
     // cout << niw.scatter_ << endl;
     // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
     // cout << niw.logProb(x_tilde) << endl;
@@ -151,15 +154,17 @@ int main(int argc, char **argv)
     // cout << data<< endl;
     
     int init_cluster = 0;
-    if (vm.count("init")) dim = vm["init"].as<int>();
+    if (vm.count("init")) init_cluster = vm["init"].as<int>();
     dpmm.initialize(data, init_cluster);
 
     // T = 1;
     for (uint32_t t=0; t<T; ++t)
     {
+
       cout<<"------------ t="<<t<<" -------------"<<endl;
       cout << "Number of components: " << dpmm.K_ << endl;
       dpmm.sampleLabels();
+
     }
 
 
@@ -172,7 +177,7 @@ int main(int argc, char **argv)
         cout<<"please specify an output data file"<<endl;
         exit(1);
     }
-    else cout<<"output to "<<pathOut<<endl;
+    else cout<<"Output to "<<pathOut<<endl;
     ofstream fout(pathOut.data(),ofstream::out);
     for (uint16_t i=0; i < z.size(); ++i)
         fout << z[i] << endl;

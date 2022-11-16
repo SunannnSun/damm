@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/random/uniform_01.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
 #include <Eigen/Dense>
 
@@ -44,35 +45,38 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x, int init_cluster)
 {
   x_ = x;
   N_ = x_.rows();
-
+  
+  VectorXi z(x.rows());
   if (init_cluster == 1) 
   {
-    VectorXi z(x.rows());
     z.setZero();
-    z_ = z;
-    K_ = z_.maxCoeff() + 1; //=1
   }
-  else if (init_cluster==0){
-    VectorXi z(x.rows());
+  else if (init_cluster==0)
+  {
     vector<int> zz;
     for (int i=0; i<N_; ++i) zz.push_back(i);
     random_shuffle(zz.begin(), zz.end());
     for (int i=0; i<N_; ++i)z[i] =zz[i];
-    z_ = z;
-    K_ = z_.maxCoeff() + 1; //=1
     // cout << z_ << endl;
+  }
+  else if (init_cluster >= 1)
+  {
+    boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
+    for (int i=0; i<N_; ++i)z[i] = uni_(*H_.pRndGen_); 
   }
   else
   { 
     cout<< "Number of initial clusters not supported yet" << endl;
     exit(1);
   }
+  z_ = z;
+  K_ = z_.maxCoeff() + 1; //=1
 
 
   for (uint32_t k=0; k<K_; ++k)
     components_.push_back(H_);
     // components_.push_back(Dist_t(H_));
-  cout<< "Number of initialized components: " << components_.size()<<endl;
+  cout<< "Initial clusters: " << components_.size()<<endl;
 
   //random number of initial components; and sample each assignment from a symmetric categorical distribution
   // if (K0>1)

@@ -18,16 +18,18 @@ parser = argparse.ArgumentParser(
                     description = 'run dpmm cluster',
                     epilog = '2022, Sunan Sun <sunan@seas.upenn.edu>')
 
-parser.add_argument('-i', '--input', type=int, default=3, help='Choose Data Input Option')
-parser.add_argument('-t', '--iteration', type=int, default=50, help='Number of Sampler Iterations')
-parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor')
-parser.add_argument('--init', type=int, default = 0, help='number of initial clusters, 0 is one cluster each point')
+parser.add_argument('-i', '--input', type=int, default=3, help='Choose Data Input Option: 0 handrawn; 1 load handdrawn; 2 load matlab')
+parser.add_argument('-d', '--data', type=int, default=1, help='Choose Matlab Dataset, default=1')
+parser.add_argument('-t', '--iteration', type=int, default=50, help='Number of Sampler Iterations; default=50')
+parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
+parser.add_argument('--init', type=int, default = 10, help='number of initial clusters, 0 is one cluster per data; default=10')
 args = parser.parse_args()
 
 data_input_option = args.input
 iteration         = args.iteration
 alpha             = args.alpha
 init_option       = args.init
+dataset_no        = args.data
 
 if data_input_option == 1:
     draw_data()
@@ -39,7 +41,7 @@ elif data_input_option == 2:
     Data = add_directional_features(l, t, x, y, if_normalize=True)
 else:
     pkg_dir = './data/'
-    chosen_data_set = 8
+    chosen_data_set = dataset_no
     sub_sample = 2
     nb_trajectories = 7
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
@@ -47,7 +49,7 @@ else:
 
 Data = Data[:, 0:2]
 num, dim = Data.shape
-print("Data dimension: ", (num, dim))
+# print("Data dimension: ", (num, dim))
 
 input_path = './data/human_demonstrated_trajectories.csv'
 output_path = './data/output.csv'
@@ -85,7 +87,7 @@ completed_process = subprocess.run(' '.join(args), shell=True)
 
 
 assignment_array = np.genfromtxt(output_path, dtype=int, delimiter=',')
-print(assignment_array.shape)
+# print(assignment_array.shape)
 
 
 """##### Plot Results ######"""
