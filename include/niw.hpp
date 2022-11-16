@@ -17,8 +17,6 @@ class NIW: public Distribution<T>
         T nu_,kappa_;
         uint32_t dim_;
 
-
-        // NIW();
         NIW(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, 
             boost::mt19937 *pRndGen);
         ~NIW();

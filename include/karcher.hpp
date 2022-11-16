@@ -46,6 +46,38 @@ Matrix<T,Dynamic, 1> rie_exp(Matrix<T,Dynamic, 1>&pp, const Matrix<T,Dynamic, 1>
 }
 
 
+template<typename T>
+Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& x_k)
+{
+  float tolerance = 0.01;
+  T angle;
+  Matrix<T, Dynamic, 1> angle_sum(x_k.cols()/2);
+  Matrix<T, Dynamic, 1> x_tp(x_k.cols()/2);   // x in tangent plane
+  Matrix<T, Dynamic, 1> x(x_k.cols()/2);
+  Matrix<T, Dynamic, 1> p(x_k.cols()/2);
+  
+  p = x_k(0, seq(x_k.cols()/2, last)).transpose();
+  if (x_k.rows() == 1) return p;
+
+  while (1)
+  { 
+    angle_sum.setZero();
+    for (int i=0; i<x_k.rows(); ++i)
+    {
+      x = x_k(i, seq(x_k.cols()/2, last)).transpose();
+      angle_sum = angle_sum + rie_log(p, x);
+    }
+    x_tp = 1. / x_k.rows() * angle_sum;
+    // cout << x_tp.norm() << endl;
+    if (x_tp.norm() < tolerance) 
+    {
+      return p;
+    }
+    p = rie_exp(p, x_tp);
+  }
+};
+
+
 
 
 

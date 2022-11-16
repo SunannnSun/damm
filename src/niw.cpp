@@ -13,7 +13,6 @@ NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& sigma,
   assert(sigma_.cols()==mu_.size());
 };
 
-
 template<typename T>
 NIW<T>::~NIW()
 {};
