@@ -4,7 +4,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
 #include "niw.hpp"
-// #include "normal.hpp"
+#include "niwDir.hpp"
 #include "dpmm.hpp"
 
 
@@ -16,8 +16,7 @@ using namespace Eigen;
 
 int main(int argc, char **argv)
 {   
-
-    // cout << "Hello World" << endl;
+    cout << "Hello Directional World" << endl;
 
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -29,9 +28,11 @@ int main(int argc, char **argv)
         ("iteration,t", po::value<int>(), "Numer of Sampler Iteration")
         ("alpha,a", po::value<double>(), "Concentration value")
         ("init", po::value<int>(), "Number of initial clusters")
+        ("base", po::value<int>(), "Base type: 0 euclidean, 1 euclidean + directional")
         ("params,p", po::value< vector<double> >()->multitoken(), "parameters of the base measure")
     ;
 
+    
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);   
@@ -40,6 +41,10 @@ int main(int argc, char **argv)
     cout << desc << "\n";
     return 1;
     } 
+
+    int base = 0;
+    if(vm.count("base"))
+        base = static_cast<uint64_t>(vm["base"].as<int>());
 
     uint64_t seed = time(0);
     if(vm.count("seed"))
@@ -59,8 +64,12 @@ int main(int argc, char **argv)
     assert(num != 0);
     cout << "Number of data point: " << num << endl;
 
+
+    
     int dim = 0;
     if (vm.count("dimension")) dim = vm["dimension"].as<int>();
+    // DIRECTIONAL
+    if (base == 1) dim = dim/2+1;
     assert(dim != 0);
     cout << "Dimension of data: " << dim << endl;
 
@@ -92,8 +101,10 @@ int main(int argc, char **argv)
         // cout <<"Sigma="<<sigma<<endl;
     }
     // cout << nu << endl;
-    NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
 
+    
+
+  
     // Log Probability Debugging Test Block
     // VectorXd x_tilde {{0, 0}};
     // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
@@ -106,11 +117,16 @@ int main(int argc, char **argv)
     // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
     // cout << niw.logProb(x_tilde) << endl;
     // cout << niw.nu_ << endl;
-    
-
 
     // DPMM<NIW<double>>* ptr_dpmm;
-    DPMM<NIW<double>> dpmm(alpha, niw);
+
+    // if (base == 0)
+    // DPMM<NIW<double>> dpmm(alpha, niw);
+    // DPMM<NIWDIR<double>> dpmm(alpha, niw);
+    // VectorXd x_tilde {{1, 1, 1}};
+    // cout << niw.logProb(x_tilde) <<endl;
+
+
 
     // VectorXd aaa(3);
     // aaa = {1, 3};
@@ -121,7 +137,11 @@ int main(int argc, char **argv)
     // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));
     // Eigen::MatrixXd& data(*spx);
 
-    MatrixXd data(num, dim);
+    int data_dim;
+    if (base==1) data_dim = (dim-1)*2;
+    else  data_dim = dim;
+
+    MatrixXd data(num, data_dim);
 
     string pathIn ="";
     if(vm.count("input")) pathIn = vm["input"].as<string>();
@@ -148,41 +168,87 @@ int main(int argc, char **argv)
         }
     fin.close();
     for (uint32_t i=0; i<num; ++i)
-        for (uint32_t j=0; j<dim; ++j)
+        for (uint32_t j=0; j<data_dim; ++j)
             data(i, j) = stod(parsedCsv[i][j]);
     }
-    // cout << data<< endl;
     
-    int init_cluster = 0;
-    if (vm.count("init")) init_cluster = vm["init"].as<int>();
-    dpmm.initialize(data, init_cluster);
+    // niw.karcherMean(x_tilde.transpose());
+    // cout << niw.karcherMean(data(0, all)) << endl;
 
+    // MatrixXd test_angle {{100, 1000, std::cos(0), std::sin(0)}, 
+    //                      {100, 1000, std::cos(-PI/2), std::sin(-PI/2)}};
+
+    // cout << niw.karcherMean(data({0, 1}, all)) << endl;
+                     
+    // cout << niw.karcherMean(data) << endl;
+
+
+
+    // int init_cluster = 0;
+    // if (vm.count("init")) init_cluster = vm["init"].as<int>();
+    // dpmm.initialize(data, init_cluster);
+    
+    // DPMM<NIW<double>> dpmm();
+    // DPMM<NIWDIR<double>> dpmmDir();
     // T = 1;
-    for (uint32_t t=0; t<T; ++t)
+    if (base==0) 
     {
+        NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+        DPMM<NIW<double>> dpmm(alpha, niw);
+        int init_cluster = 0;
+        if (vm.count("init")) init_cluster = vm["init"].as<int>();
+        dpmm.initialize(data, init_cluster);
 
-      cout<<"------------ t="<<t<<" -------------"<<endl;
-      cout << "Number of components: " << dpmm.K_ << endl;
-      dpmm.sampleLabels();
+        for (uint32_t t=0; t<T; ++t)
+        {
+            cout<<"------------ t="<<t<<" -------------"<<endl;
+            cout << "Number of components: " << dpmm.K_ << endl;
+            dpmm.sampleLabels();
+        }
 
+        const VectorXi& z = dpmm.getLabels();
+        string pathOut;
+        if(vm.count("output")) pathOut = vm["output"].as<string>();
+        if (!pathOut.compare(""))
+        {
+            cout<<"please specify an output data file"<<endl;
+            exit(1);
+        }
+        else cout<<"Output to "<<pathOut<<endl;
+        ofstream fout(pathOut.data(),ofstream::out);
+        for (uint16_t i=0; i < z.size(); ++i)
+            fout << z[i] << endl;
+        fout.close();
     }
 
 
-    const VectorXi& z = dpmm.getLabels();
-    string pathOut;
-    if(vm.count("output")) 
-    pathOut = vm["output"].as<string>();
-    if (!pathOut.compare(""))
+    else if (base==1) 
     {
-        cout<<"please specify an output data file"<<endl;
-        exit(1);
+        NIWDIR<double> niwDir(sigma, mu, nu, kappa, &rndGen);
+        DPMM<NIWDIR<double>> dpmmDir(alpha, niwDir);
+        int init_cluster = 0;
+        if (vm.count("init")) init_cluster = vm["init"].as<int>();
+        dpmmDir.initialize(data, init_cluster);
+        for (uint32_t t=0; t<T; ++t)
+        {
+            cout<<"------------ t="<<t<<" -------------"<<endl;
+            cout << "Number of components: " << dpmmDir.K_ << endl;
+            dpmmDir.sampleLabels();
+        }
+
+        const VectorXi& z = dpmmDir.getLabels();
+        string pathOut;
+        if(vm.count("output")) pathOut = vm["output"].as<string>();
+        if (!pathOut.compare(""))
+        {
+            cout<<"please specify an output data file"<<endl;
+            exit(1);
+        }
+        else cout<<"Output to "<<pathOut<<endl;
+        ofstream fout(pathOut.data(),ofstream::out);
+        for (uint16_t i=0; i < z.size(); ++i)
+            fout << z[i] << endl;
+        fout.close();
     }
-    else cout<<"Output to "<<pathOut<<endl;
-    ofstream fout(pathOut.data(),ofstream::out);
-    for (uint16_t i=0; i < z.size(); ++i)
-        fout << z[i] << endl;
-    fout.close();
-
-
     return 0;
 }   

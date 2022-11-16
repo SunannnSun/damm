@@ -21,6 +21,7 @@ template <class Dist_t>
 class DPMM
 {
 public:
+  // DPMM(){};
   DPMM(double alpha, const Dist_t& H): alpha_(alpha), H_(H) {};
   ~DPMM(){};
 

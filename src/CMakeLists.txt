@@ -28,6 +28,7 @@ link_directories(
 add_library(distribution_module
   # ${PROJECT_SOURCE_DIR}/niw.cpp
   ${PROJECT_SOURCE_DIR}/niw.cpp
+  ${PROJECT_SOURCE_DIR}/niwDir.cpp
   # ${PROJECT_SOURCE_DIR}/distribution.cpp
 )
 
@@ -43,10 +44,10 @@ target_link_libraries("${PROJECT_NAME}"
 
 
 
-# add_executable(main main.cpp
-# )
+add_executable(main main.cpp
+)
 
-# target_link_libraries(main
-#     ${Boost_PROGRAM_OPTIONS_LIBRARY}
-#     Eigen3::Eigen
-# )
+target_link_libraries(main
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    distribution_module
+)

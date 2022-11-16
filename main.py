@@ -23,6 +23,7 @@ parser.add_argument('-d', '--data', type=int, default=1, help='Choose Matlab Dat
 parser.add_argument('-t', '--iteration', type=int, default=50, help='Number of Sampler Iterations; default=50')
 parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
 parser.add_argument('--init', type=int, default = 10, help='number of initial clusters, 0 is one cluster per data; default=10')
+parser.add_argument('--base', type=int, default = 0, help='sampling type; 0 is position; 1 is position+directional')
 args = parser.parse_args()
 
 data_input_option = args.input
@@ -30,6 +31,7 @@ iteration         = args.iteration
 alpha             = args.alpha
 init_option       = args.init
 dataset_no        = args.data
+base              = args.base
 
 if data_input_option == 1:
     draw_data()
@@ -42,14 +44,12 @@ elif data_input_option == 2:
 else:
     pkg_dir = './data/'
     chosen_data_set = dataset_no
-    sub_sample = 2
+    sub_sample = 1
     nb_trajectories = 7
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
 
-Data = Data[:, 0:2]
 num, dim = Data.shape
-# print("Data dimension: ", (num, dim))
 
 input_path = './data/human_demonstrated_trajectories.csv'
 output_path = './data/output.csv'
@@ -58,14 +58,22 @@ with open(input_path, mode='w') as data_file:
     for i in range(Data.shape[0]):
         data_writer.writerow(Data[i, :])
 
-
-lambda_0 = {
-    "nu_0": dim + 3,
-    "kappa_0": 1,
-    "mu_0": np.zeros(dim),
-    "sigma_0":  0.1 * np.eye(dim)
-    # "sigma_0": (dim + 3) * (1 * np.pi) / 180 * np.eye(dim)
-}
+if base == 0:
+    lambda_0 = {
+        "nu_0": dim + 3,
+        "kappa_0": 1,
+        "mu_0": np.zeros(dim),
+        "sigma_0":  0.1 * np.eye(dim)
+    }
+elif base == 1:
+    sigma_0 = 0.1 * np.eye(int(dim/2+1))
+    sigma_0[-1, -1] = 0.001
+    lambda_0 = {
+        "nu_0": (dim/2+1) + 3,
+        "kappa_0": 1,
+        "mu_0": np.zeros(int(dim/2+1)),
+        "sigma_0":  sigma_0
+    }
 
 params = np.r_[np.array([lambda_0['nu_0'], lambda_0['kappa_0']]), lambda_0['mu_0'].ravel(), lambda_0['sigma_0'].ravel()]
 # print(params)
@@ -80,6 +88,7 @@ args = [os.path.abspath(os.getcwd()) + '/build/dpmm',
         '-t {}'.format(iteration),
         '-a {}'.format(alpha),
         '--init {}'.format(init_option), 
+        '--base {}'.format(base),
         '-p ' + ' '.join([str(p) for p in params])
 ]
 
