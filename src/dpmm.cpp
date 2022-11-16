@@ -11,15 +11,14 @@
 
 namespace po = boost::program_options;
 using namespace std;
+using namespace Eigen;
 
 
 int main(int argc, char **argv)
 {   
-    
 
-    cout << "Hello World" << endl;
+    // cout << "Hello World" << endl;
 
-    // Declare the supported options.
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
@@ -34,46 +33,45 @@ int main(int argc, char **argv)
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);    
+    po::notify(vm);   
 
+    if (vm.count("help")) {
+    cout << desc << "\n";
+    return 1;
+    } 
 
     uint64_t seed = time(0);
     if(vm.count("seed"))
         seed = static_cast<uint64_t>(vm["seed"].as<int>());
     boost::mt19937 rndGen(seed);
-    std::srand(seed);
-
-    // cout << rndGen << endl;
-    // cout << rndGen& << endl;
+    // std::srand(seed);
 
 
     double alpha = 1;
-    if(vm.count("alpha")) alpha = vm["alpha"].as<double>();
-
-    uint16_t num = 0;
+    if(vm.count("alpha")) 
+    {
+        alpha = vm["alpha"].as<double>();
+        cout << "Concentration factor set to " << vm["alpha"].as<double>() << ".\n";
+    }
+    int num = 0;
     if (vm.count("number")) num = vm["number"].as<int>();
 
-    uint8_t dim = 0;
+    int dim = 0;
     if (vm.count("dimension")) dim = vm["dimension"].as<int>();
 
-
-    if (vm.count("help")) {
-        cout << desc << "\n";
-        return 1;
-    }
-
-    uint16_t T = 0;
-    if (vm.count("iteration")) {
-        cout << "Number of sampler iteration was set to " << vm["iteration"].as<int>() << ".\n";
+    int T = 0;
+    if (vm.count("iteration")) 
+    {
+        cout << "Sampler iteration set to " << vm["iteration"].as<int>() << ".\n";
         T = vm["iteration"].as<int>();
     } 
 
-    double nu = 0;
-    double kappa = 0;
-    Eigen::MatrixXd sigma(dim,dim);
-    Eigen::VectorXd mu(dim);
+    double nu;
+    double kappa;
+    MatrixXd sigma(dim,dim);
+    VectorXd mu(dim);
     if(vm.count("params")){
-        cout << "Parameters received.\n";
+        // cout << "Parameters received.\n";
         vector<double> params = vm["params"].as< vector<double> >();
         cout<<"params length="<<params.size()<<endl;
         nu = params[0];
@@ -86,20 +84,31 @@ int main(int argc, char **argv)
         // cout <<"nu="<<nu<<endl;
         // cout <<"kappa="<<kappa<<endl;
         // cout <<"theta="<<theta<<endl;
-        // cout <<"Delta="<<Delta<<endl;
+        // cout <<"Sigma="<<sigma<<endl;
     }
     // cout << nu << endl;
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+
+    // Log Probability Debugging Test Block
+    // VectorXd x_tilde {{10, 10}};
+    // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
+    // cout << niw.logProb(x_tilde) << endl;
     // cout << niw.nu_ << endl;
+
+
     // DPMM<NIW<double>>* ptr_dpmm;
     DPMM<NIW<double>> dpmm(alpha, niw);
+
+    // VectorXd aaa(3);
+    // aaa = {1, 3};
+    // cout << niw.logProb(aaa) << endl;
     // ptr_dpmm = &dpmm;
 
 
     // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));
     // Eigen::MatrixXd& data(*spx);
 
-    Eigen::MatrixXd data(num, dim);
+    MatrixXd data(num, dim);
 
     string pathIn ="";
     if(vm.count("input")) pathIn = vm["input"].as<string>();
@@ -130,20 +139,14 @@ int main(int argc, char **argv)
             data(i, j) = stod(parsedCsv[i][j]);
     }
     // cout << data<< endl;
-    // ptr_dpmm->initialize(data);
+
     dpmm.initialize(data);
 
-    // assert(dpmm!=NULL);
-    // dpmm->initialize(x);
     for (uint32_t t=0; t<T; ++t)
     {
       cout<<"------------ t="<<t<<" -------------"<<endl;
-      
       dpmm.sampleLabels();
-    //   dpmm.printLabels();
-      cout << "done" << endl;
     }
-    // dpmm.printLabels();
 
 
     const VectorXi& z = dpmm.getLabels();
@@ -161,8 +164,6 @@ int main(int argc, char **argv)
         fout << z[i] << endl;
     fout.close();
 
-
-    
 
     return 0;
 }   

@@ -1,13 +1,8 @@
-
-
 #include <iostream>
-// #include <stdint.h>
-// #include <vector>
-// #include <Eigen/Dense>
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/variate_generator.hpp>
+#include <Eigen/Dense>
 
-#include <Eigen/Eigen>
 #include "niw.hpp"
 #include "global.hpp"
 
@@ -20,8 +15,6 @@ using namespace std;
  * following Neal [[http://www.stat.purdue.edu/~rdutta/24.PDF]]
  * Algo 3
  */
-
-
 
 template <class Dist_t>
 class DPMM
@@ -39,8 +32,6 @@ private:
   double alpha_; 
   Dist_t H_; 
   MatrixXd x_;
-  // MatrixXu z_; 
-
   VectorXi z_; 
   uint16_t N_;
   uint16_t K_;
@@ -58,13 +49,12 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x)
   z_ = z;
   // z_.setZero(x_.rows());
   N_ = x_.rows();
-  K_ = z_.maxCoeff() + 1;
+  K_ = z_.maxCoeff() + 1; //=1
   for (uint32_t k=0; k<K0; ++k)
     components_.push_back(H_);
     // components_.push_back(Dist_t(H_));
-  cout<<components_.size()<<endl;
-  //cout<<x_<<endl;
-  cout<<alpha_<<endl;
+  cout<< "Number of initialized components: " << components_.size()<<endl;
+
   //random number of initial components; and sample each assignment from a symmetric categorical distribution
   // if (K0>1)
   // {
@@ -88,18 +78,18 @@ void DPMM<Dist_t>::sampleLabels()
   {
     // cout << "Data Number: " << i << endl;
 
-    // cout << i << endl;
-    // compute clustercounts 
-    VectorXu Nk(K_);
-    Nk.setZero(K_);
+    VectorXi Nk(K_);
+    Nk.setZero();
     for(uint32_t ii=0; ii<N_; ++ii)
       Nk(z_(ii))++;
-    // cout << "first"  << endl;
+    // cout << Nk << endl;
+
     VectorXd pi(K_+1); 
     VectorXd x_i;
-    x_i = x_(i, all);
+    x_i = x_(i, all); //current data point x_i
+    // cout << x_i << endl;
+    
     // #pragma omp parallel for
-
     for (uint32_t k=0; k<K_; ++k)
     { 
       // int x[] = {1, 2 , 3};
@@ -123,11 +113,13 @@ void DPMM<Dist_t>::sampleLabels()
         // cout << z_[ii];
         if (ii!= i && z_[ii] == k) x_k_index.push_back(ii); 
       }
-      // cout << x_k_index.size() << endl;
+
+      // cout << "Number of points(excluding x_i) in cluster " << k << ": " << x_k_index.size() << endl;
+      
       MatrixXd x_k(x_k_index.size(), x_.cols()); 
       x_k = x_(x_k_index, all);
-      // cout << xk_index << endl;
-      // Nk(0) = 1;
+
+      // cout << x_k << endl;
 
 
       // cout << x_(i, all) << endl;
@@ -146,7 +138,7 @@ void DPMM<Dist_t>::sampleLabels()
     // cout << H_.nu_- H_.dim_+1 << endl;
     // cout << "i here" << endl;
     pi(K_) = log(alpha_)-log(N_+alpha_) + H_.logProb(x_i);
-    // cout << pi << endl;
+    // cout << pi.transpose() << endl;
     // normalize pi and exponentiate it; redo it later to comply with new eigen library
     // https://dev.to/seanpgallivan/solution-running-sum-of-1d-array-34na#c-code
     // https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/

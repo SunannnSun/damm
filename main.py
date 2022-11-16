@@ -42,7 +42,6 @@ else:
     nb_trajectories = 7
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
-    print('Not a valid option')
 
 Data = Data[:, 0:2]
 num, dim = Data.shape
@@ -60,7 +59,7 @@ lambda_0 = {
     "nu_0": dim + 3,
     "kappa_0": 1,
     "mu_0": np.zeros(dim),
-    "sigma_0": 0 * np.eye(dim)
+    "sigma_0":  np.eye(dim)
     # "sigma_0": (dim + 3) * (1 * np.pi) / 180 * np.eye(dim)
 }
 

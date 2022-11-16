@@ -57,17 +57,21 @@ void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 template<typename T>
 T NIW<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
 {
+  // std::cout << x_i << std::endl;
   // using multivariate student-t distribution; missing terms?
-  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/kappa_;                       
-  T logProb = boost::math::lgamma(0.5*(nu_+1.));
-  logProb -= (0.5*(nu_+1.))
-    *log(1.+((x_i-mu_).transpose()*scaledSigma.lu().solve(x_i-mu_)).sum());
+  // https://en.wikipedia.org/wiki/Multivariate_t-distribution
+  // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
+  T doF = nu_ - dim_ + 1.;
+  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));                       
+  T logProb = boost::math::lgamma(0.5*(doF + dim_));
+  logProb -= boost::math::lgamma(0.5*(doF));
+  logProb -= 0.5*dim_*log(doF);
   logProb -= 0.5*dim_*log(PI);
-  logProb -= boost::math::lgamma(0.5*(nu_-dim_+1.));
-  logProb -= 0.5*((scaledSigma.eigenvalues()).array().log().sum()).real();
-  logProb -= 0.5*dim_*log(nu_);
+  logProb -= 0.5*log(scaledSigma.determinant());
+  // logProb -= 0.5*((scaledSigma.eigenvalues()).array().log().sum()).real();
+  logProb -= (0.5*(doF + dim_))
+    *log(1.+ 1/doF*((x_i-mu_).transpose()*scaledSigma.inverse()*(x_i-mu_)).sum());
   // approximate using moment-matched Gaussian; Erik Sudderth PhD essay
-
   return logProb;
 };
 
