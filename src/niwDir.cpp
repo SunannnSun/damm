@@ -103,24 +103,28 @@ Matrix<T, Dynamic, 1> NIWDIR<T>::karcherMean(const Matrix<T,Dynamic, Dynamic>& x
     return p;
   }
 
-  angle_sum.setZero(x_k.cols()/2);
   x_tp.setZero(x_k.cols()/2);  x_tp = (x_tp.array() + 1).matrix();
   p.setZero(x_k.cols()/2); p(0) = 1;
 
-  while (x_tp.norm() > tolerance)
-  {
+  while (1)
+  { 
+    angle_sum.setZero(x_k.cols()/2);
+    // std::cout << "Tangent plane norm: " << x_tp.norm() << std::endl;
     for (int i=0; i<x_k.rows(); ++i)
     {
       x = x_k(i, seq(x_k.cols()/2, last)).transpose();
-      // std::cout << x << std::endl;
-      angle = std::acos(p.dot(x));
-      if (angle > 0.01)
-      {
-        angle_sum = angle_sum + (x-p*std::cos(angle))*angle/std::sin(angle);
-      }
-      x_tp = 1 / x_k.rows() * angle_sum;
-      p = p * std::cos(x_tp.norm()) + x_tp / x_tp.norm() * std::sin(x_tp.norm());
+      angle_sum = angle_sum + rie_log(p, x);
+     }
+    // std::cout << "angle Sum: "<<angle_sum << std::endl;
+    // std::cout << "number of rows: "<< (1/x_k.rows()) <<std::endl;
+    x_tp = 1. / x_k.rows() * angle_sum;
+    if (x_tp.norm() < tolerance) 
+    {
+      return p;
     }
+    p = rie_exp(p, x_tp);
+    // std::cout << p << std::endl;
+
   }
   return p;
 };

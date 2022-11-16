@@ -170,8 +170,14 @@ int main(int argc, char **argv)
     }
     
     // niw.karcherMean(x_tilde.transpose());
-    cout << niw.karcherMean(data(0, all)) << endl;
+    // cout << niw.karcherMean(data(0, all)) << endl;
+
+    MatrixXd test_angle {{100, 1000, std::cos(0), std::sin(0)}, 
+                         {100, 1000, std::cos(-PI/2), std::sin(-PI/2)}};
+
     cout << niw.karcherMean(data({0, 1}, all)) << endl;
+                     
+    cout << niw.karcherMean(data) << endl;
 
 
 

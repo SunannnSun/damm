@@ -4,6 +4,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include "distribution.hpp"
 #include "global.hpp"
+#include "karcher.hpp"
 
 
 using namespace Eigen;
