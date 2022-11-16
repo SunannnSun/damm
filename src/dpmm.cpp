@@ -28,6 +28,7 @@ int main(int argc, char **argv)
         ("output,o", po::value<string>(), "path to output dataset .csv file rows: dimensions; cols: numbers")
         ("iteration,t", po::value<int>(), "Numer of Sampler Iteration")
         ("alpha,a", po::value<double>(), "Concentration value")
+        ("init", po::value<int>(), "Number of initial clusters")
         ("params,p", po::value< vector<double> >()->multitoken(), "parameters of the base measure")
     ;
 
@@ -90,10 +91,19 @@ int main(int argc, char **argv)
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
 
     // Log Probability Debugging Test Block
-    // VectorXd x_tilde {{10, 10}};
+    VectorXd x_tilde {{0, 0}};
+    // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
+    cout << niw.logProb(x_tilde) << endl;
+    // cout << niw.nu_ << endl;
+
+    // Sufficient Statistics Test Block
+    MatrixXd x_kkk {{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}};
+    cout << niw.logPosteriorProb(x_tilde, x_kkk) << endl;
+    // cout << niw.scatter_ << endl;
     // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
     // cout << niw.logProb(x_tilde) << endl;
     // cout << niw.nu_ << endl;
+    
 
 
     // DPMM<NIW<double>>* ptr_dpmm;
@@ -139,12 +149,16 @@ int main(int argc, char **argv)
             data(i, j) = stod(parsedCsv[i][j]);
     }
     // cout << data<< endl;
+    
+    int init_cluster = 0;
+    if (vm.count("init")) dim = vm["init"].as<int>();
+    dpmm.initialize(data, init_cluster);
 
-    dpmm.initialize(data);
-
+    // T = 1;
     for (uint32_t t=0; t<T; ++t)
     {
       cout<<"------------ t="<<t<<" -------------"<<endl;
+      cout << "Number of components: " << dpmm.K_ << endl;
       dpmm.sampleLabels();
     }
 

@@ -28,7 +28,7 @@ class NIW: public Distribution<T>
         NIW<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
 
-    private:
+    public:
         Matrix<T,Dynamic,Dynamic> scatter_;
         Matrix<T,Dynamic,1> mean_;
         uint16_t count_;

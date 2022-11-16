@@ -18,14 +18,16 @@ parser = argparse.ArgumentParser(
                     description = 'run dpmm cluster',
                     epilog = '2022, Sunan Sun <sunan@seas.upenn.edu>')
 
-parser.add_argument('-i', '--input', type=int, default=2, help='Choose Data Input Option')
+parser.add_argument('-i', '--input', type=int, default=3, help='Choose Data Input Option')
 parser.add_argument('-t', '--iteration', type=int, default=50, help='Number of Sampler Iterations')
 parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor')
+parser.add_argument('--init', type=int, default = 0, help='number of initial clusters, 0 is one cluster each point')
 args = parser.parse_args()
 
 data_input_option = args.input
 iteration         = args.iteration
 alpha             = args.alpha
+init_option       = args.init
 
 if data_input_option == 1:
     draw_data()
@@ -37,7 +39,7 @@ elif data_input_option == 2:
     Data = add_directional_features(l, t, x, y, if_normalize=True)
 else:
     pkg_dir = './data/'
-    chosen_data_set = 10
+    chosen_data_set = 8
     sub_sample = 2
     nb_trajectories = 7
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
@@ -59,7 +61,7 @@ lambda_0 = {
     "nu_0": dim + 3,
     "kappa_0": 1,
     "mu_0": np.zeros(dim),
-    "sigma_0":  np.eye(dim)
+    "sigma_0":  0.1 * np.eye(dim)
     # "sigma_0": (dim + 3) * (1 * np.pi) / 180 * np.eye(dim)
 }
 
@@ -75,6 +77,7 @@ args = [os.path.abspath(os.getcwd()) + '/build/dpmm',
         '-o {}'.format(output_path),
         '-t {}'.format(iteration),
         '-a {}'.format(alpha),
+        '--init {}'.format(init_option), 
         '-p ' + ' '.join([str(p) for p in params])
 ]
 

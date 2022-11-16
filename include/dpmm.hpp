@@ -23,12 +23,12 @@ public:
   DPMM(double alpha, const Dist_t& H): alpha_(alpha), H_(H) {};
   ~DPMM(){};
 
-  void initialize(const MatrixXd& x);
+  void initialize(const MatrixXd& x, int init_cluster);
   void sampleLabels();
   void reorderAssignments();
   const VectorXi & getLabels(){return z_;};
 
-private:
+public:
   double alpha_; 
   Dist_t H_; 
   MatrixXd x_;
@@ -40,17 +40,36 @@ private:
 
 // ---------------- impl -----------------------------------------------------
 template <class Dist_t> 
-void DPMM<Dist_t>::initialize(const MatrixXd& x)
+void DPMM<Dist_t>::initialize(const MatrixXd& x, int init_cluster)
 {
-  uint32_t K0=1;
   x_ = x;
-  VectorXi z(x.rows());
-  z.setZero();
-  z_ = z;
-  // z_.setZero(x_.rows());
   N_ = x_.rows();
-  K_ = z_.maxCoeff() + 1; //=1
-  for (uint32_t k=0; k<K0; ++k)
+
+  if (init_cluster == 1) 
+  {
+    VectorXi z(x.rows());
+    z.setZero();
+    z_ = z;
+    K_ = z_.maxCoeff() + 1; //=1
+  }
+  else if (init_cluster==0){
+    VectorXi z(x.rows());
+    vector<int> zz;
+    for (int i=0; i<N_; ++i) zz.push_back(i);
+    random_shuffle(zz.begin(), zz.end());
+    for (int i=0; i<N_; ++i)z[i] =zz[i];
+    z_ = z;
+    K_ = z_.maxCoeff() + 1; //=1
+    // cout << z_ << endl;
+  }
+  else
+  { 
+    cout<< "Number of initial clusters not supported yet" << endl;
+    exit(1);
+  }
+
+
+  for (uint32_t k=0; k<K_; ++k)
     components_.push_back(H_);
     // components_.push_back(Dist_t(H_));
   cout<< "Number of initialized components: " << components_.size()<<endl;
@@ -67,6 +86,7 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x)
   // }
 };
 
+
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleLabels()
 {
@@ -82,8 +102,7 @@ void DPMM<Dist_t>::sampleLabels()
     Nk.setZero();
     for(uint32_t ii=0; ii<N_; ++ii)
       Nk(z_(ii))++;
-    // cout << Nk << endl;
-
+      
     VectorXd pi(K_+1); 
     VectorXd x_i;
     x_i = x_(i, all); //current data point x_i
@@ -152,7 +171,11 @@ void DPMM<Dist_t>::sampleLabels()
     // double b;
     // b = a_max + log((a.array() - a_max).exp().sum());
     // cout << b << endl;
+
+
+
     pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
+    // pi = (pi.array() - pi_max).matrix();
 
     // cout << pi << endl;
     // VectorXd n_pi(K_+1); 
