@@ -28,6 +28,7 @@ link_directories(
 add_library(distribution_module
   # ${PROJECT_SOURCE_DIR}/niw.cpp
   ${PROJECT_SOURCE_DIR}/niw.cpp
+  ${PROJECT_SOURCE_DIR}/niwDir.cpp
   # ${PROJECT_SOURCE_DIR}/distribution.cpp
 )
 

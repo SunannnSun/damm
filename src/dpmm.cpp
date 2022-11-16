@@ -4,6 +4,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
 #include "niw.hpp"
+#include "niwDir.hpp"
 // #include "normal.hpp"
 #include "dpmm.hpp"
 
@@ -16,7 +17,7 @@ using namespace Eigen;
 
 int main(int argc, char **argv)
 {   
-
+    int directional_flag = 1;
     cout << "Hello Directional World" << endl;
 
     po::options_description desc("Allowed options");
@@ -59,8 +60,12 @@ int main(int argc, char **argv)
     assert(num != 0);
     cout << "Number of data point: " << num << endl;
 
+
+    
     int dim = 0;
     if (vm.count("dimension")) dim = vm["dimension"].as<int>();
+    // DIRECTIONAL
+    if (directional_flag == 1) dim = dim/2+1;
     assert(dim != 0);
     cout << "Dimension of data: " << dim << endl;
 
@@ -92,7 +97,8 @@ int main(int argc, char **argv)
         // cout <<"Sigma="<<sigma<<endl;
     }
     // cout << nu << endl;
-    NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+    // NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+    NIWDIR<double> niw(sigma, mu, nu, kappa, &rndGen);
 
     // Log Probability Debugging Test Block
     // VectorXd x_tilde {{0, 0}};
@@ -106,11 +112,18 @@ int main(int argc, char **argv)
     // cout << niw.nu_ << niw.kappa_ << niw.mu_ << niw.sigma_ << endl;
     // cout << niw.logProb(x_tilde) << endl;
     // cout << niw.nu_ << endl;
-    
-
 
     // DPMM<NIW<double>>* ptr_dpmm;
-    DPMM<NIW<double>> dpmm(alpha, niw);
+
+
+    // DPMM<NIW<double>> dpmm(alpha, niw);
+    DPMM<NIWDIR<double>> dpmm(alpha, niw);
+    VectorXd x_tilde {{1, 1, 1}};
+    // cout << niw.logProb(x_tilde) <<endl;
+
+
+
+
 
     // VectorXd aaa(3);
     // aaa = {1, 3};
@@ -121,7 +134,11 @@ int main(int argc, char **argv)
     // shared_ptr<Eigen::MatrixXd> spx(new Eigen::MatrixXd(num, dim));
     // Eigen::MatrixXd& data(*spx);
 
-    MatrixXd data(num, dim);
+    int data_dim;
+    if (directional_flag==1) data_dim = (dim-1)*2;
+    else  data_dim = dim;
+
+    MatrixXd data(num, data_dim);
 
     string pathIn ="";
     if(vm.count("input")) pathIn = vm["input"].as<string>();
@@ -148,40 +165,43 @@ int main(int argc, char **argv)
         }
     fin.close();
     for (uint32_t i=0; i<num; ++i)
-        for (uint32_t j=0; j<dim; ++j)
+        for (uint32_t j=0; j<data_dim; ++j)
             data(i, j) = stod(parsedCsv[i][j]);
     }
-    // cout << data<< endl;
     
+    // niw.karcherMean(x_tilde.transpose());
+    cout << niw.karcherMean(data(0, all)) << endl;
+    cout << niw.karcherMean(data({0, 1}, all)) << endl;
+
+
+
     int init_cluster = 0;
     if (vm.count("init")) init_cluster = vm["init"].as<int>();
-    dpmm.initialize(data, init_cluster);
+    // dpmm.initialize(data, init_cluster);
 
     // T = 1;
-    for (uint32_t t=0; t<T; ++t)
-    {
-
-      cout<<"------------ t="<<t<<" -------------"<<endl;
-      cout << "Number of components: " << dpmm.K_ << endl;
-      dpmm.sampleLabels();
-
-    }
+    // for (uint32_t t=0; t<T; ++t)
+    // {
+    //   cout<<"------------ t="<<t<<" -------------"<<endl;
+    //   cout << "Number of components: " << dpmm.K_ << endl;
+    //   dpmm.sampleLabels();
+    // }
 
 
-    const VectorXi& z = dpmm.getLabels();
-    string pathOut;
-    if(vm.count("output")) 
-    pathOut = vm["output"].as<string>();
-    if (!pathOut.compare(""))
-    {
-        cout<<"please specify an output data file"<<endl;
-        exit(1);
-    }
-    else cout<<"Output to "<<pathOut<<endl;
-    ofstream fout(pathOut.data(),ofstream::out);
-    for (uint16_t i=0; i < z.size(); ++i)
-        fout << z[i] << endl;
-    fout.close();
+    // const VectorXi& z = dpmm.getLabels();
+    // string pathOut;
+    // if(vm.count("output")) 
+    // pathOut = vm["output"].as<string>();
+    // if (!pathOut.compare(""))
+    // {
+    //     cout<<"please specify an output data file"<<endl;
+    //     exit(1);
+    // }
+    // else cout<<"Output to "<<pathOut<<endl;
+    // ofstream fout(pathOut.data(),ofstream::out);
+    // for (uint16_t i=0; i < z.size(); ++i)
+    //     fout << z[i] << endl;
+    // fout.close();
 
 
     return 0;

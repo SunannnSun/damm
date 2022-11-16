@@ -133,6 +133,6 @@ def load_matlab_data(pkg_dir, dataset, sub_sample, nb_trajectories):
     plt.title('Trajectories drawn by human with mouse GUI:', fontsize=15)
     ax.plot(Data[0, :], Data[1, :], 'ro', markersize=2, lw=2)
 
-    return Data
+    return Data[:, np.arange(0, Data.shape[1], sub_sample)]
 
 
