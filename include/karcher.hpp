@@ -11,6 +11,8 @@ template <typename T>
 T unsigned_angle(const Matrix<T,Dynamic, 1>&u, const Matrix<T,Dynamic, 1>&v)
 {
     T theta;
+    if (u.dot(v) > 1) return 0;
+    if (u.dot(v) < -1) return PI;
     theta = acos(u.dot(v));
     return theta; 
 }
@@ -22,7 +24,7 @@ Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&pp, const Matrix<T,Dynam
     //Return the coordinate of x_tp starting from the tip of p
     Matrix<T,Dynamic, 1> x_tp;
     T theta = unsigned_angle(pp, xx);
-    if (theta < 0.001)
+    if (theta < 0.01)
     {   
         x_tp.setZero(pp.rows());
         return x_tp; //p and x are same
@@ -37,14 +39,11 @@ Matrix<T,Dynamic, 1> rie_exp(Matrix<T,Dynamic, 1>&pp, const Matrix<T,Dynamic, 1>
     // return the coordinate of x starting from the origin
     // T theta;
     T theta = xx_tp.norm();
-    if (theta < 0.001)
+    if (theta < 0.01)
         return pp;   // p and x are same
     pp =  pp * cos(theta) + xx_tp / theta * sin(theta);
     return pp;
 }
-
-
-
 
 
 

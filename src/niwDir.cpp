@@ -92,40 +92,29 @@ Matrix<T, Dynamic, 1> NIWDIR<T>::karcherMean(const Matrix<T,Dynamic, Dynamic>& x
 {
   float tolerance = 0.01;
   T angle;
-  Matrix<T, Dynamic, 1> angle_sum;
-  Matrix<T, Dynamic, 1> x_tp; // x in tangent plane
-  Matrix<T, Dynamic, 1> x;
-  Matrix<T, Dynamic, 1> p;
+  Matrix<T, Dynamic, 1> angle_sum(x_k.cols()/2);
+  Matrix<T, Dynamic, 1> x_tp(x_k.cols()/2);   // x in tangent plane
+  Matrix<T, Dynamic, 1> x(x_k.cols()/2);
+  Matrix<T, Dynamic, 1> p(x_k.cols()/2);
   
-  if (x_k.rows() == 1)
-  {
-    p = x_k(0, seq(x_k.cols()/2, last)).transpose();
-    return p;
-  }
-
-  x_tp.setZero(x_k.cols()/2);  x_tp = (x_tp.array() + 1).matrix();
-  p.setZero(x_k.cols()/2); p(0) = 1;
+  p = x_k(0, seq(x_k.cols()/2, last)).transpose();
+  if (x_k.rows() == 1) return p;
 
   while (1)
   { 
-    angle_sum.setZero(x_k.cols()/2);
-    // std::cout << "Tangent plane norm: " << x_tp.norm() << std::endl;
+    angle_sum.setZero();
     for (int i=0; i<x_k.rows(); ++i)
     {
       x = x_k(i, seq(x_k.cols()/2, last)).transpose();
       angle_sum = angle_sum + rie_log(p, x);
-     }
-    // std::cout << "angle Sum: "<<angle_sum << std::endl;
-    // std::cout << "number of rows: "<< (1/x_k.rows()) <<std::endl;
+    }
     x_tp = 1. / x_k.rows() * angle_sum;
+    // cout << x_tp.norm() << endl;
     if (x_tp.norm() < tolerance) 
     {
       return p;
     }
     p = rie_exp(p, x_tp);
-    // std::cout << p << std::endl;
-
   }
-  return p;
 };
 
