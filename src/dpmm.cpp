@@ -17,7 +17,7 @@ using namespace Eigen;
 int main(int argc, char **argv)
 {   
 
-    // cout << "Hello World" << endl;
+    cout << "Hello Directional World" << endl;
 
     po::options_description desc("Allowed options");
     desc.add_options()
