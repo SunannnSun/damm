@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
@@ -97,11 +98,14 @@ void DPMM<Dist_t>::sampleLabels()
 {
   for(uint32_t i=0; i<N_; ++i)
   {
+    // cout << "number of data point: " << i << endl;
     VectorXi Nk(K_);
     Nk.setZero();
     for(uint32_t ii=0; ii<N_; ++ii)
-      Nk(z_(ii))++;
-      
+    {
+      if (ii != i) Nk(z_(ii))++;
+    }
+    // cout<< Nk << endl;
     VectorXd pi(K_+1); 
     VectorXd x_i;
     x_i = x_(i, all); //current data point x_i
@@ -114,18 +118,31 @@ void DPMM<Dist_t>::sampleLabels()
       {
         if (ii!= i && z_[ii] == k) x_k_index.push_back(ii); 
       }
+      // if (x_k_index.empty()) 
+      // cout << "no index" << endl;
       // cout << "im here" <<endl;
+
+
       MatrixXd x_k(x_k_index.size(), x_.cols()); 
       x_k = x_(x_k_index, all);
       // cout << "x_i" << x_i << endl;
       // cout << "x_k" << x_k << endl;
+      // cout << "component:" <<k  <<endl;
+      // cout << x_k << endl;
+      // cout << Nk(k) << endl;
+      if (Nk(k)!=0)
       pi(k) = log(Nk(k))-log(N_+alpha_) + components_[k].logPosteriorProb(x_i, x_k);
-      // cout << "im here" <<endl;
-
+      else
+      pi(k) = - std::numeric_limits<float>::infinity();
     }
+    // cout << pi << endl;
     pi(K_) = log(alpha_)-log(N_+alpha_) + H_.logProb(x_i);
+    // cout << pi <<endl;
+    // exit(1);
 
 
+    
+    
     double pi_max = pi.maxCoeff();
     pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
     pi = pi / pi.sum();

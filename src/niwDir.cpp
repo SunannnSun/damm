@@ -27,6 +27,7 @@ T NIWDIR<T>::logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynam
 
   // std::cout << posterior.sigma_ <<std::endl;
   // std::cout << posterior.mu_ <<std::endl;
+  
 
   return posterior.logProb(x_i, x_k);
   // return x_i.rows() + x_k.cols();
@@ -95,11 +96,18 @@ T NIWDIR<T>::logProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic,Dyna
   x_i_dir.setZero();
   x_i_dir(seq(0,dim_-2)) = x_i(seq(0,dim_-2));
 
+  // cout << x_i_dir << endl;
+
   Matrix<T,Dynamic,1>  x_i_dirrr(dim_-1); // just direction no position
   x_i_dirrr = x_i(seq(dim_-1, dim_));
+
+  // cout << x_k << endl;
+  // cout << karcherMean(x_k) << endl;
+
   x_i_dir(dim_-1) = rie_log(x_i_dirrr, karcherMean(x_k)).sum();
 
 
+  // cout << x_i_dirrr << endl;
 
   // std::cout << x_i << std::endl;
   // std::cout << x_i_dir << std::endl;
@@ -108,7 +116,9 @@ T NIWDIR<T>::logProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic,Dyna
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
   // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
   T doF = nu_ - dim_ + 1.;
-  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));         
+  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));   
+
+      
   // scaledSigma(dim_-1, dim_-1) = 0.001;   
   // std::cout << scaledSigma << std::endl;           
   // T logProb = 0;
@@ -120,6 +130,7 @@ T NIWDIR<T>::logProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic,Dyna
   // logProb -= 0.5*((scaledSigma.eigenvalues()).array().log().sum()).real();
   logProb -= (0.5*(doF + dim_))
     *log(1.+ 1/doF*((x_i_dir-mu_).transpose()*scaledSigma.inverse()*(x_i_dir-mu_)).sum());
+
   // approximate using moment-matched Gaussian; Erik Sudderth PhD essay
   return logProb;
 };
