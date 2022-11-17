@@ -49,7 +49,11 @@ else:
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
 
+# Data = np.hstack((Data[:, 0:2], np.zeros((Data.shape[0], 1))))
+# Data = Data[:, 0:2]
+
 num, dim = Data.shape
+# print(Data)
 
 input_path = './data/human_demonstrated_trajectories.csv'
 output_path = './data/output.csv'
@@ -59,15 +63,16 @@ with open(input_path, mode='w') as data_file:
         data_writer.writerow(Data[i, :])
 
 if base == 0:
+    sigma_0 = 0.1 * np.eye(int(dim))
     lambda_0 = {
         "nu_0": dim + 3,
         "kappa_0": 1,
         "mu_0": np.zeros(dim),
-        "sigma_0":  0.1 * np.eye(dim)
+        "sigma_0":  sigma_0
     }
 elif base == 1:
     sigma_0 = 0.1 * np.eye(int(dim/2+1))
-    sigma_0[-1, -1] = 0.001
+    sigma_0[-1, -1] = 10
     lambda_0 = {
         "nu_0": (dim/2+1) + 3,
         "kappa_0": 1,

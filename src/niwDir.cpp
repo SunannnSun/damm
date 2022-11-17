@@ -24,6 +24,10 @@ template<typename T>
 T NIWDIR<T>::logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k)
 {
   NIWDIR<T> posterior = this ->posterior(x_k);
+
+  // std::cout << posterior.sigma_ <<std::endl;
+  // std::cout << posterior.mu_ <<std::endl;
+
   return posterior.logProb(x_i, x_k);
   // return x_i.rows() + x_k.cols();
 };
@@ -31,6 +35,7 @@ T NIWDIR<T>::logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynam
 template<typename T>
 NIWDIR<T> NIWDIR<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
+  // std::cout << "im hereeee" <<std::endl;
   getSufficientStatistics(x_k);
   return NIWDIR<T>(
     sigma_+scatter_ + ((kappa_*count_)/(kappa_+count_))
@@ -46,12 +51,17 @@ void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
   mean_.setZero(dim_);
 	mean_(seq(0, dim_-2)) = x_k(all, (seq(0, dim_-2))).colwise().mean().transpose();
+  // std::cout << "mean_" << mean_ <<std::endl;
+
   Matrix<T,Dynamic, Dynamic> x_k_mean;
   // // x_k_mean = x_k.rowwise() - mean.transpose();
   x_k_mean = x_k.rowwise() - x_k.colwise().mean();
 
   scatter_.setZero(dim_, dim_);
   scatter_(seq(0, dim_-2), seq(0, dim_-2)) = (x_k_mean.adjoint() * x_k_mean)(seq(0, dim_-2), seq(0, dim_-2));
+  
+  // std::cout << "scatter_" << scatter_ <<std::endl;
+
   count_ = x_k.rows();
 };
 
@@ -60,14 +70,8 @@ T NIWDIR<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
 {
   Matrix<T,Dynamic,1>  x_i_dir(dim_);
   x_i_dir.setZero();
-  x_i_dir(seq(0,last-1)) = x_i(seq(0,last-1));
+  x_i_dir(seq(0,dim_-2)) = x_i(seq(0,dim_-2));
 
-  // std::cout << x_i << std::endl;
-  // std::cout << x_i_dir << std::endl;
-  // std::cout << x_i << std::endl;
-  // using multivariate student-t distribution; missing terms?
-  // https://en.wikipedia.org/wiki/Multivariate_t-distribution
-  // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
   T doF = nu_ - dim_ + 1.;
   Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));                       
   // T logProb = 0;
@@ -89,8 +93,13 @@ T NIWDIR<T>::logProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic,Dyna
 {
   Matrix<T,Dynamic,1>  x_i_dir(dim_);
   x_i_dir.setZero();
-  x_i_dir(seq(0,last-1)) = x_i(seq(0,last-1));
-  x_i_dir(-1) = (rie_log(x_i, karcherMean(x_k))).norm();
+  x_i_dir(seq(0,dim_-2)) = x_i(seq(0,dim_-2));
+
+  Matrix<T,Dynamic,1>  x_i_dirrr(dim_-1); // just direction no position
+  x_i_dirrr = x_i(seq(dim_-1, dim_));
+  x_i_dir(dim_-1) = rie_log(x_i_dirrr, karcherMean(x_k)).sum();
+
+
 
   // std::cout << x_i << std::endl;
   // std::cout << x_i_dir << std::endl;
@@ -99,7 +108,9 @@ T NIWDIR<T>::logProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic,Dyna
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
   // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
   T doF = nu_ - dim_ + 1.;
-  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));                       
+  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));         
+  // scaledSigma(dim_-1, dim_-1) = 0.001;   
+  // std::cout << scaledSigma << std::endl;           
   // T logProb = 0;
   T logProb = boost::math::lgamma(0.5*(doF + dim_));  
   logProb -= boost::math::lgamma(0.5*(doF));

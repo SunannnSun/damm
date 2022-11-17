@@ -95,14 +95,8 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x, int init_cluster)
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleLabels()
 {
-  // cout << x_.size() << endl;
-  // cout << x_.rows() << endl;
-  // cout << x_.cols() << endl;
-  // cout << K_ << endl;
   for(uint32_t i=0; i<N_; ++i)
   {
-    // cout << "Data Number: " << i << endl;
-
     VectorXi Nk(K_);
     Nk.setZero();
     for(uint32_t ii=0; ii<N_; ++ii)
@@ -111,137 +105,45 @@ void DPMM<Dist_t>::sampleLabels()
     VectorXd pi(K_+1); 
     VectorXd x_i;
     x_i = x_(i, all); //current data point x_i
-    // cout << x_i << endl;
-    
+
     // #pragma omp parallel for
     for (uint32_t k=0; k<K_; ++k)
     { 
-      // int x[] = {1, 2 , 3};
-      // vector<int> x;
-      // x.push_back(1);
-      // x.push_back(2);
-      // cout << x_(x, all) << endl;
-      // cout << z_(x) << endl;
-      // cout << "Data Number: " << i << endl;
-
-
-      // uint32_t z_i = z_(i);
-      // x_(1, 1) = -1;
-      // cout << Nk << endl;
-      // z_[5] = 33; 
-      // cout << z_ << endl;
       vector<int> x_k_index;
       for (uint32_t ii = 0; ii<N_; ++ii)
       {
-        // cout << ii;
-        // cout << z_[ii];
         if (ii!= i && z_[ii] == k) x_k_index.push_back(ii); 
       }
-
-      // cout << "Number of points(excluding x_i) in cluster " << k << ": " << x_k_index.size() << endl;
-      
+      // cout << "im here" <<endl;
       MatrixXd x_k(x_k_index.size(), x_.cols()); 
       x_k = x_(x_k_index, all);
-
-      // cout << x_k << endl;
-
-
-      // cout << x_(i, all) << endl;
-      // x_i = x(i, );
-      // cout << x_(i, all) << endl;
-      // cout << seq(2,5) << endl;
-      // pi(k) = log(Nk(k))-log(N_+alpha_) + components_[k].logPosteriorProb(x_i, x_k);
+      // cout << "x_i" << x_i << endl;
+      // cout << "x_k" << x_k << endl;
       pi(k) = log(Nk(k))-log(N_+alpha_) + components_[k].logPosteriorProb(x_i, x_k);
+      // cout << "im here" <<endl;
 
-      // cout << pi(k) << endl;
-      // cout << x_k.rowwise() - x_k.colwise().mean() << endl;
-
-      // cout << x_k.colwise().mean() << endl;
-      // cout << pi(N_) << endl;
     }
-    // cout << H_.nu_- H_.dim_+1 << endl;
-    // cout << "i here" << endl;
     pi(K_) = log(alpha_)-log(N_+alpha_) + H_.logProb(x_i);
-    // cout << pi.transpose() << endl;
-    // normalize pi and exponentiate it; redo it later to comply with new eigen library
-    // https://dev.to/seanpgallivan/solution-running-sum-of-1d-array-34na#c-code
-    // https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/
+
 
     double pi_max = pi.maxCoeff();
-    // cout << pi.size() <<endl;
-    // VectorXd a {{-10, 2}};
-    // cout << a << endl;
-    // double a_max = a.maxCoeff();
-    // a = (a.array()-(a_max + log((pi.array() - a_max).exp().sum()))).exp().matrix();
-    // double b;
-    // b = a_max + log((a.array() - a_max).exp().sum());
-    // cout << b << endl;
-
-
-
     pi = (pi.array()-(pi_max + log((pi.array() - pi_max).exp().sum()))).exp().matrix();
-    // pi = (pi.array() - pi_max).matrix();
-
-    // cout << pi << endl;
-    // VectorXd n_pi(K_+1); 
-    // n_pi = (pi.array() - pi_max).exp().matrix();
-    // cout << n_pi << endl;
     pi = pi / pi.sum();
+
+
     for (uint32_t ii = 1; ii < pi.size(); ++ii){
       pi[ii] = pi[ii-1]+ pi[ii];
     }
-        // cout << "i here" << endl;
-
-    // cout << pi[0] << endl;
-    // cout << pi[1] << endl;
-  
-
-
-    // Generate a uniform number from [0, 1]
-    boost::random::uniform_01<> uni_;
-    // boost::random::mt19937 gen = ;
-    // https://www.boost.org/doc/libs/1_80_0/doc/html/boost_random/tutorial.html
-    // note: Distinguish boost::math::uniform vs. boost::random::uniform
-    
+   
+    boost::random::uniform_01<> uni_;   
     boost::random::variate_generator<boost::random::mt19937&, 
                            boost::random::uniform_01<> > var_nor(*H_.pRndGen_, uni_);
     double uni_draw = var_nor();
-    // cout << uni_draw << endl;
     uint32_t k = 0;
-    // uni_draw = 0.999;
-    // cout << (pi[0] < uni_draw) << endl;
     while (pi[k] < uni_draw) k++;
-    // cout << k << endl;
-    // while (k < pi.size()){
-    //   cout << pi[k] << endl;
-    //   k++;
-    // }
-    // for (int k = 0; k< pi.size(); k++)
-    // {
-    // cout << k << endl;
-    // }
     z_[i] = k;
-      // cout << "i here" << endl;
-
-    // vector<uint8_t> rearrange_list;
-    // if (rearrange_list.empty()) rearrange_list.push_back(0);
-    // rearrange_list.push_back(10);
-    // cout << rearrange_list <<endl;
-    // std::vector<uint8_t>::iterator it;
-    // it = find (rearrange_list.begin(), rearrange_list.end(), 30);
-    // if (it != rearrange_list.end())
-    // std::cout << "Element found in myvector: " << *it << '\n';
-    // else
-    // std::cout << "Element not found in myvector\n";
-
-
     this -> reorderAssignments();
-    // cout << z_ << endl;
-    // this->removeEmptyClusters();
-
-    // cout << uni_(gen) << endl;
   }
-  // cout << components_[0].nu_ << endl;
 
 };
 
