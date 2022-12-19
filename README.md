@@ -1,5 +1,4 @@
-# Dirichlet Process Mixture Model
-# Parallel Implementation
+# Dirichlet Process Mixture Model (Parallel Implementation)
 
 Tested on MacOS12.6 Apple M1 Pro
 
@@ -17,7 +16,7 @@ export CPPFLAGS="-I/usr/local/Cellar/llvm/15.0.3/include" -->
 Create temporary environment variables (Note: locate the correct path to "arm64" Brew)
 ```
 export CC="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang"
-export CXX="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang++" 
+export CXX="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang++"
 export LDFLAGS="-L/opt/homebrew/Cellar/llvm/15.0.6/lib"
 export CPPFLAGS="-I/opt/homebrew/Cellar/llvm/15.0.6/include"
 ```
@@ -31,16 +30,11 @@ make
 ```
 
 
-
 Alternative methods to make files
 ```
-export CXX="/usr/local/Cellar/llvm/15.0.3/bin/clang++"; cmake ../src
+cmake ../src -DCMAKE_CXX_COMPILER="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang++" 
 ```
 or
 ```
-cmake ../src -DCMAKE_CXX_COMPILER="/usr/local/Cellar/llvm/15.0.3/bin/clang++"
-```
-or
-```
-CXX="/usr/local/Cellar/llvm/15.0.3/bin/clang++" cmake ../src
+CXX="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang++" cmake ../src
 ```
