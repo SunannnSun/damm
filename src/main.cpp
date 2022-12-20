@@ -4,7 +4,9 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
 #include "niw.hpp"
-#include "template_tutorial.hpp"
+#include "dpmm.hpp"
+
+
 
 namespace po = boost::program_options;
 using namespace std;
@@ -121,12 +123,11 @@ int main(int argc, char **argv)
     }
     
  
-    Distribution<double> dist;
     NIW<double> niw(sigma, mu, nu, kappa);
+    DPMM<NIW<double>> dpmm(alpha, niw, &rndGen);
+    dpmm.initialize(data, init_cluster);
 
 
-    // DPMM<NIW<double>> dpmm(alpha, niw);
-    // dpmm.initialize(data, init_cluster);
     // for (uint32_t t=0; t<T; ++t)
     // {
     //     cout<<"------------ t="<<t<<" -------------"<<endl;
@@ -134,19 +135,20 @@ int main(int argc, char **argv)
     //     // dpmm.sampleLabels();
     // }
 
-    // const VectorXi& z = dpmm.getLabels();
-    // string pathOut;
-    // if(vm.count("output")) pathOut = vm["output"].as<string>();
-    // if (!pathOut.compare(""))
-    // {
-    //     cout<<"please specify an output data file"<<endl;
-    //     exit(1);
-    // }
-    // else cout<<"Output to "<<pathOut<<endl;
-    // ofstream fout(pathOut.data(),ofstream::out);
-    // for (uint16_t i=0; i < z.size(); ++i)
-    //     fout << z[i] << endl;
-    // fout.close();
+
+    const VectorXi& z = dpmm.getLabels();
+    string pathOut;
+    if(vm.count("output")) pathOut = vm["output"].as<string>();
+    if (!pathOut.compare(""))
+    {
+        cout<<"please specify an output data file"<<endl;
+        exit(1);
+    }
+    else cout<<"Output to "<<pathOut<<endl;
+    ofstream fout(pathOut.data(),ofstream::out);
+    for (uint16_t i=0; i < z.size(); ++i)
+        fout << z[i] << endl;
+    fout.close();
 
 
     return 0;

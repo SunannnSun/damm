@@ -69,13 +69,13 @@ args = ['time ' + os.path.abspath(os.getcwd()) + '/build/main',
 completed_process = subprocess.run(' '.join(args), shell=True)
 
 
-# assignment_array = np.genfromtxt(output_path, dtype=int, delimiter=',')
+assignment_array = np.genfromtxt(output_path, dtype=int, delimiter=',')
 """##### Plot Results ######"""
-# fig, ax = plt.subplots()
-# colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
-#     "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
-# for i in range(Data.shape[0]):
-#     # color = colors[assignment_array[i]]
-#     ax.scatter(Data[i, 0], Data[i, 1], c='black')
-# ax.set_aspect('equal')
-# plt.show()
+fig, ax = plt.subplots()
+colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+    "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+for i in range(Data.shape[0]):
+    color = colors[assignment_array[i]]
+    ax.scatter(Data[i, 0], Data[i, 1], c=color)
+ax.set_aspect('equal')
+plt.show()
