@@ -3,7 +3,8 @@
 #include <boost/program_options.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
-
+#include "niw.hpp"
+#include "template_tutorial.hpp"
 
 namespace po = boost::program_options;
 using namespace std;
@@ -45,30 +46,30 @@ int main(int argc, char **argv)
     std::srand(seed);
 
 
-    double alpha = 1;
-    if(vm.count("alpha")) 
-    {
-        alpha = vm["alpha"].as<double>();
-        cout << "Concentration factor: " << vm["alpha"].as<double>() << ".\n";
-    }
+    int T = 0;
+    if (vm.count("iteration")) T = vm["iteration"].as<int>();
+
+
+    double alpha = 0;
+    if(vm.count("alpha")) alpha = vm["alpha"].as<double>();
 
 
     int num = 0;
     if (vm.count("number")) num = vm["number"].as<int>();
     assert(num != 0);
-    cout << "Number of data point: " << num << endl;
 
 
     int dim = 0;
     if (vm.count("dimension")) dim = vm["dimension"].as<int>();
-    
+    assert(dim != 0);
 
-    int T = 0;
-    if (vm.count("iteration")) 
-    {
-        cout << "Sampler iteration: " << vm["iteration"].as<int>() << ".\n";
-        T = vm["iteration"].as<int>();
-    } 
+
+    int init_cluster = 0;
+    if (vm.count("init")) init_cluster = vm["init"].as<int>();
+
+
+    cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
+         <<"Number: " << num << "; Dimension:" << dim <<endl;
 
 
     double nu;
@@ -113,25 +114,24 @@ int main(int argc, char **argv)
             }
             parsedCsv.push_back(parsedRow);
         }
-    fin.close();
-    for (uint32_t i=0; i<num; ++i)
-        for (uint32_t j=0; j<dim; ++j)
-            data(i, j) = stod(parsedCsv[i][j]);
+        fin.close();
+        for (uint32_t i=0; i<num; ++i)
+            for (uint32_t j=0; j<dim; ++j)
+                data(i, j) = stod(parsedCsv[i][j]);
     }
     
  
+    Distribution<double> dist;
+    NIW<double> niw(sigma, mu, nu, kappa);
 
-    // NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+
     // DPMM<NIW<double>> dpmm(alpha, niw);
-    // int init_cluster = 0;
-    // if (vm.count("init")) init_cluster = vm["init"].as<int>();
     // dpmm.initialize(data, init_cluster);
-
     // for (uint32_t t=0; t<T; ++t)
     // {
     //     cout<<"------------ t="<<t<<" -------------"<<endl;
-    //     cout << "Number of components: " << dpmm.K_ << endl;
-    //     dpmm.sampleLabels();
+    //     // cout << "Number of components: " << dpmm.K_ << endl;
+    //     // dpmm.sampleLabels();
     // }
 
     // const VectorXi& z = dpmm.getLabels();
@@ -147,7 +147,6 @@ int main(int argc, char **argv)
     // for (uint16_t i=0; i < z.size(); ++i)
     //     fout << z[i] << endl;
     // fout.close();
-    
 
 
     return 0;

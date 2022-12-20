@@ -1,6 +1,5 @@
 from util.load_data import *
 from util.process_data import *
-import numpy as np
 import argparse, subprocess, os, csv, random
 
 

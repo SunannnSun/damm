@@ -16,22 +16,19 @@ include_directories(
     ../include
     ${PROJECT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR} 
+    ${EIGEN3_INCLUDE_DIR}
 )
 
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
 
+add_subdirectory(${PROJECT_SOURCE_DIR}/dpmm_library)
 
 
 add_executable("${PROJECT_NAME}" main.cpp
 )
 
-if(OpenMP_CXX_FOUND)
-    target_link_libraries("${PROJECT_NAME}" PUBLIC 
-    OpenMP::OpenMP_CXX
-    ${Boost_PROGRAM_OPTIONS_LIBRARY})
-endif()
 
-
+target_link_libraries("${PROJECT_NAME}" PUBLIC 
+OpenMP::OpenMP_CXX
+${Boost_PROGRAM_OPTIONS_LIBRARY}
+dpmm_library
+)
