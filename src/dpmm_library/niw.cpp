@@ -85,16 +85,26 @@ T NIW<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
 
 
 template<class T>
-Parameter NIW<T>::sampleParameter()
+Normal<T> NIW<T>::samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
-  LLT<Matrix<T,Dynamic,Dynamic> > lltofV(sigma_);
-  Matrix<T,Dynamic,Dynamic> matrixL = lltofV.matrixL();
-  Matrix<T,Dynamic,Dynamic> matrixA(dim_,dim_);
-  Matrix<T,Dynamic,Dynamic> sampledCov(dim_,dim_);
+  NIW<T> posterior = this ->posterior(x_k);
+  return posterior.sampleParameter();
+}
 
+
+
+template<class T>
+Normal<T> NIW<T>::sampleParameter()
+{
+  Matrix<T,Dynamic,Dynamic> sampledCov(dim_,dim_);
+  Matrix<T,Dynamic,1> sampledMean(dim_);
+
+  LLT<Matrix<T,Dynamic,Dynamic> > lltObj(sigma_);
+  Matrix<T,Dynamic,Dynamic> cholFacotor = lltObj.matrixL();
+
+  Matrix<T,Dynamic,Dynamic> matrixA(dim_,dim_);
   matrixA.setZero();
   boost::random::normal_distribution<> gauss_;
-
   for (uint32_t i=0; i<dim_; ++i)
   {
     boost::random::chi_squared_distribution<> chiSq_(nu_-i);
@@ -104,14 +114,19 @@ Parameter NIW<T>::sampleParameter()
       matrixA(j, i) = gauss_(*this->pRndGen_);
     }
   }
-
-  sampledCov = matrixA.inverse()*matrixL;
+  sampledCov = matrixA.inverse()*cholFacotor;
   sampledCov = sampledCov.transpose()*sampledCov;
 
 
-  std::cout << sampledCov<<std::endl;
-  Parameter theta;
-  return theta;
+  lltObj.compute(sampledCov);
+  cholFacotor = lltObj.matrixL();
+
+  for (uint32_t i=0; i<dim_; ++i)
+    sampledMean[i] = gauss_(*this->pRndGen_);
+  sampledMean = cholFacotor * sampledMean / sqrt(kappa_) + mu_;
+
+  
+  return Normal<T>(sampledCov, sampledMean, this->pRndGen_);
 };
 
 

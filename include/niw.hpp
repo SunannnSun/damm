@@ -1,9 +1,8 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include "structParameter.hpp"
 #include <boost/random/mersenne_twister.hpp>
-
+#include "normal.hpp"
 
 #define PI 3.141592653589793
 
@@ -18,10 +17,13 @@ class NIW
 
         T logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
         T logProb(const Matrix<T,Dynamic,1>& x_i);
+
+        Normal<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic>& x_k);
         NIW<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
-        Parameter sampleParameter();
+        Normal<T> sampleParameter();
 
+ 
     public:
         boost::mt19937* pRndGen_;
 

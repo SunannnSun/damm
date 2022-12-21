@@ -4,7 +4,7 @@
 
 #include <Eigen/Dense>
 #include "niw.hpp"
-#include "structParameter.hpp"
+#include "normal.hpp"
 
 using namespace Eigen;
 using namespace std;
@@ -20,7 +20,7 @@ public:
   void initialize(const MatrixXd& x, const int init_cluster);
   void sampleCoefficients();
   void sampleParameters();
-//   void sampleLabels();
+  void sampleLabels();
 //   void reorderAssignments();
   const VectorXi & getLabels(){return z_;};
 
@@ -36,8 +36,8 @@ public:
   VectorXd Pi_; //coefficient vector
   uint16_t N_;
   uint16_t K_;
-  vector<Dist_t> components_;
+  // vector<Dist_t> components_;
 
   //sampled parameters
-  vector<Parameter> Parameters_;
+  vector<Normal<double>> components_;
 };

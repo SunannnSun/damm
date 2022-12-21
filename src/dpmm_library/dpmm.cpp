@@ -39,11 +39,11 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x, const int init_cluster)
   }
   z_ = z;
 
-
   K_ = z_.maxCoeff() + 1; //
-  for (uint32_t k=0; k<K_; ++k)
-    components_.push_back(H_);
-  cout<< "Initial clusters: " << components_.size()<<endl;
+
+  // for (uint32_t k=0; k<K_; ++k)
+  //   components_.push_back(H_);
+  // cout<< "Initial clusters: " << components_.size()<<endl;
 };
 
 
@@ -72,6 +72,8 @@ void DPMM<Dist_t>::sampleCoefficients()
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleParameters()
 {
+  components_.clear();
+
   for (uint32_t k=0; k<K_; ++k)
   {
     vector<int> x_k_index;
@@ -82,13 +84,42 @@ void DPMM<Dist_t>::sampleParameters()
     MatrixXd x_k(x_k_index.size(), x_.cols()); 
     x_k = x_(x_k_index, all);
 
-
-    components_[0].sampleParameter();
+    components_.push_back(H_.samplePosteriorParameter(x_k));
   }
 }
-// template <class Dist_t> 
-// void DPMM<Dist_t>::sampleLabels()
-// {
+
+
+template <class Dist_t> 
+void DPMM<Dist_t>::sampleLabels()
+{
+
+  for(uint32_t i=0; i<N_; ++i)
+  {
+    VectorXd x_i;
+    x_i = x_(i, all); //current data point x_i
+    VectorXd prob(K_);
+    for (uint32_t k=0; k<K_; ++k)
+    {
+      prob[k] = log(Pi_[k]) + components_[k].logProb(x_i);
+    }
+
+
+    double prob_max = prob.maxCoeff();
+    prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    for (uint32_t ii = 1; ii < prob.size(); ++ii){
+      prob[ii] = prob[ii-1]+ prob[ii];
+    }
+    boost::random::uniform_01<> uni_;   
+    double uni_draw = uni_(*this->pRndGen_);
+    uint32_t k = 0;
+    while (prob[k] < uni_draw) k++;
+    z_[i] = k;
+  }
+}
+
+
+
 //   vector<int> i_array = generateRandom(N_);
 //   for(uint32_t j=0; j<N_; ++j)
 //   // for(uint32_t i=0; i<N_; ++i)
@@ -224,3 +255,4 @@ void DPMM<Dist_t>::sampleParameters()
 // }
 
 template class DPMM<NIW<double>>;
+

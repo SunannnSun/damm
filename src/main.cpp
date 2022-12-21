@@ -43,7 +43,6 @@ int main(int argc, char **argv)
 
     // uint64_t seed = time(0);
     uint64_t seed = 1671503159;
-    std::cout << seed;
     if(vm.count("seed"))
         seed = static_cast<uint64_t>(vm["seed"].as<int>());
     boost::mt19937 rndGen(seed);
@@ -133,11 +132,10 @@ int main(int argc, char **argv)
     for (uint32_t t=0; t<T; ++t)
     {
         cout<<"------------ t="<<t<<" -------------"<<endl;
-        // cout << "Number of components: " << dpmm.K_ << endl;
+        cout << "Number of components: " << dpmm.K_ << endl;
         dpmm.sampleCoefficients();
         dpmm.sampleParameters();
-
-        // dpmm.sampleLabels();
+        dpmm.sampleLabels();
     }
 
 
@@ -154,7 +152,6 @@ int main(int argc, char **argv)
     for (uint16_t i=0; i < z.size(); ++i)
         fout << z[i] << endl;
     fout.close();
-
 
     return 0;
 }   
