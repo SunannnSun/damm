@@ -2,14 +2,17 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 
+#include <boost/random/chi_squared_distribution.hpp>
+#include <boost/random/normal_distribution.hpp>
+
 
 #define PI 3.141592653589793
 
 
 template<class T>
 NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& sigma, 
-  const Matrix<T,Dynamic,Dynamic>& mu,const T nu, const T kappa)
-: sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size())
+  const Matrix<T,Dynamic,Dynamic>& mu,const T nu, const T kappa, boost::mt19937* pRndGen)
+: sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), pRndGen_(pRndGen) 
 {
   assert(sigma_.rows()==mu_.size()); 
   assert(sigma_.cols()==mu_.size());
@@ -38,7 +41,7 @@ NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
       *(mean_-mu_)*(mean_-mu_).transpose(), 
     (kappa_*mu_+ count_*mean_)/(kappa_+count_),
     nu_+count_,
-    kappa_+count_);
+    kappa_+count_, this->pRndGen_);
 };
 
 
@@ -81,6 +84,39 @@ T NIW<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
 };
 
 
+template<class T>
+Parameter NIW<T>::sampleParameter()
+{
+  LLT<Matrix<T,Dynamic,Dynamic> > lltofV(sigma_);
+  Matrix<T,Dynamic,Dynamic> matrixL = lltofV.matrixL();
+  Matrix<T,Dynamic,Dynamic> matrixA(dim_,dim_);
+  Matrix<T,Dynamic,Dynamic> sampledCov(dim_,dim_);
+
+  matrixA.setZero();
+  boost::random::normal_distribution<> gauss_;
+
+  for (uint32_t i=0; i<dim_; ++i)
+  {
+    boost::random::chi_squared_distribution<> chiSq_(nu_-i);
+    matrixA(i,i) = sqrt(chiSq_(*this->pRndGen_)); 
+    for (uint32_t j=i+1; j<dim_; ++j)
+    {
+      matrixA(j, i) = gauss_(*this->pRndGen_);
+    }
+  }
+
+  sampledCov = matrixA.inverse()*matrixL;
+  sampledCov = sampledCov.transpose()*sampledCov;
+
+
+  std::cout << sampledCov<<std::endl;
+  Parameter theta;
+  return theta;
+};
+
+
+
+
 // template<class T>
 // T NIW<T>::logPosteriorProb(const Matrix<T,Dynamic,Dynamic>& x, VectorXu& z, uint32_t k, uint32_t i)
 // {
@@ -92,13 +128,6 @@ T NIW<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
 //   return posterior.logProb(x.col(i));
 // };
 
-// void TemporaryFunction2 ()
-// {
-
-// NIW<double> NIW_double;
-// NIW<float>  NIW_int;
-
-// }
 
 
 template class NIW<double>;

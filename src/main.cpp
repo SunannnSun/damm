@@ -41,7 +41,9 @@ int main(int argc, char **argv)
     } 
 
 
-    uint64_t seed = time(0);
+    // uint64_t seed = time(0);
+    uint64_t seed = 1671503159;
+    std::cout << seed;
     if(vm.count("seed"))
         seed = static_cast<uint64_t>(vm["seed"].as<int>());
     boost::mt19937 rndGen(seed);
@@ -123,17 +125,20 @@ int main(int argc, char **argv)
     }
     
  
-    NIW<double> niw(sigma, mu, nu, kappa);
+    NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
     DPMM<NIW<double>> dpmm(alpha, niw, &rndGen);
     dpmm.initialize(data, init_cluster);
 
 
-    // for (uint32_t t=0; t<T; ++t)
-    // {
-    //     cout<<"------------ t="<<t<<" -------------"<<endl;
-    //     // cout << "Number of components: " << dpmm.K_ << endl;
-    //     // dpmm.sampleLabels();
-    // }
+    for (uint32_t t=0; t<T; ++t)
+    {
+        cout<<"------------ t="<<t<<" -------------"<<endl;
+        // cout << "Number of components: " << dpmm.K_ << endl;
+        dpmm.sampleCoefficients();
+        dpmm.sampleParameters();
+
+        // dpmm.sampleLabels();
+    }
 
 
     const VectorXi& z = dpmm.getLabels();

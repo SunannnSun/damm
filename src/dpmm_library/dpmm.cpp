@@ -2,8 +2,9 @@
 #include <limits>
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/variate_generator.hpp>
+#include <boost/random/gamma_distribution.hpp>
 
+#include <boost/random/variate_generator.hpp>
 #include "dpmm.hpp"
 
 
@@ -46,6 +47,45 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x, const int init_cluster)
 };
 
 
+template <class Dist_t> 
+void DPMM<Dist_t>::sampleCoefficients()
+{
+  VectorXi Nk(K_+1);
+  Nk.setZero();
+  // #pragma omp parallel for num_threads(8) schedule(static)
+  for(uint32_t ii=0; ii<N_; ++ii)
+  {
+    Nk(z_(ii))++;
+  }
+  Nk(K_) = alpha_;
+
+  VectorXd Pi(K_+1);
+  for (uint32_t k=0; k<K_+1; ++k)
+  {
+    boost::random::gamma_distribution<> gamma_(Nk(k), 1);
+    Pi(k) = gamma_(*pRndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+template <class Dist_t> 
+void DPMM<Dist_t>::sampleParameters()
+{
+  for (uint32_t k=0; k<K_; ++k)
+  {
+    vector<int> x_k_index;
+    for (uint32_t ii = 0; ii<N_; ++ii)
+    {
+      if (z_[ii] == k) x_k_index.push_back(ii); 
+    }
+    MatrixXd x_k(x_k_index.size(), x_.cols()); 
+    x_k = x_(x_k_index, all);
+
+
+    components_[0].sampleParameter();
+  }
+}
 // template <class Dist_t> 
 // void DPMM<Dist_t>::sampleLabels()
 // {

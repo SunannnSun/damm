@@ -4,6 +4,7 @@
 
 #include <Eigen/Dense>
 #include "niw.hpp"
+#include "structParameter.hpp"
 
 using namespace Eigen;
 using namespace std;
@@ -17,6 +18,8 @@ public:
   ~DPMM(){};
 
   void initialize(const MatrixXd& x, const int init_cluster);
+  void sampleCoefficients();
+  void sampleParameters();
 //   void sampleLabels();
 //   void reorderAssignments();
   const VectorXi & getLabels(){return z_;};
@@ -29,8 +32,12 @@ public:
 
   //class initializer(dependent on data)
   MatrixXd x_;
-  VectorXi z_; //membership vector
+  VectorXi z_;  //membership vector
+  VectorXd Pi_; //coefficient vector
   uint16_t N_;
   uint16_t K_;
   vector<Dist_t> components_;
+
+  //sampled parameters
+  vector<Parameter> Parameters_;
 };
