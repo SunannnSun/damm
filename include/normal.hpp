@@ -12,7 +12,7 @@ template<typename T>
 class Normal
 {
     public:
-        Normal(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,1>& mu, boost::mt19937* pRndGen);
+        Normal(const Matrix<T,Dynamic,1>& mu, const Matrix<T,Dynamic,Dynamic>& Sigma, boost::mt19937* pRndGen);
         ~Normal();
         T logProb(const Matrix<T,Dynamic,1>& x_i);
 
@@ -27,7 +27,7 @@ class Normal
 
 
         // parameters
-        Matrix<T,Dynamic,Dynamic> sigma_;
         Matrix<T,Dynamic,1> mu_;
+        Matrix<T,Dynamic,Dynamic> Sigma_;
         uint32_t dim_;
 };

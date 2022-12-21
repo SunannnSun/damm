@@ -10,12 +10,12 @@
 
 
 template<class T>
-NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& sigma, 
+NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& Sigma, 
   const Matrix<T,Dynamic,Dynamic>& mu,const T nu, const T kappa, boost::mt19937* pRndGen)
-: sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), pRndGen_(pRndGen) 
+: Sigma_(Sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), pRndGen_(pRndGen) 
 {
-  assert(sigma_.rows()==mu_.size()); 
-  assert(sigma_.cols()==mu_.size());
+  assert(Sigma_.rows()==mu_.size()); 
+  assert(Sigma_.cols()==mu_.size());
 };
 
 
@@ -37,7 +37,7 @@ NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
   getSufficientStatistics(x_k);
   return NIW<T>(
-    sigma_+scatter_ + ((kappa_*count_)/(kappa_+count_))
+    Sigma_+scatter_ + ((kappa_*count_)/(kappa_+count_))
       *(mean_-mu_)*(mean_-mu_).transpose(), 
     (kappa_*mu_+ count_*mean_)/(kappa_+count_),
     nu_+count_,
@@ -68,8 +68,8 @@ T NIW<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
   // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
   T doF = nu_ - dim_ + 1.;
-  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));   
-  // scaledSigma(dim_-1, dim_-1) = sigma_(dim_-1, dim_-1); //testing the z-value effects if all zeros
+  Matrix<T,Dynamic,Dynamic> scaledSigma = Sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));   
+  // scaledSigma(dim_-1, dim_-1) = Sigma_(dim_-1, dim_-1); //testing the z-value effects if all zeros
                     
   T logProb = boost::math::lgamma(0.5*(doF + dim_));
   logProb -= boost::math::lgamma(0.5*(doF));
@@ -99,7 +99,7 @@ Normal<T> NIW<T>::sampleParameter()
   Matrix<T,Dynamic,Dynamic> sampledCov(dim_,dim_);
   Matrix<T,Dynamic,1> sampledMean(dim_);
 
-  LLT<Matrix<T,Dynamic,Dynamic> > lltObj(sigma_);
+  LLT<Matrix<T,Dynamic,Dynamic> > lltObj(Sigma_);
   Matrix<T,Dynamic,Dynamic> cholFacotor = lltObj.matrixL();
 
   Matrix<T,Dynamic,Dynamic> matrixA(dim_,dim_);
@@ -126,7 +126,7 @@ Normal<T> NIW<T>::sampleParameter()
   sampledMean = cholFacotor * sampledMean / sqrt(kappa_) + mu_;
 
   
-  return Normal<T>(sampledCov, sampledMean, this->pRndGen_);
+  return Normal<T>(sampledMean, sampledCov, this->pRndGen_);
 };
 
 

@@ -12,7 +12,7 @@ template<typename T>
 class NIW
 {
     public:
-        NIW(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu,const T nu,const T kappa, boost::mt19937* pRndGen);
+        NIW(const Matrix<T,Dynamic,Dynamic>& Sigma, const Matrix<T,Dynamic,Dynamic>& mu,const T nu,const T kappa, boost::mt19937* pRndGen);
         ~NIW();
 
         T logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
@@ -29,7 +29,7 @@ class NIW
 
 
         // Hyperparameters
-        Matrix<T,Dynamic,Dynamic> sigma_;
+        Matrix<T,Dynamic,Dynamic> Sigma_;
         Matrix<T,Dynamic,1> mu_;
         T nu_,kappa_;
         uint32_t dim_;
