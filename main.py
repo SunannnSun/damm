@@ -78,4 +78,4 @@ for i in range(Data.shape[0]):
     color = colors[assignment_array[i]]
     ax.scatter(Data[i, 0], Data[i, 1], c=color)
 ax.set_aspect('equal')
-plt.show()
+# plt.show()

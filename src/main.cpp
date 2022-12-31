@@ -125,17 +125,22 @@ int main(int argc, char **argv)
     
  
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
-    DPMM<NIW<double>> dpmm(alpha, niw, &rndGen);
-    dpmm.initialize(data, init_cluster);
+    DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, &rndGen);
+    // dpmm.initialize(data, init_cluster);
 
 
     for (uint32_t t=0; t<T; ++t)
     {
         cout<<"------------ t="<<t<<" -------------"<<endl;
         cout << "Number of components: " << dpmm.K_ << endl;
-        dpmm.sampleCoefficients();
-        dpmm.sampleParameters();
-        dpmm.sampleLabels();
+        dpmm.splitProposal(0, 1);
+        // std::cout<<dpmm.z_<<std::endl;
+
+
+
+        // dpmm.sampleCoefficients();
+        // dpmm.sampleParameters();
+        // dpmm.sampleLabels();
     }
 
 

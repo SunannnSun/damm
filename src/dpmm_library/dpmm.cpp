@@ -3,24 +3,15 @@
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/gamma_distribution.hpp>
-
 #include <boost/random/variate_generator.hpp>
+
 #include "dpmm.hpp"
 
 
 template <class Dist_t> 
-DPMM<Dist_t>::DPMM(const double alpha, const Dist_t& H, boost::mt19937* pRndGen)
-: alpha_(alpha), H_(H), pRndGen_(pRndGen) 
-{};
-
-
-
-template <class Dist_t> 
-void DPMM<Dist_t>::initialize(const MatrixXd& x, const int init_cluster)
+DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha, const Dist_t& H, boost::mt19937* pRndGen)
+: alpha_(alpha), H_(H), pRndGen_(pRndGen), x_(x), N_(x.rows())
 {
-  x_ = x;
-  N_ = x_.rows();
-
   VectorXi z(x.rows());
   if (init_cluster == 1) 
   {
@@ -39,12 +30,46 @@ void DPMM<Dist_t>::initialize(const MatrixXd& x, const int init_cluster)
   }
   z_ = z;
 
-  K_ = z_.maxCoeff() + 1; //
-
-  // for (uint32_t k=0; k<K_; ++k)
-  //   components_.push_back(H_);
-  // cout<< "Initial clusters: " << components_.size()<<endl;
+  K_ = z_.maxCoeff() + 1; // equivalent to the number of initial clusters
 };
+
+
+template <class Dist_t> 
+DPMM<Dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937* pRndGen)
+: alpha_(alpha), H_(H), pRndGen_(pRndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
+{
+};
+
+
+
+
+template <class Dist_t> 
+void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
+{ 
+  VectorXi z_launch = z_; //original assignment vector
+  uint32_t z_split_i = z_launch.maxCoeff() + 1;
+  uint32_t z_split_j = z_launch[index_j];
+
+  vector<int> sIndexList;  
+  boost::random::uniform_int_distribution<> uni_(0, 1);
+  for (uint32_t ii = 0; ii<N_; ++ii)
+  {
+    if (z_launch[ii] == z_split_j) 
+    {
+      if (uni_(*pRndGen_) == 0) z_launch[ii] = z_split_i;
+      else z_launch[ii] = z_split_j;
+      sIndexList.push_back(ii); //set S including index_i and index_j
+    }
+  }
+  z_launch[index_i] = z_split_i;
+  z_launch[index_j] = z_split_j;
+
+
+  DPMM<Dist_t> dpmm_split(x_, z_launch, sIndexList, alpha_, H_, this->pRndGen_);
+  dpmm_split.sampleCoefficients(index_i, index_j);
+  // MatrixXd x_s(sIndexList.size(), x_.cols()); 
+  // x_s = x_(sIndexList, all);
+}
 
 
 template <class Dist_t> 
@@ -61,6 +86,28 @@ void DPMM<Dist_t>::sampleCoefficients()
 
   VectorXd Pi(K_+1);
   for (uint32_t k=0; k<K_+1; ++k)
+  {
+    boost::random::gamma_distribution<> gamma_(Nk(k), 1);
+    Pi(k) = gamma_(*pRndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+template <class Dist_t> 
+void DPMM<Dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t index_j)
+{
+  VectorXi Nk(2);
+  Nk.setZero();
+
+  for(uint32_t i=0; i<indexList_.size(); ++i)
+  {
+    if (z_(indexList_[i])==index_i) Nk(0)++;
+    else Nk(1)++;
+  }
+  // std::cout << Nk <<std::endl;
+  VectorXd Pi(2);
+  for (uint32_t k=0; k<2; ++k)
   {
     boost::random::gamma_distribution<> gamma_(Nk(k), 1);
     Pi(k) = gamma_(*pRndGen_);
@@ -92,7 +139,7 @@ void DPMM<Dist_t>::sampleParameters()
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleLabels()
 {
-
+  #pragma omp parallel for num_threads(8) schedule(dynamic,50)
   for(uint32_t i=0; i<N_; ++i)
   {
     VectorXd x_i;
@@ -102,7 +149,6 @@ void DPMM<Dist_t>::sampleLabels()
     {
       prob[k] = log(Pi_[k]) + components_[k].logProb(x_i);
     }
-
 
     double prob_max = prob.maxCoeff();
     prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
@@ -117,6 +163,9 @@ void DPMM<Dist_t>::sampleLabels()
     z_[i] = k;
   }
 }
+
+
+
 
 
 
