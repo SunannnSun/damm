@@ -23,6 +23,8 @@ public:
   void sampleCoefficients();
   void sampleCoefficients(const uint32_t index_i, const uint32_t index_j);
   void sampleParameters();
+  void sampleParameters(const uint32_t index_i, const uint32_t index_j);
+  void sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j);
   void sampleLabels();
 //   void reorderAssignments();
   const VectorXi & getLabels(){return z_;};

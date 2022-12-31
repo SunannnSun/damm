@@ -37,10 +37,7 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha
 template <class Dist_t> 
 DPMM<Dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937* pRndGen)
 : alpha_(alpha), H_(H), pRndGen_(pRndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
-{
-};
-
-
+{};
 
 
 template <class Dist_t> 
@@ -66,7 +63,11 @@ void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
 
 
   DPMM<Dist_t> dpmm_split(x_, z_launch, sIndexList, alpha_, H_, this->pRndGen_);
-  dpmm_split.sampleCoefficients(index_i, index_j);
+  // dpmm_split.sampleCoefficients(index_i, index_j);
+  // dpmm_split.sampleParameters(index_i, index_j);
+  dpmm_split.sampleCoefficientsParameters(index_i, index_j);
+
+
   // MatrixXd x_s(sIndexList.size(), x_.cols()); 
   // x_s = x_(sIndexList, all);
 }
@@ -100,12 +101,17 @@ void DPMM<Dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t ind
   VectorXi Nk(2);
   Nk.setZero();
 
-  for(uint32_t i=0; i<indexList_.size(); ++i)
+  for(uint32_t ii=0; ii<indexList_.size(); ++ii)
   {
-    if (z_(indexList_[i])==index_i) Nk(0)++;
+    if (z_[indexList_[ii]]==z_[index_i]) Nk(0)++;
     else Nk(1)++;
   }
+
+  //`````testing``````````````
   // std::cout << Nk <<std::endl;
+  //`````testing``````````````
+
+
   VectorXd Pi(2);
   for (uint32_t k=0; k<2; ++k)
   {
@@ -113,6 +119,7 @@ void DPMM<Dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t ind
     Pi(k) = gamma_(*pRndGen_);
   }
   Pi_ = Pi / Pi.sum();
+  std::cout << Pi_ <<std::endl;
 }
 
 
@@ -134,6 +141,81 @@ void DPMM<Dist_t>::sampleParameters()
     components_.push_back(H_.samplePosteriorParameter(x_k));
   }
 }
+
+template <class Dist_t> 
+void DPMM<Dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index_j)
+{
+  components_.clear();
+
+  vector<int> x_i_index;
+  vector<int> x_j_index;
+
+  for (uint32_t ii = 0; ii<indexList_.size(); ++ii)  //To-do: This can be combined with sampleCoefficients
+  {
+    if (z_[indexList_[ii]]==z_[index_i]) x_i_index.push_back(ii); 
+    else x_j_index.push_back(ii); 
+  }
+  MatrixXd x_i(x_i_index.size(), x_.cols()); 
+  MatrixXd x_j(x_j_index.size(), x_.cols()); 
+
+
+  //`````testing``````````````
+  // std::cout << x_i_index.size() << std::endl << x_j_index.size() << std::endl;
+  //`````testing``````````````
+
+
+  x_i = x_(x_i_index, all);
+  x_j = x_(x_j_index, all);
+
+  components_.push_back(H_.samplePosteriorParameter(x_i));
+  components_.push_back(H_.samplePosteriorParameter(x_j));
+}
+
+
+template <class Dist_t> 
+void DPMM<Dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j)
+{
+  vector<int> x_i_index;
+  vector<int> x_j_index;
+  for (uint32_t ii = 0; ii<indexList_.size(); ++ii) 
+  {
+    if (z_[indexList_[ii]]==z_[index_i]) x_i_index.push_back(ii); 
+    else x_j_index.push_back(ii); 
+  }
+  MatrixXd x_i(x_i_index.size(), x_.cols()); 
+  MatrixXd x_j(x_j_index.size(), x_.cols()); 
+  x_i = x_(x_i_index, all);
+  x_j = x_(x_j_index, all);
+
+  components_.clear();
+  components_.push_back(H_.samplePosteriorParameter(x_i));
+  components_.push_back(H_.samplePosteriorParameter(x_j));
+  
+
+  VectorXi Nk(2);
+  Nk(0) = x_i_index.size();
+  Nk(1) = x_j_index.size();
+
+
+  // //`````testing``````````````
+  // std::cout << Nk <<std::endl;
+  // //`````testing``````````````
+
+
+  VectorXd Pi(2);
+  for (uint32_t k=0; k<2; ++k)
+  {
+    boost::random::gamma_distribution<> gamma_(Nk(k), 1);
+    Pi(k) = gamma_(*pRndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+
+
+  // //`````testing``````````````
+  // std::cout << Pi_ <<std::endl;  
+  // //`````testing``````````````
+}
+
 
 
 template <class Dist_t> 

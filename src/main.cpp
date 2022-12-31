@@ -133,7 +133,7 @@ int main(int argc, char **argv)
     {
         cout<<"------------ t="<<t<<" -------------"<<endl;
         cout << "Number of components: " << dpmm.K_ << endl;
-        dpmm.splitProposal(0, 1);
+        dpmm.splitProposal(10, 100);
         // std::cout<<dpmm.z_<<std::endl;
 
 
