@@ -1,4 +1,5 @@
 #include "niw.hpp"
+#include <cmath>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 
@@ -30,6 +31,15 @@ T NIW<T>::logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic,
   NIW<T> posterior = this ->posterior(x_k);
   return posterior.logProb(x_i);
 };
+
+
+// template<class T>
+// T NIW<T>::logPosteriorProb(const Matrix<T,Dynamic, Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_j, )
+// {
+//   NIW<T> posterior = this ->posterior(x_k);
+
+//   return posterior.logProb(x_i);
+// };
 
 
 template<class T>
@@ -81,6 +91,14 @@ T NIW<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
     *log(1.+ 1/doF*((x_i-mu_).transpose()*scaledSigma.inverse()*(x_i-mu_)).sum());
   // approximate using moment-matched Gaussian; Erik Sudderth PhD essay
   return logProb;
+};
+
+
+template<class T>
+T NIW<T>::prob(const Matrix<T,Dynamic,1>& x_i)
+{ 
+  T logProb = this ->logProb(x_i);
+  return exp(logProb);
 };
 
 

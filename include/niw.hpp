@@ -17,6 +17,7 @@ class NIW
 
         T logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
         T logProb(const Matrix<T,Dynamic,1>& x_i);
+        T prob(const Matrix<T,Dynamic,1>& x_i);
 
         Normal<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic>& x_k);
         NIW<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);

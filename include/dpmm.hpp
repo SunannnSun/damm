@@ -26,6 +26,9 @@ public:
   void sampleParameters(const uint32_t index_i, const uint32_t index_j);
   void sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j);
   void sampleLabels();
+  void sampleLabels(const uint32_t index_i, const uint32_t index_j);
+
+  double transitionProb(const uint32_t index_i, const uint32_t index_j);
 //   void reorderAssignments();
   const VectorXi & getLabels(){return z_;};
 
@@ -46,9 +49,12 @@ public:
   uint16_t K_;
 
   //sampled parameters
-  vector<Normal<double>> components_; //parameter vector
+  vector<Dist_t> components_; //
+  vector<Normal<double>> parameters_; //parameter vector
 
 
   //spilt/merge proposal
   vector<int> indexList_;
+
+
 };

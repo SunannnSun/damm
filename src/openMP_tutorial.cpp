@@ -1,25 +1,18 @@
 // Open_MP Tutorial
 
 #include <iostream>
-
-using namespace std;
-
-int main ()
+#include <algorithm>
+#define ARRAY_SIZE 1000000000
+#define ARRAY_VALUE 1231
+int main()
 {
-    //create a new team of threads and explicitly specify the number of threads
-    
-    //
-    #pragma omp parallel for schedule(static) num_threads(8)
-    for(int n=0; n<5; ++n) 
+    int *arr = new int[ARRAY_SIZE];
+    std::fill_n(arr, ARRAY_SIZE, ARRAY_VALUE);
+    #pragma omp parallel for num_threads(8) schedule(dynamic,10000000)
+    for(int i = 0; i < ARRAY_SIZE; i++)
     {
-        vector<int> x_k_index;
-        for (int i=0; i<3; ++i)
-        {
-            if (i == n) 
-            x_k_index.push_back(i); 
-        }
-        std::cout << x_k_index.size() << std::endl;
-
+        // do some relatively long operation
+        arr[i] = arr[i] / arr[i] + arr[i] / 5 - 14;
     }
     return 0;
 }
