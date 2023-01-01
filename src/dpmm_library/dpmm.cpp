@@ -75,8 +75,10 @@ void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
   }
   
   // std::cout << dpmm_split.transitionProb(index_i, index_j) << std::endl;
-  std::cout << dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]) << std::endl;
-  z_ = dpmm_split.z_;
+  // std::cout << dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]) << std::endl;
+  double acceptanceRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j) * 
+  dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]);
+  if (acceptanceRatio > 1) z_ = dpmm_split.z_;
 }
 
 
@@ -404,40 +406,40 @@ void DPMM<Dist_t>::sampleLabels()
 // };
 
 
-// template <class Dist_t>
-// void DPMM<Dist_t>::reorderAssignments()
-// { 
-//   // cout << z_ << endl;
-//   vector<uint8_t> rearrange_list;
-//   for (uint32_t i=0; i<N_; ++i)
-//   {
-//     if (rearrange_list.empty()) rearrange_list.push_back(z_[i]);
-//     // cout << *rearrange_list.begin() << endl;
-//     // cout << *rearrange_list.end()  << endl;
-//     std::vector<uint8_t>::iterator it;
-//     it = find (rearrange_list.begin(), rearrange_list.end(), z_[i]);
-//     if (it == rearrange_list.end())
-//     {
-//       rearrange_list.push_back(z_[i]);
-//       // z_[i] = rearrange_list.end() - rearrange_list.begin();
-//       z_[i] = rearrange_list.size() - 1;
-//     }
-//     else if (it != rearrange_list.end())
-//     {
-//       int index = it - rearrange_list.begin();
-//       z_[i] = index;
-//     }
-//   }
-//   K_ = z_.maxCoeff() + 1;
-//   if(K_>parameters_.size())
-//   parameters_.push_back(H_);
-//   else if(K_<parameters_.size())
-//   parameters_.pop_back();
-//     // std::cout << "Element found in myvector: " << *it << '\n';
-//     // else
-//     // std::cout << "Element not found in myvector\n";
-// }
-//     // cout << z_ << endl;
+template <class Dist_t>
+void DPMM<Dist_t>::reorderAssignments()
+{ 
+  // cout << z_ << endl;
+  vector<uint8_t> rearrange_list;
+  for (uint32_t i=0; i<N_; ++i)
+  {
+    if (rearrange_list.empty()) rearrange_list.push_back(z_[i]);
+    // cout << *rearrange_list.begin() << endl;
+    // cout << *rearrange_list.end()  << endl;
+    vector<uint8_t>::iterator it;
+    it = find (rearrange_list.begin(), rearrange_list.end(), z_[i]);
+    if (it == rearrange_list.end())
+    {
+      rearrange_list.push_back(z_[i]);
+      // z_[i] = rearrange_list.end() - rearrange_list.begin();
+      z_[i] = rearrange_list.size() - 1;
+    }
+    else if (it != rearrange_list.end())
+    {
+      int index = it - rearrange_list.begin();
+      z_[i] = index;
+    }
+  }
+  K_ = z_.maxCoeff() + 1;
+  // if(K_>parameters_.size())
+  // parameters_.push_back(H_);
+  // else if(K_<parameters_.size())
+  // parameters_.pop_back();
+    // std::cout << "Element found in myvector: " << *it << '\n';
+    // else
+    // std::cout << "Element not found in myvector\n";
+}
+    // cout << z_ << endl;
 
 
 

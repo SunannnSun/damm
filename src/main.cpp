@@ -2,6 +2,7 @@
 #include <fstream>
 #include <boost/program_options.hpp>
 #include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
 #include <Eigen/Dense>
 #include "niw.hpp"
 #include "dpmm.hpp"
@@ -128,16 +129,21 @@ int main(int argc, char **argv)
     DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, &rndGen);
     // dpmm.initialize(data, init_cluster);
 
-
+    boost::random::uniform_int_distribution<> uni_(0, num-1);
     for (uint32_t t=0; t<T; ++t)
     {
         cout<<"------------ t="<<t<<" -------------"<<endl;
         cout << "Number of components: " << dpmm.K_ << endl;
-        dpmm.splitProposal(201,200);
+
+        // uint32_t index_i = uni_(rndGen);
+        // uint32_t index_j = uni_(rndGen);
+        // if (dpmm.z_[index_i] == dpmm.z_[index_j])
+        // dpmm.splitProposal(index_i,index_j);
         // std::cout<<dpmm.z_<<std::endl;
-        // dpmm.sampleCoefficients();
-        // dpmm.sampleParameters();
-        // dpmm.sampleLabels();
+        dpmm.sampleCoefficients();
+        dpmm.sampleParameters();
+        dpmm.sampleLabels();
+        dpmm.reorderAssignments();
     }
 
 
