@@ -31,6 +31,9 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha
   z_ = z;
 
   K_ = z_.maxCoeff() + 1; // equivalent to the number of initial clusters
+  
+  this -> sampleCoefficients();
+  this -> sampleParameters();
 };
 
 
@@ -71,7 +74,8 @@ void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
     dpmm_split.sampleLabels(index_i, index_j);  
   }
   
-  std::cout << dpmm_split.transitionProb(index_i, index_j) << std::endl;
+  // std::cout << dpmm_split.transitionProb(index_i, index_j) << std::endl;
+  std::cout << dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]) << std::endl;
   z_ = dpmm_split.z_;
 }
 
@@ -91,6 +95,21 @@ double DPMM<Dist_t>::transitionProb(const uint32_t index_i, const uint32_t index
     (Pi_(0) * components_[0].prob(x_(indexList_[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_[ii], all)));
   }
   return transitionProb;
+}
+
+template <class Dist_t>
+double DPMM<Dist_t>::posteriorRatio(const uint32_t index_i, const uint32_t index_j, const double prevPi, Normal<double>& prevParameter)
+{
+  double logPosteriorRatio = 0;
+  for (uint32_t ii=0; ii < indexList_.size(); ++ii)
+  {
+    if (z_[indexList_[ii]] == z_[index_i])
+    logPosteriorRatio += log(Pi_(0)) + parameters_[0].logProb(x_(indexList_[ii], all)) ;
+    else
+    logPosteriorRatio += log(Pi_(1)) + parameters_[1].logProb(x_(indexList_[ii], all)); 
+    logPosteriorRatio -= prevParameter.logProb(x_(indexList_[ii], all));
+  }  
+  return exp(logPosteriorRatio);
 }
 
 

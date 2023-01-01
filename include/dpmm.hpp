@@ -29,6 +29,7 @@ public:
   void sampleLabels(const uint32_t index_i, const uint32_t index_j);
 
   double transitionProb(const uint32_t index_i, const uint32_t index_j);
+  double posteriorRatio(const uint32_t index_i, const uint32_t index_j, const double prevPi, Normal<double>& prevParameter);
 //   void reorderAssignments();
   const VectorXi & getLabels(){return z_;};
 
