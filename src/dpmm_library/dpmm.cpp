@@ -50,6 +50,8 @@ void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
   uint32_t z_split_i = z_launch.maxCoeff() + 1;
   uint32_t z_split_j = z_launch[index_j];
 
+  // std::cout << z_split_i << std::endl;
+
   vector<int> sIndexList;  
   boost::random::uniform_int_distribution<> uni_(0, 1);
   for (uint32_t ii = 0; ii<N_; ++ii)
@@ -61,24 +63,48 @@ void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
       sIndexList.push_back(ii); //set S including index_i and index_j
     }
   }
+
+  // std::cout << sIndexList.size() << std::endl;
+
   z_launch[index_i] = z_split_i;
   z_launch[index_j] = z_split_j;
 
+  // std::cout << "begin" << index_i << std::endl<< index_j << std::endl;
 
   DPMM<Dist_t> dpmm_split(x_, z_launch, sIndexList, alpha_, H_, this->pRndGen_);
-  for (uint32_t t=0; t<50; ++t)
+  for (uint32_t t=0; t<25; ++t)
   {
+    // std::cout << t << std::endl;
     // dpmm_split.sampleCoefficients(index_i, index_j);
     // dpmm_split.sampleParameters(index_i, index_j); 
     dpmm_split.sampleCoefficientsParameters(index_i, index_j);
     dpmm_split.sampleLabels(index_i, index_j);  
   }
+
   
+
+  double transitionRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j);
+  // std::cout << Pi_(z_[index_j]) << std::endl;
+
+  double posteriorRatio = dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]);
+
   // std::cout << dpmm_split.transitionProb(index_i, index_j) << std::endl;
   // std::cout << dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]) << std::endl;
-  double acceptanceRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j) * 
-  dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]);
-  if (acceptanceRatio > 1) z_ = dpmm_split.z_;
+  double acceptanceRatio = transitionRatio * posteriorRatio;
+  if (acceptanceRatio > 1) 
+  {
+    z_ = dpmm_split.z_;
+    K_ += 1;
+    this -> sampleCoefficients();
+    this -> sampleParameters();
+    std::cout << "Split proposal Aceepted" << std::endl;
+    // std::cout << Pi_ << std::endl;
+    // std::cout << parameters_.size() << std::endl;
+  }
+  else
+  {
+    std::cout << "Split proposal Rejected" << std::endl;
+  }
 }
 
 
@@ -118,17 +144,17 @@ double DPMM<Dist_t>::posteriorRatio(const uint32_t index_i, const uint32_t index
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleCoefficients()
 {
-  VectorXi Nk(K_+1);
+  VectorXi Nk(K_);
   Nk.setZero();
   #pragma omp parallel for num_threads(8) schedule(static)
   for(uint32_t ii=0; ii<N_; ++ii)
   {
     Nk(z_(ii))++;
   }
-  Nk(K_) = alpha_;
+  // Nk(K_) = alpha_;
 
-  VectorXd Pi(K_+1);
-  for (uint32_t k=0; k<K_+1; ++k)
+  VectorXd Pi(K_);
+  for (uint32_t k=0; k<K_; ++k)
   {
     boost::random::gamma_distribution<> gamma_(Nk(k), 1);
     Pi(k) = gamma_(*pRndGen_);
@@ -224,7 +250,10 @@ void DPMM<Dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const ui
 {
   vector<int> x_i_index;
   vector<int> x_j_index;
-  #pragma omp parallel for num_threads(8) schedule(dynamic,100)
+
+  // std::cout << index_i <<std::endl << index_j << std::endl;
+  assert(z_[index_i] !=  z_[index_j]);
+  // #pragma omp parallel for num_threads(8) schedule(dynamic,100)
   for (uint32_t ii = 0; ii<indexList_.size(); ++ii) 
   {
     if (z_[indexList_[ii]]==z_[index_i]) x_i_index.push_back(ii); 
@@ -274,6 +303,7 @@ void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
 {
   uint32_t z_i = z_[index_i];
   uint32_t z_j = z_[index_j];
+  assert(z_i!=z_j);
   boost::random::uniform_01<> uni_;    //maybe put in constructor?
   #pragma omp parallel for num_threads(8) schedule(static)
   for(uint32_t i=0; i<indexList_.size(); ++i)
@@ -298,6 +328,9 @@ void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
   }
   z_[index_i] = z_i;
   z_[index_j] = z_j;
+  // //`````testing``````````````
+  // std::cout << z_i << std::endl << z_j <<std::endl;
+  // //`````testing``````````````
 }
 
 

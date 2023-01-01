@@ -53,9 +53,6 @@ public:
   vector<Dist_t> components_; //
   vector<Normal<double>> parameters_; //parameter vector
 
-
   //spilt/merge proposal
   vector<int> indexList_;
-
-
 };

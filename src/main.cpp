@@ -134,16 +134,26 @@ int main(int argc, char **argv)
     {
         cout<<"------------ t="<<t<<" -------------"<<endl;
         cout << "Number of components: " << dpmm.K_ << endl;
-
-        // uint32_t index_i = uni_(rndGen);
-        // uint32_t index_j = uni_(rndGen);
-        // if (dpmm.z_[index_i] == dpmm.z_[index_j])
-        // dpmm.splitProposal(index_i,index_j);
         // std::cout<<dpmm.z_<<std::endl;
         dpmm.sampleCoefficients();
         dpmm.sampleParameters();
         dpmm.sampleLabels();
         dpmm.reorderAssignments();
+
+        if (t!=0 && t%10==0)
+        {
+            for (uint32_t tt=0; tt<10; ++tt)
+            {
+                uint32_t index_i = uni_(rndGen);
+                uint32_t index_j = uni_(rndGen);
+                while (dpmm.z_[index_i] != dpmm.z_[index_j] || index_i == index_j) 
+                {
+                    index_i = uni_(rndGen);
+                    index_j = uni_(rndGen);            
+                }
+                dpmm.splitProposal(index_i,index_j);
+            }
+        }
     }
 
 
