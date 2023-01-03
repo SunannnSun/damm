@@ -31,6 +31,7 @@ public:
   double transitionProb(const uint32_t index_i, const uint32_t index_j);
   double posteriorRatio(const uint32_t index_i, const uint32_t index_j, const double prevPi, Normal<double>& prevParameter);
   void reorderAssignments();
+  void updateIndexLists();
   vector<vector<int>> getIndexLists();
   const VectorXi & getLabels(){return z_;};
 
@@ -56,4 +57,5 @@ public:
 
   //spilt/merge proposal
   vector<int> indexList_;
+  vector<vector<int>> indexLists_;
 };

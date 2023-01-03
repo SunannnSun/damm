@@ -149,14 +149,14 @@ int main(int argc, char **argv)
 
         if (t >= 40 && t%10==0)
         {
-            vector<vector<int>> indexLists = dpmm.getIndexLists();
             for (int k=0; k<dpmm.K_; ++k)
             {   
-                vector<int> kIndexLists = indexLists[k];
                 for (int tt = 0; tt < 3; ++tt)
                 {
-                    // std::cout << tt << std::endl;
-                    dpmm.splitProposal(kIndexLists);
+                    vector<vector<int>> indexLists = dpmm.getIndexLists();
+                    vector<int> indexList_k = indexLists[k];   
+                    if (indexList_k.size()>=10)
+                    dpmm.splitProposal(indexList_k);
                 }
             }
         }

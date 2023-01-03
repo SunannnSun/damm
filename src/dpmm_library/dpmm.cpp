@@ -87,8 +87,10 @@ void DPMM<Dist_t>::splitProposal(vector<int> indexList)
     // dpmm_split.sampleCoefficientsParameters(index_i, index_j);
     dpmm_split.sampleLabels(index_i, index_j);  
   }
+  
+  this ->getIndexLists();
 
-    double transitionRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j);
+  double transitionRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j);
   // std::cout << Pi_(z_[index_j]) << std::endl;
 
   double posteriorRatio = dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]);
@@ -96,10 +98,11 @@ void DPMM<Dist_t>::splitProposal(vector<int> indexList)
   // std::cout << dpmm_split.transitionProb(index_i, index_j) << std::endl;
   // std::cout << dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]) << std::endl;
   double acceptanceRatio = transitionRatio * posteriorRatio;
-  if (acceptanceRatio != 1) 
+  if (acceptanceRatio >= 1) 
   {
     z_ = dpmm_split.z_;
     K_ += 1;
+    this ->getIndexLists();
     this -> sampleCoefficients();
     this -> sampleParameters();
     std::cout << "Split proposal Aceepted" << std::endl;
@@ -151,16 +154,18 @@ void DPMM<Dist_t>::sampleCoefficients()
 {
   VectorXi Nk(K_);
   Nk.setZero();
-  #pragma omp parallel for num_threads(8) schedule(static)
+  // #pragma omp parallel for num_threads(8) schedule(static)
   for(uint32_t ii=0; ii<N_; ++ii)
   {
     Nk(z_(ii))++;
   }
   // Nk(K_) = alpha_;
+  // std::cout << Nk << std::endl;
 
   VectorXd Pi(K_);
   for (uint32_t k=0; k<K_; ++k)
   {
+    assert(Nk(k)!=0);
     boost::random::gamma_distribution<> gamma_(Nk(k), 1);
     Pi(k) = gamma_(*pRndGen_);
   }
@@ -349,7 +354,7 @@ void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleLabels()
 {
-  #pragma omp parallel for num_threads(8) schedule(static)
+  // #pragma omp parallel for num_threads(8) schedule(static)
   for(uint32_t i=0; i<N_; ++i)
   {
     VectorXd x_i;
@@ -482,6 +487,13 @@ void DPMM<Dist_t>::reorderAssignments()
 template <class Dist_t>
 vector<vector<int>> DPMM<Dist_t>::getIndexLists()
 {
+  this ->updateIndexLists();
+  return indexLists_;
+}
+
+template <class Dist_t>
+void DPMM<Dist_t>::updateIndexLists()
+{
   vector<vector<int>> indexLists;
   for (int k=0; k<K_; ++k)
   {
@@ -495,7 +507,7 @@ vector<vector<int>> DPMM<Dist_t>::getIndexLists()
     indexLists.push_back(kIndexLists);
   }
   assert(indexLists.size() == K_);
-  return indexLists;
+  indexLists_ = indexLists;
 }
 
 
