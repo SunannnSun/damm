@@ -134,28 +134,33 @@ int main(int argc, char **argv)
     {
         cout<<"------------ t="<<t<<" -------------"<<endl;
         cout << "Number of components: " << dpmm.K_ << endl;
-        // std::cout<<dpmm.z_<<std::endl;
+
+        ////----------------testing-------------------------////
+        // vector<int> indexLists = dpmm.getIndexLists()[0];
+        // dpmm.splitProposal(indexLists);
+        // std::cout << dpmm.K_ << std::endl;
+        // std::cout << dpmm.Pi_ << std::endl;
+        ////----------------testing-------------------------////
+
         dpmm.sampleCoefficients();
         dpmm.sampleParameters();
         dpmm.sampleLabels();
         dpmm.reorderAssignments();
 
-        if (t!=0 && t%10==0)
+        if (t >= 40 && t%10==0)
         {
-            for (uint32_t tt=0; tt<10; ++tt)
-            {
-                uint32_t index_i = uni_(rndGen);
-                uint32_t index_j = uni_(rndGen);
-                while (dpmm.z_[index_i] != dpmm.z_[index_j] || index_i == index_j) 
+            vector<vector<int>> indexLists = dpmm.getIndexLists();
+            for (int k=0; k<dpmm.K_; ++k)
+            {   
+                vector<int> kIndexLists = indexLists[k];
+                for (int tt = 0; tt < 3; ++tt)
                 {
-                    index_i = uni_(rndGen);
-                    index_j = uni_(rndGen);            
+                    // std::cout << tt << std::endl;
+                    dpmm.splitProposal(kIndexLists);
                 }
-                dpmm.splitProposal(index_i,index_j);
             }
         }
     }
-
 
     const VectorXi& z = dpmm.getLabels();
     string pathOut;

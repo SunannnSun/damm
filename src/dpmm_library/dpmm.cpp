@@ -32,8 +32,8 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha
 
   K_ = z_.maxCoeff() + 1; // equivalent to the number of initial clusters
   
-  this -> sampleCoefficients();
-  this -> sampleParameters();
+  this -> sampleCoefficients(); //Pi_
+  this -> sampleParameters();  //parameters_; components_
 };
 
 
@@ -44,46 +44,51 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
 
 
 template <class Dist_t> 
-void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
+void DPMM<Dist_t>::splitProposal(vector<int> indexList)
 { 
+  boost::random::uniform_int_distribution<> uni_(0, indexList.size()-1);
+  uint32_t index_i = indexList[uni_(*pRndGen_)];
+  uint32_t index_j = indexList[uni_(*pRndGen_)];
+  while (index_i == index_j)
+  {
+    index_i = indexList[uni_(*pRndGen_)];
+    index_j = indexList[uni_(*pRndGen_)];
+  }
+  assert(index_i!=index_j);
+  
+
   VectorXi z_launch = z_; //original assignment vector
   uint32_t z_split_i = z_launch.maxCoeff() + 1;
   uint32_t z_split_j = z_launch[index_j];
 
-  // std::cout << z_split_i << std::endl;
+  // std::cout << z_split_i << std::endl<< z_split_j << std::endl;
 
-  vector<int> sIndexList;  
-  boost::random::uniform_int_distribution<> uni_(0, 1);
-  for (uint32_t ii = 0; ii<N_; ++ii)
+
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (uint32_t ii = 0; ii<indexList.size(); ++ii)
   {
-    if (z_launch[ii] == z_split_j) 
-    {
-      if (uni_(*pRndGen_) == 0) z_launch[ii] = z_split_i;
-      else z_launch[ii] = z_split_j;
-      sIndexList.push_back(ii); //set S including index_i and index_j
-    }
+    if (uni_01(*pRndGen_) == 0) z_launch[indexList[ii]] = z_split_i;
+    else z_launch[indexList[ii]] = z_split_j;
   }
 
-  // std::cout << sIndexList.size() << std::endl;
+  // std::cout << indexList.size() << std::endl;
 
   z_launch[index_i] = z_split_i;
   z_launch[index_j] = z_split_j;
 
   // std::cout << "begin" << index_i << std::endl<< index_j << std::endl;
 
-  DPMM<Dist_t> dpmm_split(x_, z_launch, sIndexList, alpha_, H_, this->pRndGen_);
-  for (uint32_t t=0; t<25; ++t)
+  DPMM<Dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, this->pRndGen_);
+  for (uint32_t t=0; t<50; ++t)
   {
     // std::cout << t << std::endl;
-    // dpmm_split.sampleCoefficients(index_i, index_j);
-    // dpmm_split.sampleParameters(index_i, index_j); 
-    dpmm_split.sampleCoefficientsParameters(index_i, index_j);
+    dpmm_split.sampleCoefficients(index_i, index_j);
+    dpmm_split.sampleParameters(index_i, index_j); 
+    // dpmm_split.sampleCoefficientsParameters(index_i, index_j);
     dpmm_split.sampleLabels(index_i, index_j);  
   }
 
-  
-
-  double transitionRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j);
+    double transitionRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j);
   // std::cout << Pi_(z_[index_j]) << std::endl;
 
   double posteriorRatio = dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]);
@@ -91,7 +96,7 @@ void DPMM<Dist_t>::splitProposal(const uint32_t index_i, const uint32_t index_j)
   // std::cout << dpmm_split.transitionProb(index_i, index_j) << std::endl;
   // std::cout << dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]) << std::endl;
   double acceptanceRatio = transitionRatio * posteriorRatio;
-  if (acceptanceRatio > 1) 
+  if (acceptanceRatio != 1) 
   {
     z_ = dpmm_split.z_;
     K_ += 1;
@@ -187,7 +192,7 @@ void DPMM<Dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t ind
     Pi(k) = gamma_(*pRndGen_);
   }
   Pi_ = Pi / Pi.sum();
-  std::cout << Pi_ <<std::endl;
+  // std::cout << Pi_ <<std::endl;
 }
 
 
@@ -199,13 +204,13 @@ void DPMM<Dist_t>::sampleParameters()
 
   for (uint32_t k=0; k<K_; ++k)
   {
-    vector<int> x_k_index;
+    vector<int> indexList_k;
     for (uint32_t ii = 0; ii<N_; ++ii)
     {
-      if (z_[ii] == k) x_k_index.push_back(ii); 
+      if (z_[ii] == k) indexList_k.push_back(ii); 
     }
-    MatrixXd x_k(x_k_index.size(), x_.cols()); 
-    x_k = x_(x_k_index, all);
+    MatrixXd x_k(indexList_k.size(), x_.cols()); 
+    x_k = x_(indexList_k, all);
 
     components_.push_back(H_.posterior(x_k));
     parameters_.push_back(components_[k].sampleParameter());
@@ -218,25 +223,28 @@ void DPMM<Dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index
   components_.clear();
   parameters_.clear();
 
-  vector<int> x_i_index;
-  vector<int> x_j_index;
+  vector<int> indexList_i;
+  vector<int> indexList_j;
 
   for (uint32_t ii = 0; ii<indexList_.size(); ++ii)  //To-do: This can be combined with sampleCoefficients
   {
-    if (z_[indexList_[ii]]==z_[index_i]) x_i_index.push_back(ii); 
-    else x_j_index.push_back(ii); 
+    if (z_[indexList_[ii]]==z_[index_i]) 
+    indexList_i.push_back(indexList_[ii]); 
+    else if (z_[indexList_[ii]]==z_[index_j])
+    indexList_j.push_back(indexList_[ii]);
   }
-  MatrixXd x_i(x_i_index.size(), x_.cols()); 
-  MatrixXd x_j(x_j_index.size(), x_.cols()); 
+  assert(indexList_i.size() + indexList_j.size() == indexList_.size());
+  MatrixXd x_i(indexList_i.size(), x_.cols()); 
+  MatrixXd x_j(indexList_j.size(), x_.cols()); 
 
 
   //`````testing``````````````
-  // std::cout << x_i_index.size() << std::endl << x_j_index.size() << std::endl;
+  // std::cout << indexList_i.size() << std::endl << indexList_j.size() << std::endl;
   //`````testing``````````````
 
 
-  x_i = x_(x_i_index, all);
-  x_j = x_(x_j_index, all);
+  x_i = x_(indexList_i, all);
+  x_j = x_(indexList_j, all);
 
   components_.push_back(H_.posterior(x_i));
   components_.push_back(H_.posterior(x_j));
@@ -248,21 +256,25 @@ void DPMM<Dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j)
 {
-  vector<int> x_i_index;
-  vector<int> x_j_index;
+  vector<int> indexList_i;
+  vector<int> indexList_j;
 
   // std::cout << index_i <<std::endl << index_j << std::endl;
   assert(z_[index_i] !=  z_[index_j]);
   // #pragma omp parallel for num_threads(8) schedule(dynamic,100)
   for (uint32_t ii = 0; ii<indexList_.size(); ++ii) 
   {
-    if (z_[indexList_[ii]]==z_[index_i]) x_i_index.push_back(ii); 
-    else x_j_index.push_back(ii); 
+    if (z_[indexList_[ii]]==z_[index_i]) 
+    indexList_i.push_back(indexList_[ii]); 
+    else if (z_[indexList_[ii]]==z_[index_j])
+    indexList_j.push_back(indexList_[ii]);
   }
-  MatrixXd x_i(x_i_index.size(), x_.cols()); 
-  MatrixXd x_j(x_j_index.size(), x_.cols()); 
-  x_i = x_(x_i_index, all);
-  x_j = x_(x_j_index, all);
+  assert(indexList_i.size() + indexList_j.size() == indexList_.size());
+
+  MatrixXd x_i(indexList_i.size(), x_.cols()); 
+  MatrixXd x_j(indexList_j.size(), x_.cols()); 
+  x_i = x_(indexList_i, all);
+  x_j = x_(indexList_j, all);
   
   components_.clear();
   parameters_.clear();
@@ -273,8 +285,8 @@ void DPMM<Dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const ui
   
 
   VectorXi Nk(2);
-  Nk(0) = x_i_index.size();
-  Nk(1) = x_j_index.size();
+  Nk(0) = indexList_i.size();
+  Nk(1) = indexList_j.size();
 
 
   // //`````testing``````````````
@@ -305,7 +317,7 @@ void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
   uint32_t z_j = z_[index_j];
   assert(z_i!=z_j);
   boost::random::uniform_01<> uni_;    //maybe put in constructor?
-  #pragma omp parallel for num_threads(8) schedule(static)
+  // #pragma omp parallel for num_threads(8) schedule(static)
   for(uint32_t i=0; i<indexList_.size(); ++i)
   {
     VectorXd x_i;
@@ -386,18 +398,18 @@ void DPMM<Dist_t>::sampleLabels()
 //     // #pragma omp parallel for
 //     for (uint32_t k=0; k<K_; ++k)
 //     { 
-//       vector<int> x_k_index;
+//       vector<int> indexList_k;
 //       for (uint32_t ii = 0; ii<N_; ++ii)
 //       {
-//         if (ii!= i && z_[ii] == k) x_k_index.push_back(ii); 
+//         if (ii!= i && z_[ii] == k) indexList_k.push_back(ii); 
 //       }
-//       // if (x_k_index.empty()) 
+//       // if (indexList_k.empty()) 
 //       // cout << "no index" << endl;
 //       // cout << "im here" <<endl;
 
 
-//       MatrixXd x_k(x_k_index.size(), x_.cols()); 
-//       x_k = x_(x_k_index, all);
+//       MatrixXd x_k(indexList_k.size(), x_.cols()); 
+//       x_k = x_(indexList_k, all);
 //       // cout << "x_i" << x_i << endl;
 //       // cout << "x_k" << x_k << endl;
 //       // cout << "component:" <<k  <<endl;
@@ -464,16 +476,27 @@ void DPMM<Dist_t>::reorderAssignments()
     }
   }
   K_ = z_.maxCoeff() + 1;
-  // if(K_>parameters_.size())
-  // parameters_.push_back(H_);
-  // else if(K_<parameters_.size())
-  // parameters_.pop_back();
-    // std::cout << "Element found in myvector: " << *it << '\n';
-    // else
-    // std::cout << "Element not found in myvector\n";
 }
-    // cout << z_ << endl;
 
+
+template <class Dist_t>
+vector<vector<int>> DPMM<Dist_t>::getIndexLists()
+{
+  vector<vector<int>> indexLists;
+  for (int k=0; k<K_; ++k)
+  {
+    vector<int> kIndexLists;
+    for (int i=0; i<N_; ++i)
+    {
+      if (z_[i] == k)
+      kIndexLists.push_back(i);
+    }
+    std::cout << k << ": " << kIndexLists.size() << std::endl;
+    indexLists.push_back(kIndexLists);
+  }
+  assert(indexLists.size() == K_);
+  return indexLists;
+}
 
 
 
