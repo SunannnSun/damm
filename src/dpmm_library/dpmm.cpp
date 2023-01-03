@@ -44,7 +44,76 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
 
 
 template <class Dist_t> 
-void DPMM<Dist_t>::splitProposal(vector<int> indexList)
+int DPMM<Dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j)
+{ 
+  VectorXi z_split = z_; //original split state
+  
+  boost::random::uniform_int_distribution<> uni_i(0, indexList_i.size()-1);
+  boost::random::uniform_int_distribution<> uni_j(0, indexList_j.size()-1);
+  uint32_t index_i = indexList_i[uni_i(*pRndGen_)];
+  uint32_t index_j = indexList_j[uni_j(*pRndGen_)];
+  assert(index_i!=index_j);
+
+  VectorXi z_launch = z_; 
+  uint32_t z_split_i = z_[index_i];
+  uint32_t z_split_j = z_[index_j];
+
+  vector<int> indexList;
+  indexList.reserve( indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
+  indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
+  assert(indexList.size() == indexList_i.size() + indexList_j.size());
+
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (uint32_t ii = 0; ii<indexList.size(); ++ii)
+  {
+    if (uni_01(*pRndGen_) == 0) z_launch[indexList[ii]] = z_split_i;
+    else z_launch[indexList[ii]] = z_split_j;
+  }
+  z_launch[index_i] = z_split_i;
+  z_launch[index_j] = z_split_j;
+
+
+  DPMM<Dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, this->pRndGen_);
+  for (uint32_t t=0; t<50; ++t)
+  {
+    // std::cout << t << std::endl;
+    dpmm_merge.sampleCoefficients(index_i, index_j);
+    dpmm_merge.sampleParameters(index_i, index_j); 
+    // dpmm_split.sampleCoefficientsParameters(index_i, index_j);
+    dpmm_merge.sampleLabels(index_i, index_j);  
+  }
+
+  indexList_i = dpmm_merge.getIndexLists()[z_split_i];
+  indexList_j = dpmm_merge.getIndexLists()[z_split_j];
+
+  double transitionRatio = dpmm_merge.transitionProb(index_i, index_j, z_);
+  double posteriorRatio = 1.0 / dpmm_merge.posteriorRatio(indexList_i, indexList_j, indexList);
+  double acceptanceRatio = transitionRatio * posteriorRatio;
+
+  if (acceptanceRatio >= 1) 
+  {
+    std::cout << "Component " << z_split_i << " and " << z_split_j << ": Merge proposal Aceepted" << std::endl; 
+    z_ = dpmm_merge.z_;
+    K_ -= 1;
+    this ->updateIndexLists();
+    this -> sampleCoefficients();
+    this -> sampleParameters();
+    std::cout << "Component " << z_split_i << " and " << z_split_j << ": Merge proposal Aceepted" << std::endl;
+    // std::cout << Pi_ << std::endl;
+    // std::cout << parameters_.size() << std::endl;
+    return 0;
+  }
+  else
+  {
+    std::cout  << "Component " << z_split_i << " and " << z_split_j << ": Merge proposal Rejected" << std::endl;
+    return 1;
+  }
+}
+
+
+template <class Dist_t> 
+int DPMM<Dist_t>::splitProposal(vector<int> indexList)
 { 
   boost::random::uniform_int_distribution<> uni_(0, indexList.size()-1);
   uint32_t index_i = indexList[uni_(*pRndGen_)];
@@ -82,36 +151,35 @@ void DPMM<Dist_t>::splitProposal(vector<int> indexList)
   for (uint32_t t=0; t<50; ++t)
   {
     // std::cout << t << std::endl;
-    dpmm_split.sampleCoefficients(index_i, index_j);
-    dpmm_split.sampleParameters(index_i, index_j); 
-    // dpmm_split.sampleCoefficientsParameters(index_i, index_j);
+    // dpmm_split.sampleCoefficients(index_i, index_j);
+    // dpmm_split.sampleParameters(index_i, index_j); 
+    dpmm_split.sampleCoefficientsParameters(index_i, index_j);
     dpmm_split.sampleLabels(index_i, index_j);  
   }
   
-  this ->getIndexLists();
+  vector<int> indexList_i = dpmm_split.getIndexLists()[z_split_i];
+  vector<int> indexList_j = dpmm_split.getIndexLists()[z_split_j];
 
   double transitionRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j);
-  // std::cout << Pi_(z_[index_j]) << std::endl;
-
-  double posteriorRatio = dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]);
-
-  // std::cout << dpmm_split.transitionProb(index_i, index_j) << std::endl;
-  // std::cout << dpmm_split.posteriorRatio(index_i, index_j, Pi_(z_[index_j]), parameters_[z_[index_j]]) << std::endl;
+  double posteriorRatio = dpmm_split.posteriorRatio(indexList_i, indexList_j, indexList);
   double acceptanceRatio = transitionRatio * posteriorRatio;
+
   if (acceptanceRatio >= 1) 
   {
     z_ = dpmm_split.z_;
     K_ += 1;
-    this ->getIndexLists();
+    this ->updateIndexLists();
     this -> sampleCoefficients();
     this -> sampleParameters();
-    std::cout << "Split proposal Aceepted" << std::endl;
+    std::cout << "Component " << z_split_j <<": Split proposal Aceepted" << std::endl;
     // std::cout << Pi_ << std::endl;
     // std::cout << parameters_.size() << std::endl;
+    return 0;
   }
   else
   {
-    std::cout << "Split proposal Rejected" << std::endl;
+    std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
+    return 1;
   }
 }
 
@@ -133,18 +201,33 @@ double DPMM<Dist_t>::transitionProb(const uint32_t index_i, const uint32_t index
   return transitionProb;
 }
 
-template <class Dist_t>
-double DPMM<Dist_t>::posteriorRatio(const uint32_t index_i, const uint32_t index_j, const double prevPi, Normal<double>& prevParameter)
+template <class Dist_t> 
+double DPMM<Dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j,VectorXi z_original)
 {
+  z_ = z_original;
+  return this->transitionProb(index_i, index_j);
+}
+
+
+template <class Dist_t>
+double DPMM<Dist_t>::posteriorRatio(vector<int> indexList_i, vector<int> indexList_j, vector<int> indexList_ij)
+{
+  Normal<double> parameter_ij = H_.posterior(x_(indexList_ij, all)).sampleParameter();
+  Normal<double> parameter_i  = H_.posterior(x_(indexList_i, all)).sampleParameter();
+  Normal<double> parameter_j  = H_.posterior(x_(indexList_j, all)).sampleParameter();
+
   double logPosteriorRatio = 0;
-  for (uint32_t ii=0; ii < indexList_.size(); ++ii)
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
   {
-    if (z_[indexList_[ii]] == z_[index_i])
-    logPosteriorRatio += log(Pi_(0)) + parameters_[0].logProb(x_(indexList_[ii], all)) ;
-    else
-    logPosteriorRatio += log(Pi_(1)) + parameters_[1].logProb(x_(indexList_[ii], all)); 
-    logPosteriorRatio -= prevParameter.logProb(x_(indexList_[ii], all));
-  }  
+    logPosteriorRatio += log(indexList_i.size()) + parameter_i.logProb(x_(indexList_i[ii], all)) ;
+    logPosteriorRatio -= parameter_ij.logProb(x_(indexList_i[ii], all));
+  }
+  for (uint32_t jj=0; jj < indexList_j.size(); ++jj)
+  {
+    logPosteriorRatio += log(indexList_j.size()) + parameter_j.logProb(x_(indexList_j[jj], all)) ;
+    logPosteriorRatio -= parameter_ij.logProb(x_(indexList_j[jj], all));
+  }
+
   return exp(logPosteriorRatio);
 }
 
@@ -221,6 +304,14 @@ void DPMM<Dist_t>::sampleParameters()
     parameters_.push_back(components_[k].sampleParameter());
   }
 }
+
+
+template <class Dist_t> 
+Normal<double> DPMM<Dist_t>::sampleParameters(vector<int> indexList)
+{ 
+  return H_.posterior(x_(indexList, all)).sampleParameter();
+}
+
 
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index_j)
@@ -503,7 +594,7 @@ void DPMM<Dist_t>::updateIndexLists()
       if (z_[i] == k)
       kIndexLists.push_back(i);
     }
-    std::cout << k << ": " << kIndexLists.size() << std::endl;
+    // std::cout << k << ": " << kIndexLists.size() << std::endl;
     indexLists.push_back(kIndexLists);
   }
   assert(indexLists.size() == K_);

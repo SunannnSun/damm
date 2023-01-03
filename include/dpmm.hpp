@@ -24,18 +24,21 @@ public:
   void sampleCoefficients(const uint32_t index_i, const uint32_t index_j);
   void sampleParameters();
   void sampleParameters(const uint32_t index_i, const uint32_t index_j);
+  Normal<double> sampleParameters(vector<int> indexList);
   void sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j);
   void sampleLabels();
   void sampleLabels(const uint32_t index_i, const uint32_t index_j);
 
   double transitionProb(const uint32_t index_i, const uint32_t index_j);
-  double posteriorRatio(const uint32_t index_i, const uint32_t index_j, const double prevPi, Normal<double>& prevParameter);
+  double transitionProb(const uint32_t index_i, const uint32_t index_j, VectorXi z_original);
+  double posteriorRatio(vector<int> indexList_i, vector<int> indexList_j, vector<int> indexList_ij);
   void reorderAssignments();
   void updateIndexLists();
   vector<vector<int>> getIndexLists();
   const VectorXi & getLabels(){return z_;};
 
-  void splitProposal(vector<int> sIndexList);
+  int splitProposal(vector<int> sIndexList);
+  int mergeProposal(vector<int> indexList_i, vector<int> indexList_j);
 
 public:
   //class constructor(indepedent of data)
@@ -52,8 +55,8 @@ public:
   uint16_t K_;
 
   //sampled parameters
-  vector<Dist_t> components_; //
-  vector<Normal<double>> parameters_; //parameter vector
+  vector<Dist_t> components_; // NIW
+  vector<Normal<double>> parameters_; //Normal
 
   //spilt/merge proposal
   vector<int> indexList_;

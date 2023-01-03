@@ -136,8 +136,8 @@ int main(int argc, char **argv)
         cout << "Number of components: " << dpmm.K_ << endl;
 
         ////----------------testing-------------------------////
-        // vector<int> indexLists = dpmm.getIndexLists()[0];
-        // dpmm.splitProposal(indexLists);
+        // vector<vector<int>> indexLists = dpmm.getIndexLists();
+        // dpmm.mergeProposal(indexLists[0], indexLists[1]);
         // std::cout << dpmm.K_ << std::endl;
         // std::cout << dpmm.Pi_ << std::endl;
         ////----------------testing-------------------------////
@@ -147,19 +147,36 @@ int main(int argc, char **argv)
         dpmm.sampleLabels();
         dpmm.reorderAssignments();
 
-        if (t >= 40 && t%10==0)
-        {
-            for (int k=0; k<dpmm.K_; ++k)
+        // /*
+        if (t == 40)
+        {   
+            int KK = dpmm.K_;
+            for (int k=0; k<KK; ++k)
             {   
-                for (int tt = 0; tt < 3; ++tt)
+                vector<vector<int>> indexLists = dpmm.getIndexLists();
+                vector<int> indexList_k = indexLists[k];   
+                int tt = 0;
+                while (tt < 3)
                 {
-                    vector<vector<int>> indexLists = dpmm.getIndexLists();
-                    vector<int> indexList_k = indexLists[k];   
-                    if (indexList_k.size()>=10)
-                    dpmm.splitProposal(indexList_k);
+                    if (dpmm.splitProposal(indexList_k)==0)
+                    break;                    
+                    tt++;
                 }
             }
         }
+        // */
+
+        // /*
+        if (t == 80)
+        {   
+            for (int tt=0; tt<10; tt++)
+            {   
+                vector<vector<int>> indexLists = dpmm.getIndexLists();
+                boost::random::uniform_int_distribution<> uni_(0, indexLists.size()-1);
+                dpmm.mergeProposal(indexLists[uni_(rndGen)], indexLists[uni_(rndGen)]);
+            }
+        }
+        // */
     }
 
     const VectorXi& z = dpmm.getLabels();
