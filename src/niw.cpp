@@ -2,7 +2,6 @@
 #include <cmath>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/math/special_functions/gamma.hpp>
-
 #include <boost/random/chi_squared_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
 

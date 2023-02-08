@@ -5,10 +5,8 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/program_options.hpp>
-
-
-// #include "niw.hpp"
-// #include "dpmm.hpp"
+#include "niw.hpp"
+#include "dpmm.hpp"
 
 
 
@@ -128,15 +126,15 @@ int main(int argc, char **argv)
     }
     
  
-    // NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
-    // DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, &rndGen);
+    NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+    DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, &rndGen);
     // // dpmm.initialize(data, init_cluster);
 
-    // boost::random::uniform_int_distribution<> uni_(0, num-1);
-    // for (uint32_t t=0; t<T; ++t)
-    // {
-    //     cout<<"------------ t="<<t<<" -------------"<<endl;
-    //     cout << "Number of components: " << dpmm.K_ << endl;
+    boost::random::uniform_int_distribution<> uni_(0, num-1);
+    for (uint32_t t=0; t<T; ++t)
+    {
+        cout<<"------------ t="<<t<<" -------------"<<endl;
+        cout << "Number of components: " << dpmm.K_ << endl;
 
     //     ////----------------testing-------------------------////
     //     // vector<vector<int>> indexLists = dpmm.getIndexLists();
@@ -145,10 +143,10 @@ int main(int argc, char **argv)
     //     // std::cout << dpmm.Pi_ << std::endl;
     //     ////----------------testing-------------------------////
 
-    //     dpmm.sampleCoefficients();
-    //     dpmm.sampleParameters();
-    //     dpmm.sampleLabels();
-    //     dpmm.reorderAssignments();
+        dpmm.sampleCoefficients();
+        dpmm.sampleParameters();
+        dpmm.sampleLabels();
+        dpmm.reorderAssignments();
 
     //     // /*
     //     if (t == 40)
@@ -180,21 +178,21 @@ int main(int argc, char **argv)
     //         }
     //     }
     //     // */
-    // }
+    }
 
-    // const VectorXi& z = dpmm.getLabels();
-    // string pathOut;
-    // if(vm.count("output")) pathOut = vm["output"].as<string>();
-    // if (!pathOut.compare(""))
-    // {
-    //     cout<<"please specify an output data file"<<endl;
-    //     exit(1);
-    // }
-    // else cout<<"Output to "<<pathOut<<endl;
-    // ofstream fout(pathOut.data(),ofstream::out);
-    // for (uint16_t i=0; i < z.size(); ++i)
-    //     fout << z[i] << endl;
-    // fout.close();
+    const VectorXi& z = dpmm.getLabels();
+    string pathOut;
+    if(vm.count("output")) pathOut = vm["output"].as<string>();
+    if (!pathOut.compare(""))
+    {
+        cout<<"please specify an output data file"<<endl;
+        exit(1);
+    }
+    else cout<<"Output to "<<pathOut<<endl;
+    ofstream fout(pathOut.data(),ofstream::out);
+    for (uint16_t i=0; i < z.size(); ++i)
+        fout << z[i] << endl;
+    fout.close();
 
     return 0;
 }   
