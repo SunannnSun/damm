@@ -54,7 +54,7 @@ lambda_0 = {
 params = np.r_[np.array([lambda_0['nu_0'], lambda_0['kappa_0']]), lambda_0['mu_0'].ravel(), lambda_0['sigma_0'].ravel()]
 
 
-args = ['time ' + os.path.abspath(os.getcwd()) + '/build/main',
+args = ['time ' + os.path.abspath(os.getcwd()) + '/main',
         '-n {}'.format(num),
         '-m {}'.format(dim),        
         '-i {}'.format(input_path),

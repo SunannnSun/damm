@@ -1,40 +1,23 @@
 # Dirichlet Process Mixture Model (Parallel Implementation)
 
-Tested on MacOS12.6 Apple M1 Pro
+Tested on Ubuntu 20.04; i7-1065G7 CPU (8 cores) 
 
-Apple has explicitly disabled OpenMP support in compilers that they ship in Xcode.
+As opposite to using cmakelists.txt in previous iteration, new implementation on Linux uses GCC terminal commands
 
-```
-brew install llvm
-```
+Package required: Eigen3.4(stable release) and boost_1_81_0; both under the system directory, or /usr/include
 
-<!-- export CC="/usr/local/Cellar/llvm/15.0.3/bin/clang"
-export CXX="/usr/local/Cellar/llvm/15.0.3/bin/clang++" 
-export LDFLAGS="-L/usr/local/Cellar/llvm/15.0.3/lib"
-export CPPFLAGS="-I/usr/local/Cellar/llvm/15.0.3/include" -->
+GCC can search for package under system directory, but both packages have unconventional names with version information, we need to specify the include path for GCC to search using the -I flag 
 
-Create temporary environment variables (Note: locate the correct path to "arm64" Brew)
-```
-export CC="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang"
-export CXX="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang++"
-export LDFLAGS="-L/opt/homebrew/Cellar/llvm/15.0.6/lib"
-export CPPFLAGS="-I/opt/homebrew/Cellar/llvm/15.0.6/include"
-```
+Eigen library is completely header-based; hence no separate compilation is needed and can be directly referenced and used once the include path is specified.
 
-Make files using cmake commands
-```
-mkdir build
-cd build
-cmake ../src -DCMAKE_OSX_ARCHITECTURES='arm64'
-make
-```
+On the other hand, boost library; while most of its functionalities are defined in header files, some packages do require separate compilation and linking; e.g., boost::program_options.
+
+Use the built-in build system from the boost:
+./bootstrap.sh --help
+Also, consider using the --show-libraries and --with-libraries=library-name-list options to limit the long wait you'll experience if you build everything. 
+./b2 install 
+
+The binary library, if not specified, by default will be installed under the directory usr/include/boost_1_81_0/stage/lib. Make sure then use the -L flag to specifiy the library path and use the -l flag to search for the specific library in the path
 
 
-Alternative methods to make files
-```
-cmake ../src -DCMAKE_CXX_COMPILER="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang++" 
-```
-or
-```
-CXX="/opt/homebrew/Cellar/llvm/15.0.6/bin/clang++" cmake ../src
-```
+g++ src/main.cpp -I/usr/include/eigen3.4 -I/usr/include/boost_1_81_0 -o -L/usr/include/boost_1_81_0/stage/lib -lboost_program_options -o main
