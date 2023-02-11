@@ -7,7 +7,7 @@ int main()
 {
     int *arr = new int[ARRAY_SIZE];
     std::fill_n(arr, ARRAY_SIZE, ARRAY_VALUE);
-    #pragma omp parallel for num_threads(4) 
+    #pragma omp parallel for num_threads(8) schedule(dynamic,10000)
     for(int i = 0; i < ARRAY_SIZE; i++)
     {
         arr[i] = arr[i] / arr[i] + arr[i] / 5 - 14;

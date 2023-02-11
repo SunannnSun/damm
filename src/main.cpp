@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     if(vm.count("seed"))
         seed = static_cast<uint64_t>(vm["seed"].as<int>());
     boost::mt19937 rndGen(seed);
-    std::srand(seed);
+    // std::srand(seed);
 
 
     int T = 0;
@@ -127,8 +127,7 @@ int main(int argc, char **argv)
     
  
     NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
-    DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, &rndGen);
-    // // dpmm.initialize(data, init_cluster);
+    DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, rndGen);
 
     boost::random::uniform_int_distribution<> uni_(0, num-1);
     for (uint32_t t=0; t<T; ++t)

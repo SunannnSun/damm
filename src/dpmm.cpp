@@ -9,8 +9,8 @@
 
 
 template <class Dist_t> 
-DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha, const Dist_t& H, boost::mt19937* pRndGen)
-: alpha_(alpha), H_(H), pRndGen_(pRndGen), x_(x), N_(x.rows())
+DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha, const Dist_t& H, boost::mt19937 &rndGen)
+: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows())
 {
   VectorXi z(x.rows());
   if (init_cluster == 1) 
@@ -21,7 +21,7 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha
   {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
     // #pragma omp parallel for num_threads(8) schedule(static)
-    for (int i=0; i<N_; ++i)z[i] = uni_(*pRndGen_); 
+    for (int i=0; i<N_; ++i)z[i] = uni_(rndGen_); 
   }
   else
   { 
@@ -38,8 +38,8 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha
 
 
 template <class Dist_t> 
-DPMM<Dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937* pRndGen)
-: alpha_(alpha), H_(H), pRndGen_(pRndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
+DPMM<Dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937 &rndGen)
+: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
 {};
 
 
@@ -50,8 +50,8 @@ int DPMM<Dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j
   
   boost::random::uniform_int_distribution<> uni_i(0, indexList_i.size()-1);
   boost::random::uniform_int_distribution<> uni_j(0, indexList_j.size()-1);
-  uint32_t index_i = indexList_i[uni_i(*pRndGen_)];
-  uint32_t index_j = indexList_j[uni_j(*pRndGen_)];
+  uint32_t index_i = indexList_i[uni_i(rndGen_)];
+  uint32_t index_j = indexList_j[uni_j(rndGen_)];
   assert(index_i!=index_j);
 
   VectorXi z_launch = z_; 
@@ -67,14 +67,14 @@ int DPMM<Dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j
   boost::random::uniform_int_distribution<> uni_01(0, 1);
   for (uint32_t ii = 0; ii<indexList.size(); ++ii)
   {
-    if (uni_01(*pRndGen_) == 0) z_launch[indexList[ii]] = z_split_i;
+    if (uni_01(rndGen_) == 0) z_launch[indexList[ii]] = z_split_i;
     else z_launch[indexList[ii]] = z_split_j;
   }
   z_launch[index_i] = z_split_i;
   z_launch[index_j] = z_split_j;
 
 
-  DPMM<Dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, this->pRndGen_);
+  DPMM<Dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (uint32_t t=0; t<50; ++t)
   {
     // std::cout << t << std::endl;
@@ -116,12 +116,12 @@ template <class Dist_t>
 int DPMM<Dist_t>::splitProposal(vector<int> indexList)
 { 
   boost::random::uniform_int_distribution<> uni_(0, indexList.size()-1);
-  uint32_t index_i = indexList[uni_(*pRndGen_)];
-  uint32_t index_j = indexList[uni_(*pRndGen_)];
+  uint32_t index_i = indexList[uni_(rndGen_)];
+  uint32_t index_j = indexList[uni_(rndGen_)];
   while (index_i == index_j)
   {
-    index_i = indexList[uni_(*pRndGen_)];
-    index_j = indexList[uni_(*pRndGen_)];
+    index_i = indexList[uni_(rndGen_)];
+    index_j = indexList[uni_(rndGen_)];
   }
   assert(index_i!=index_j);
   
@@ -136,7 +136,7 @@ int DPMM<Dist_t>::splitProposal(vector<int> indexList)
   boost::random::uniform_int_distribution<> uni_01(0, 1);
   for (uint32_t ii = 0; ii<indexList.size(); ++ii)
   {
-    if (uni_01(*pRndGen_) == 0) z_launch[indexList[ii]] = z_split_i;
+    if (uni_01(rndGen_) == 0) z_launch[indexList[ii]] = z_split_i;
     else z_launch[indexList[ii]] = z_split_j;
   }
 
@@ -147,7 +147,7 @@ int DPMM<Dist_t>::splitProposal(vector<int> indexList)
 
   // std::cout << "begin" << index_i << std::endl<< index_j << std::endl;
 
-  DPMM<Dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, this->pRndGen_);
+  DPMM<Dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (uint32_t t=0; t<50; ++t)
   {
     // std::cout << t << std::endl;
@@ -237,7 +237,7 @@ void DPMM<Dist_t>::sampleCoefficients()
 {
   VectorXi Nk(K_);
   Nk.setZero();
-  // #pragma omp parallel for num_threads(8) schedule(static)
+  // #pragma omp parallel for num_threads(8) schedule(dynamic, N_/8)
   for(uint32_t ii=0; ii<N_; ++ii)
   {
     Nk(z_(ii))++;
@@ -250,9 +250,10 @@ void DPMM<Dist_t>::sampleCoefficients()
   {
     assert(Nk(k)!=0);
     boost::random::gamma_distribution<> gamma_(Nk(k), 1);
-    Pi(k) = gamma_(*pRndGen_);
+    Pi(k) = gamma_(rndGen_);
   }
   Pi_ = Pi / Pi.sum();
+  // std::cout << Nk << std::endl;
 }
 
 
@@ -277,7 +278,7 @@ void DPMM<Dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t ind
   for (uint32_t k=0; k<2; ++k)
   {
     boost::random::gamma_distribution<> gamma_(Nk(k), 1);
-    Pi(k) = gamma_(*pRndGen_);
+    Pi(k) = gamma_(rndGen_);
   }
   Pi_ = Pi / Pi.sum();
   // std::cout << Pi_ <<std::endl;
@@ -394,7 +395,7 @@ void DPMM<Dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const ui
   for (uint32_t k=0; k<2; ++k)
   {
     boost::random::gamma_distribution<> gamma_(Nk(k), 1);
-    Pi(k) = gamma_(*pRndGen_);
+    Pi(k) = gamma_(rndGen_);
   }
   Pi_ = Pi / Pi.sum();
 
@@ -430,7 +431,7 @@ void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
     for (uint32_t ii = 1; ii < prob.size(); ++ii){
       prob[ii] = prob[ii-1]+ prob[ii];
     }
-    double uni_draw = uni_(*this->pRndGen_);
+    double uni_draw = uni_(rndGen_);
     if (uni_draw < prob[0]) z_[indexList_[i]] = z_i;
     else z_[indexList_[i]] = z_j;
   }
@@ -445,12 +446,14 @@ void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
 template <class Dist_t> 
 void DPMM<Dist_t>::sampleLabels()
 {
-  // #pragma omp parallel for num_threads(8) schedule(static)
+  #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
   for(uint32_t i=0; i<N_; ++i)
   {
     VectorXd x_i;
     x_i = x_(i, all); //current data point x_i
     VectorXd prob(K_);
+    // #pragma omp simd 
+    #pragma omp parallel for num_threads(4) schedule(static)
     for (uint32_t k=0; k<K_; ++k)
     {
       prob[k] = log(Pi_[k]) + parameters_[k].logProb(x_i);
@@ -463,7 +466,7 @@ void DPMM<Dist_t>::sampleLabels()
       prob[ii] = prob[ii-1]+ prob[ii];
     }
     boost::random::uniform_01<> uni_;   
-    double uni_draw = uni_(*this->pRndGen_);
+    double uni_draw = uni_(rndGen_);
     uint32_t k = 0;
     while (prob[k] < uni_draw) k++;
     z_[i] = k;
@@ -536,7 +539,7 @@ void DPMM<Dist_t>::sampleLabels()
    
 //     boost::random::uniform_01<> uni_;   
 //     boost::random::variate_generator<boost::random::mt19937&, 
-//                            boost::random::uniform_01<> > var_nor(*H_.pRndGen_, uni_);
+//                            boost::random::uniform_01<> > var_nor(*H_.rndGen_, uni_);
 //     double uni_draw = var_nor();
 //     uint32_t k = 0;
 //     while (pi[k] < uni_draw) k++;

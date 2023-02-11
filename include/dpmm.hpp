@@ -14,8 +14,8 @@ template <class Dist_t>
 class DPMM
 {
 public:
-  DPMM(const MatrixXd& x, const int init_cluster, const double alpha, const Dist_t& H, boost::mt19937* pRndGen);
-  DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937* pRndGen);
+  DPMM(const MatrixXd& x, const int init_cluster, const double alpha, const Dist_t& H, boost::mt19937& rndGen);
+  DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937& rndGen);
   ~DPMM(){};
 
   void splitProposal();
@@ -44,7 +44,7 @@ public:
   //class constructor(indepedent of data)
   double alpha_; 
   Dist_t H_; 
-  boost::mt19937* pRndGen_;
+  boost::mt19937 rndGen_;
 
   //class initializer(dependent on data)
   MatrixXd x_;

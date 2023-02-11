@@ -20,4 +20,4 @@ Also, consider using the --show-libraries and --with-libraries=library-name-list
 The binary library, if not specified, by default will be installed under the directory usr/include/boost_1_81_0/stage/lib. Make sure then use the -L flag to specifiy the library path and use the -l flag to search for the specific library in the path
 
 
-g++ src/main.cpp -I/usr/include/eigen3.4 -I/usr/include/boost_1_81_0 -o -L/usr/include/boost_1_81_0/stage/lib -lboost_program_options -o main
+g++ src/niw.cpp src/normal.cpp src/dpmm.cpp src/main.cpp -fopenmp -Iinclude -I/usr/include/eigen3.4 -I/usr/include/boost_1_81_0 -o main -L/usr/include/boost_1_81_0/stage/lib -lboost_program_options
