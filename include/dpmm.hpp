@@ -14,7 +14,7 @@ template <class dist_t>
 class DPMM
 {
 public:
-  DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, boost::mt19937& rndGen);
+  DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen);
   DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
   ~DPMM(){};
 
@@ -38,7 +38,7 @@ public:
   vector<vector<int>> getIndexLists();
   const VectorXi & getLabels(){return z_;};
 
-  int splitProposal(vector<int> sIndexList);
+  int splitProposal(vector<int> indexList);
   int mergeProposal(vector<int> indexList_i, vector<int> indexList_j);
 
 public:

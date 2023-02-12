@@ -9,7 +9,7 @@
 
 
 template <class dist_t> 
-DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, boost::mt19937 &rndGen)
+DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows())
 {
   VectorXi z(x.rows());
@@ -148,7 +148,7 @@ int DPMM<dist_t>::splitProposal(vector<int> indexList)
   // std::cout << "begin" << index_i << std::endl<< index_j << std::endl;
 
   DPMM<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
-  for (uint32_t t=0; t<50; ++t)
+  for (uint32_t t=0; t<500; ++t)
   {
     // std::cout << t << std::endl;
     // dpmm_split.sampleCoefficients(index_i, index_j);
@@ -291,17 +291,17 @@ void DPMM<dist_t>::sampleCoefficientsParameters()
   parameters_.clear();
   VectorXd Pi(K_);
 
-  vector<int> indexLists_arr[K_];
+  vector<vector<int>> indexLists(K_);
   for (uint32_t ii = 0; ii<N_; ++ii)
   {
-    indexLists_arr[z_[ii]].push_back(ii); 
+    indexLists[z_[ii]].push_back(ii); 
   }
   
   for (uint32_t k=0; k<K_; ++k)
   {
-    boost::random::gamma_distribution<> gamma_(indexLists_arr[k].size(), 1);
+    boost::random::gamma_distribution<> gamma_(indexLists[k].size(), 1);
     Pi(k) = gamma_(rndGen_);
-    components_.push_back(H_.posterior(x_(indexLists_arr[k], all)));
+    components_.push_back(H_.posterior(x_(indexLists[k], all)));
     parameters_.push_back(components_[k].sampleParameter());
   }
   Pi_ = Pi / Pi.sum();
@@ -374,7 +374,7 @@ void DPMM<dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j)
+void DPMM<dist_t>::sampleCoefficientsParameters(uint32_t index_i, uint32_t index_j)
 {
   vector<int> indexList_i;
   vector<int> indexList_j;
@@ -437,7 +437,7 @@ void DPMM<dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
   uint32_t z_j = z_[index_j];
   assert(z_i!=z_j);
   boost::random::uniform_01<> uni_;    //maybe put in constructor?
-  // #pragma omp parallel for num_threads(8) schedule(static)
+  #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
   for(uint32_t i=0; i<indexList_.size(); ++i)
   {
     VectorXd x_i;
@@ -609,19 +609,11 @@ vector<vector<int>> DPMM<dist_t>::getIndexLists()
 template <class dist_t>
 void DPMM<dist_t>::updateIndexLists()
 {
-  vector<vector<int>> indexLists;
-  for (int k=0; k<K_; ++k)
+  vector<vector<int>> indexLists(K_);
+  for (uint32_t ii = 0; ii<N_; ++ii)
   {
-    vector<int> kIndexLists;
-    for (int i=0; i<N_; ++i)
-    {
-      if (z_[i] == k)
-      kIndexLists.push_back(i);
-    }
-    // std::cout << k << ": " << kIndexLists.size() << std::endl;
-    indexLists.push_back(kIndexLists);
+    indexLists[z_[ii]].push_back(ii); 
   }
-  assert(indexLists.size() == K_);
   indexLists_ = indexLists;
 }
 

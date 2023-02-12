@@ -135,6 +135,10 @@ int main(int argc, char **argv)
         cout<<"------------ t="<<t<<" -------------"<<endl;
         cout << "Number of components: " << dpmm.K_ << endl;
 
+        // vector<vector<int>> indexLists = dpmm.getIndexLists();
+        // std::cout << indexLists[0].size() << std::endl;
+        // dpmm.splitProposal(indexLists[0]);
+
     //     ////----------------testing-------------------------////
     //     // vector<vector<int>> indexLists = dpmm.getIndexLists();
     //     // dpmm.mergeProposal(indexLists[0], indexLists[1]);
@@ -149,24 +153,24 @@ int main(int argc, char **argv)
         dpmm.sampleLabels();
         dpmm.reorderAssignments();
 
-    //     // /*
-    //     if (t == 40)
-    //     {   
-    //         int KK = dpmm.K_;
-    //         for (int k=0; k<KK; ++k)
-    //         {   
-    //             vector<vector<int>> indexLists = dpmm.getIndexLists();
-    //             vector<int> indexList_k = indexLists[k];   
-    //             int tt = 0;
-    //             while (tt < 3)
-    //             {
-    //                 if (dpmm.splitProposal(indexList_k)==0)
-    //                 break;                    
-    //                 tt++;
-    //             }
-    //         }
-    //     }
-    //     // */
+        // /*
+        if (t%1000==0 && t<=7000)
+        {   
+            int KK = dpmm.K_;
+            for (int k=0; k<KK; ++k)
+            {   
+                vector<vector<int>> indexLists = dpmm.getIndexLists();
+                vector<int> indexList_k = indexLists[k];   
+                int tt = 0;
+                while (tt < 3)
+                {
+                    if (dpmm.splitProposal(indexList_k)==0)
+                    break;                    
+                    tt++;
+                }
+            }
+        }
+        // */
 
     //     // /*
     //     if (t == 80)
