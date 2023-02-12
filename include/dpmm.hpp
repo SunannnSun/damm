@@ -10,12 +10,12 @@ using namespace Eigen;
 using namespace std;
 
 
-template <class Dist_t>
+template <class dist_t>
 class DPMM
 {
 public:
-  DPMM(const MatrixXd& x, const int init_cluster, const double alpha, const Dist_t& H, boost::mt19937& rndGen);
-  DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937& rndGen);
+  DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, boost::mt19937& rndGen);
+  DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
   ~DPMM(){};
 
   void splitProposal();
@@ -25,6 +25,7 @@ public:
   void sampleParameters();
   void sampleParameters(const uint32_t index_i, const uint32_t index_j);
   Normal<double> sampleParameters(vector<int> indexList);
+  void sampleCoefficientsParameters();
   void sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j);
   void sampleLabels();
   void sampleLabels(const uint32_t index_i, const uint32_t index_j);
@@ -43,7 +44,7 @@ public:
 public:
   //class constructor(indepedent of data)
   double alpha_; 
-  Dist_t H_; 
+  dist_t H_; 
   boost::mt19937 rndGen_;
 
   //class initializer(dependent on data)
@@ -55,7 +56,7 @@ public:
   uint16_t K_;
 
   //sampled parameters
-  vector<Dist_t> components_; // NIW
+  vector<dist_t> components_; // NIW
   vector<Normal<double>> parameters_; //Normal
 
   //spilt/merge proposal

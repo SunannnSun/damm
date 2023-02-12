@@ -43,8 +43,8 @@ int main(int argc, char **argv)
     } 
 
 
-    // uint64_t seed = time(0);
-    uint64_t seed = 1671503159;
+    uint64_t seed = time(0);
+    // uint64_t seed = 1671503159;
     if(vm.count("seed"))
         seed = static_cast<uint64_t>(vm["seed"].as<int>());
     boost::mt19937 rndGen(seed);
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
     double nu;
     double kappa;
-    MatrixXd sigma(dim,dim);
+    MatrixXd sigma(dim, dim);
     VectorXd mu(dim);
     if(vm.count("params")){
         // cout << "Parameters received.\n";
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     }
     
  
-    NIW<double> niw(sigma, mu, nu, kappa, &rndGen);
+    NIW<double> niw(sigma, mu, nu, kappa, rndGen);
     DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, rndGen);
 
     boost::random::uniform_int_distribution<> uni_(0, num-1);
@@ -141,9 +141,11 @@ int main(int argc, char **argv)
     //     // std::cout << dpmm.K_ << std::endl;
     //     // std::cout << dpmm.Pi_ << std::endl;
     //     ////----------------testing-------------------------////
+        
 
-        dpmm.sampleCoefficients();
-        dpmm.sampleParameters();
+        // dpmm.sampleCoefficients();
+        // dpmm.sampleParameters();
+        dpmm.sampleCoefficientsParameters();
         dpmm.sampleLabels();
         dpmm.reorderAssignments();
 

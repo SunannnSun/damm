@@ -1,6 +1,5 @@
 #include "niw.hpp"
 #include <cmath>
-#include <boost/random/mersenne_twister.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/random/chi_squared_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -10,9 +9,9 @@
 
 
 template<class T>
-NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic>& Sigma, 
-  const Matrix<T,Dynamic,Dynamic>& mu,const T nu, const T kappa, boost::mt19937* pRndGen)
-: Sigma_(Sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), pRndGen_(pRndGen) 
+NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic> &Sigma, 
+  const Matrix<T,Dynamic,Dynamic> &mu, T nu, T kappa, boost::mt19937 &rndGen)
+: Sigma_(Sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), rndGen_(rndGen) 
 {
   assert(Sigma_.rows()==mu_.size()); 
   assert(Sigma_.cols()==mu_.size());
@@ -25,9 +24,9 @@ NIW<T>::~NIW()
 
 
 template<class T>
-T NIW<T>::logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k)
+T NIW<T>::logPosteriorProb(const Vector<T,Dynamic> &x_i, const Matrix<T,Dynamic, Dynamic> &x_k)
 {
-  NIW<T> posterior = this ->posterior(x_k);
+  NIW<T> posterior = this->posterior(x_k);
   return posterior.logProb(x_i);
 };
 
@@ -42,7 +41,7 @@ T NIW<T>::logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic,
 
 
 template<class T>
-NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
+NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
   getSufficientStatistics(x_k);
   return NIW<T>(
@@ -50,15 +49,14 @@ NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
       *(mean_-mu_)*(mean_-mu_).transpose(), 
     (kappa_*mu_+ count_*mean_)/(kappa_+count_),
     nu_+count_,
-    kappa_+count_, this->pRndGen_);
+    kappa_+count_, rndGen_);
 };
 
 
 template<class T>
-void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
+void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
 	mean_ = x_k.colwise().mean();
-  // cout << mean <<endl;
   Matrix<T,Dynamic, Dynamic> x_k_mean;
   // MatrixXd x_k
   x_k_mean = x_k.rowwise() - mean_.transpose();
@@ -125,10 +123,10 @@ Normal<T> NIW<T>::sampleParameter()
   for (uint32_t i=0; i<dim_; ++i)
   {
     boost::random::chi_squared_distribution<> chiSq_(nu_-i);
-    matrixA(i,i) = sqrt(chiSq_(*this->pRndGen_)); 
+    matrixA(i,i) = sqrt(chiSq_(rndGen_)); 
     for (uint32_t j=i+1; j<dim_; ++j)
     {
-      matrixA(j, i) = gauss_(*this->pRndGen_);
+      matrixA(j, i) = gauss_(rndGen_);
     }
   }
   sampledCov = matrixA.inverse()*cholFacotor;
@@ -139,11 +137,11 @@ Normal<T> NIW<T>::sampleParameter()
   cholFacotor = lltObj.matrixL();
 
   for (uint32_t i=0; i<dim_; ++i)
-    sampledMean[i] = gauss_(*this->pRndGen_);
+    sampledMean[i] = gauss_(rndGen_);
   sampledMean = cholFacotor * sampledMean / sqrt(kappa_) + mu_;
 
   
-  return Normal<T>(sampledMean, sampledCov, this->pRndGen_);
+  return Normal<T>(sampledMean, sampledCov, rndGen_);
 };
 
 
@@ -163,4 +161,3 @@ Normal<T> NIW<T>::sampleParameter()
 
 
 template class NIW<double>;
-template class NIW<float>;

@@ -8,8 +8,8 @@
 #include "dpmm.hpp"
 
 
-template <class Dist_t> 
-DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha, const Dist_t& H, boost::mt19937 &rndGen)
+template <class dist_t> 
+DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows())
 {
   VectorXi z(x.rows());
@@ -37,14 +37,14 @@ DPMM<Dist_t>::DPMM(const MatrixXd& x, const int init_cluster, const double alpha
 };
 
 
-template <class Dist_t> 
-DPMM<Dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const Dist_t& H, boost::mt19937 &rndGen)
+template <class dist_t> 
+DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
 {};
 
 
-template <class Dist_t> 
-int DPMM<Dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j)
+template <class dist_t> 
+int DPMM<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j)
 { 
   VectorXi z_split = z_; //original split state
   
@@ -74,7 +74,7 @@ int DPMM<Dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j
   z_launch[index_j] = z_split_j;
 
 
-  DPMM<Dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
+  DPMM<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (uint32_t t=0; t<50; ++t)
   {
     // std::cout << t << std::endl;
@@ -112,8 +112,8 @@ int DPMM<Dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j
 }
 
 
-template <class Dist_t> 
-int DPMM<Dist_t>::splitProposal(vector<int> indexList)
+template <class dist_t> 
+int DPMM<dist_t>::splitProposal(vector<int> indexList)
 { 
   boost::random::uniform_int_distribution<> uni_(0, indexList.size()-1);
   uint32_t index_i = indexList[uni_(rndGen_)];
@@ -147,7 +147,7 @@ int DPMM<Dist_t>::splitProposal(vector<int> indexList)
 
   // std::cout << "begin" << index_i << std::endl<< index_j << std::endl;
 
-  DPMM<Dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
+  DPMM<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (uint32_t t=0; t<50; ++t)
   {
     // std::cout << t << std::endl;
@@ -184,8 +184,8 @@ int DPMM<Dist_t>::splitProposal(vector<int> indexList)
 }
 
 
-template <class Dist_t> 
-double DPMM<Dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j)
+template <class dist_t> 
+double DPMM<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j)
 {
   assert(!components_.empty());
   double transitionProb = 1;
@@ -201,16 +201,16 @@ double DPMM<Dist_t>::transitionProb(const uint32_t index_i, const uint32_t index
   return transitionProb;
 }
 
-template <class Dist_t> 
-double DPMM<Dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j,VectorXi z_original)
+template <class dist_t> 
+double DPMM<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j,VectorXi z_original)
 {
   z_ = z_original;
   return this->transitionProb(index_i, index_j);
 }
 
 
-template <class Dist_t>
-double DPMM<Dist_t>::posteriorRatio(vector<int> indexList_i, vector<int> indexList_j, vector<int> indexList_ij)
+template <class dist_t>
+double DPMM<dist_t>::posteriorRatio(vector<int> indexList_i, vector<int> indexList_j, vector<int> indexList_ij)
 {
   Normal<double> parameter_ij = H_.posterior(x_(indexList_ij, all)).sampleParameter();
   Normal<double> parameter_i  = H_.posterior(x_(indexList_i, all)).sampleParameter();
@@ -232,12 +232,11 @@ double DPMM<Dist_t>::posteriorRatio(vector<int> indexList_i, vector<int> indexLi
 }
 
 
-template <class Dist_t> 
-void DPMM<Dist_t>::sampleCoefficients()
+template <class dist_t> 
+void DPMM<dist_t>::sampleCoefficients()
 {
   VectorXi Nk(K_);
   Nk.setZero();
-  // #pragma omp parallel for num_threads(8) schedule(dynamic, N_/8)
   for(uint32_t ii=0; ii<N_; ++ii)
   {
     Nk(z_(ii))++;
@@ -257,8 +256,8 @@ void DPMM<Dist_t>::sampleCoefficients()
 }
 
 
-template <class Dist_t> 
-void DPMM<Dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t index_j)
+template <class dist_t> 
+void DPMM<dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t index_j)
 {
   VectorXi Nk(2);
   Nk.setZero();
@@ -285,8 +284,32 @@ void DPMM<Dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t ind
 }
 
 
-template <class Dist_t> 
-void DPMM<Dist_t>::sampleParameters()
+template <class dist_t> 
+void DPMM<dist_t>::sampleCoefficientsParameters()
+{ 
+  components_.clear();
+  parameters_.clear();
+  VectorXd Pi(K_);
+
+  vector<int> indexLists_arr[K_];
+  for (uint32_t ii = 0; ii<N_; ++ii)
+  {
+    indexLists_arr[z_[ii]].push_back(ii); 
+  }
+  
+  for (uint32_t k=0; k<K_; ++k)
+  {
+    boost::random::gamma_distribution<> gamma_(indexLists_arr[k].size(), 1);
+    Pi(k) = gamma_(rndGen_);
+    components_.push_back(H_.posterior(x_(indexLists_arr[k], all)));
+    parameters_.push_back(components_[k].sampleParameter());
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleParameters()
 { 
   components_.clear();
   parameters_.clear();
@@ -307,15 +330,15 @@ void DPMM<Dist_t>::sampleParameters()
 }
 
 
-template <class Dist_t> 
-Normal<double> DPMM<Dist_t>::sampleParameters(vector<int> indexList)
+template <class dist_t> 
+Normal<double> DPMM<dist_t>::sampleParameters(vector<int> indexList)
 { 
   return H_.posterior(x_(indexList, all)).sampleParameter();
 }
 
 
-template <class Dist_t> 
-void DPMM<Dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index_j)
+template <class dist_t> 
+void DPMM<dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index_j)
 {
   components_.clear();
   parameters_.clear();
@@ -350,8 +373,8 @@ void DPMM<Dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index
 }
 
 
-template <class Dist_t> 
-void DPMM<Dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j)
+template <class dist_t> 
+void DPMM<dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j)
 {
   vector<int> indexList_i;
   vector<int> indexList_j;
@@ -407,8 +430,8 @@ void DPMM<Dist_t>::sampleCoefficientsParameters(const uint32_t index_i, const ui
 
 
 
-template <class Dist_t> 
-void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
+template <class dist_t> 
+void DPMM<dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
 {
   uint32_t z_i = z_[index_i];
   uint32_t z_j = z_[index_j];
@@ -443,8 +466,8 @@ void DPMM<Dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
 }
 
 
-template <class Dist_t> 
-void DPMM<Dist_t>::sampleLabels()
+template <class dist_t> 
+void DPMM<dist_t>::sampleLabels()
 {
   #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
   for(uint32_t i=0; i<N_; ++i)
@@ -452,8 +475,6 @@ void DPMM<Dist_t>::sampleLabels()
     VectorXd x_i;
     x_i = x_(i, all); //current data point x_i
     VectorXd prob(K_);
-    // #pragma omp simd 
-    #pragma omp parallel for num_threads(4) schedule(static)
     for (uint32_t k=0; k<K_; ++k)
     {
       prob[k] = log(Pi_[k]) + parameters_[k].logProb(x_i);
@@ -550,8 +571,8 @@ void DPMM<Dist_t>::sampleLabels()
 // };
 
 
-template <class Dist_t>
-void DPMM<Dist_t>::reorderAssignments()
+template <class dist_t>
+void DPMM<dist_t>::reorderAssignments()
 { 
   // cout << z_ << endl;
   vector<uint8_t> rearrange_list;
@@ -578,15 +599,15 @@ void DPMM<Dist_t>::reorderAssignments()
 }
 
 
-template <class Dist_t>
-vector<vector<int>> DPMM<Dist_t>::getIndexLists()
+template <class dist_t>
+vector<vector<int>> DPMM<dist_t>::getIndexLists()
 {
   this ->updateIndexLists();
   return indexLists_;
 }
 
-template <class Dist_t>
-void DPMM<Dist_t>::updateIndexLists()
+template <class dist_t>
+void DPMM<dist_t>::updateIndexLists()
 {
   vector<vector<int>> indexLists;
   for (int k=0; k<K_; ++k)
@@ -606,8 +627,8 @@ void DPMM<Dist_t>::updateIndexLists()
 
 
 
-// template <class Dist_t>
-// void DPMM<Dist_t>::removeEmptyClusters()
+// template <class dist_t>
+// void DPMM<dist_t>::removeEmptyClusters()
 // {
 //   for(uint32_t k=parameters_.size()-1; k>=0; --k)
 //   {

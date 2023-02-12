@@ -46,19 +46,19 @@ Run the built-in build tools in boost:
 
 and then,
 
-```./b2 install ```
+```sudo ./b2 install ```
 
-The built shared library is a dynamic library. Hence, we need to add the environmental variables that allow the source code to locate the library at run time:
+<!-- The built shared library is a dynamic library. Hence, we need to add the environmental variables that allow the source code to locate the library at run time:
 
 ```LD_LIBRARY_PATH=/usr/include/boost_1_81_0/stage/lib```
 
-```export $LD_LIBRARY_PATH```
+```export $LD_LIBRARY_PATH``` -->
 
 Now we can go back to the root directory of dpmm and compile the source code using the following command,
 
 ```cd dpmm```
 
-```g++ -O1 -fopenmp -Iinclude -I/usr/include/eigen3.4 -I/usr/include/boost_1_81_0 src/niw.cpp src/normal.cpp src/dpmm.cpp src/main.cpp -o main -L/usr/include/boost_1_81_0/stage/lib -lboost_program_options```
+```g++ -O1 -fopenmp -Iinclude -I/usr/include/eigen-3.4.0 -I/usr/include/boost_1_81_0 src/niw.cpp src/normal.cpp src/dpmm.cpp src/main.cpp -o main -lboost_program_options```
 
 
 And execute the code 
