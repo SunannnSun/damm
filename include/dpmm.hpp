@@ -39,6 +39,7 @@ public:
   const VectorXi & getLabels(){return z_;};
 
   int splitProposal(vector<int> indexList);
+  void sampleSplit(uint32_t z_i, uint32_t z_j);
   int mergeProposal(vector<int> indexList_i, vector<int> indexList_j);
 
 public:

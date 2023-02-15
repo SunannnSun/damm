@@ -43,8 +43,8 @@ int main(int argc, char **argv)
     } 
 
 
-    uint64_t seed = time(0);
-    // uint64_t seed = 1671503159;
+    // uint64_t seed = time(0);
+    uint64_t seed = 1671503159;
     if(vm.count("seed"))
         seed = static_cast<uint64_t>(vm["seed"].as<int>());
     boost::mt19937 rndGen(seed);
@@ -147,14 +147,26 @@ int main(int argc, char **argv)
     //     ////----------------testing-------------------------////
         
 
-        // dpmm.sampleCoefficients();
-        // dpmm.sampleParameters();
         dpmm.sampleCoefficientsParameters();
         dpmm.sampleLabels();
         dpmm.reorderAssignments();
 
+        // int KK = dpmm.K_;
+        // for (int k=0; k<KK; ++k)
+        // {   
+        //     vector<vector<int>> indexLists = dpmm.getIndexLists();
+        //     vector<int> indexList_k = indexLists[k];   
+        //     int tt = 0;
+        //     while (tt < 3)
+        //     {
+        //         std::cout << indexList_k.size() << std::endl;
+        //         if (dpmm.splitProposal(indexList_k)==0)
+        //         break;                    
+        //         tt++;
+        //     }
+        // }
         // /*
-        if (t%1000==0 && t<=7000)
+        if (t%1000==0 && t<=7000 && t!=0)
         {   
             int KK = dpmm.K_;
             for (int k=0; k<KK; ++k)

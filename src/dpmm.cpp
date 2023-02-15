@@ -115,6 +115,7 @@ int DPMM<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j
 template <class dist_t> 
 int DPMM<dist_t>::splitProposal(vector<int> indexList)
 { 
+  // /*
   boost::random::uniform_int_distribution<> uni_(0, indexList.size()-1);
   uint32_t index_i = indexList[uni_(rndGen_)];
   uint32_t index_j = indexList[uni_(rndGen_)];
@@ -130,8 +131,6 @@ int DPMM<dist_t>::splitProposal(vector<int> indexList)
   uint32_t z_split_i = z_launch.maxCoeff() + 1;
   uint32_t z_split_j = z_launch[index_j];
 
-  // std::cout << z_split_i << std::endl<< z_split_j << std::endl;
-
 
   boost::random::uniform_int_distribution<> uni_01(0, 1);
   for (uint32_t ii = 0; ii<indexList.size(); ++ii)
@@ -140,21 +139,35 @@ int DPMM<dist_t>::splitProposal(vector<int> indexList)
     else z_launch[indexList[ii]] = z_split_j;
   }
 
-  // std::cout << indexList.size() << std::endl;
 
   z_launch[index_i] = z_split_i;
   z_launch[index_j] = z_split_j;
+  // */
+  
 
-  // std::cout << "begin" << index_i << std::endl<< index_j << std::endl;
+  /*
+  VectorXi z_launch = z_; //original assignment vector including all xs
+  uint32_t z_split_i = z_launch.maxCoeff() + 1;
+  uint32_t z_split_j = z_launch[indexList[0]];
 
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (uint32_t ii = 0; ii<indexList.size(); ++ii)
+  {
+    if (uni_01(rndGen_) == 0) z_launch[indexList[ii]] = z_split_i;
+    else z_launch[indexList[ii]] = z_split_j;
+  }
+  */
+  
   DPMM<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
-  for (uint32_t t=0; t<500; ++t)
+
+  for (uint32_t t=0; t<1000; ++t)
   {
     // std::cout << t << std::endl;
     // dpmm_split.sampleCoefficients(index_i, index_j);
     // dpmm_split.sampleParameters(index_i, index_j); 
     dpmm_split.sampleCoefficientsParameters(index_i, index_j);
     dpmm_split.sampleLabels(index_i, index_j);  
+    // dpmm_split.sampleSplit(z_split_i, z_split_j);  
   }
   
   vector<int> indexList_i = dpmm_split.getIndexLists()[z_split_i];
@@ -163,12 +176,13 @@ int DPMM<dist_t>::splitProposal(vector<int> indexList)
   double transitionRatio = 1.0 / dpmm_split.transitionProb(index_i, index_j);
   double posteriorRatio = dpmm_split.posteriorRatio(indexList_i, indexList_j, indexList);
   double acceptanceRatio = transitionRatio * posteriorRatio;
+  
 
   if (acceptanceRatio >= 1) 
   {
     z_ = dpmm_split.z_;
     K_ += 1;
-    this ->updateIndexLists();
+    this -> updateIndexLists();
     this -> sampleCoefficients();
     this -> sampleParameters();
     std::cout << "Component " << z_split_j <<": Split proposal Aceepted" << std::endl;
@@ -255,6 +269,16 @@ void DPMM<dist_t>::sampleCoefficients()
   // std::cout << Nk << std::endl;
 }
 
+// template <class dist_t> 
+// void DPMM<dist_t>::sampleSplit()
+// {
+
+
+
+
+
+
+// }
 
 template <class dist_t> 
 void DPMM<dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t index_j)
@@ -371,6 +395,87 @@ void DPMM<dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index
   parameters_.push_back(components_[0].sampleParameter());
   parameters_.push_back(components_[1].sampleParameter());
 }
+
+
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleSplit(uint32_t z_i, uint32_t z_j)
+{
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+
+  // #pragma omp parallel for num_threads(8) schedule(dynamic,100)
+  for (uint32_t ii = 0; ii<indexList_.size(); ++ii) 
+  {
+    if (z_[indexList_[ii]]==z_i) 
+    indexList_i.push_back(indexList_[ii]); 
+    else if (z_[indexList_[ii]]==z_j)
+    indexList_j.push_back(indexList_[ii]);
+  }
+  assert(indexList_i.size() + indexList_j.size() == indexList_.size());
+
+  MatrixXd x_i(indexList_i.size(), x_.cols()); 
+  MatrixXd x_j(indexList_j.size(), x_.cols()); 
+  x_i = x_(indexList_i, all);
+  x_j = x_(indexList_j, all);
+  
+  components_.clear();
+  parameters_.clear();
+  components_.push_back(H_.posterior(x_i));
+  components_.push_back(H_.posterior(x_j));
+  parameters_.push_back(components_[0].sampleParameter());
+  parameters_.push_back(components_[1].sampleParameter());
+  
+
+  VectorXi Nk(2);
+  Nk(0) = indexList_i.size();
+  Nk(1) = indexList_j.size();
+
+
+  // //`````testing``````````````
+  // std::cout << Nk <<std::endl;
+  // //`````testing``````````````
+
+
+  VectorXd Pi(2);
+  for (uint32_t k=0; k<2; ++k)
+  {
+    boost::random::gamma_distribution<> gamma_(Nk(k), 1);
+    Pi(k) = gamma_(rndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+
+
+  // //`````testing``````````````
+  // std::cout << Pi_ <<std::endl;  
+  // //`````testing``````````````
+
+  boost::random::uniform_01<> uni_;    //maybe put in constructor?
+  #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
+  for(uint32_t i=0; i<indexList_.size(); ++i)
+  {
+    VectorXd x_i;
+    x_i = x_(indexList_[i], all); //current data point x_i from the index_list
+    VectorXd prob(2);
+    for (uint32_t k=0; k<2; ++k)
+    {
+      prob[k] = log(Pi_[k]) + parameters_[k].logProb(x_i); //first component is always the set of x_i (different notion from x_i here)
+    }
+
+    double prob_max = prob.maxCoeff();
+    prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    for (uint32_t ii = 1; ii < prob.size(); ++ii){
+      prob[ii] = prob[ii-1]+ prob[ii];
+    }
+    double uni_draw = uni_(rndGen_);
+    if (uni_draw < prob[0]) z_[indexList_[i]] = z_i;
+    else z_[indexList_[i]] = z_j;
+  }
+}
+
+
 
 
 template <class dist_t> 
