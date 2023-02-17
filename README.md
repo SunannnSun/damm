@@ -58,7 +58,7 @@ Now we can go back to the root directory of dpmm and compile the source code usi
 
 ```cd dpmm```
 
-```g++ -O1 -fopenmp -Iinclude -I/usr/include/eigen-3.4.0 -I/usr/include/boost_1_81_0 src/niw.cpp src/normal.cpp src/dpmm.cpp src/main.cpp -o main -lboost_program_options```
+```g++ -O1 -fopenmp -Iinclude -I/usr/include/eigen-3.4.0 -I/usr/include/boost_1_81_0 src/niw.cpp src/niwDir.cpp src/normal.cpp src/dpmm.cpp src/main.cpp -o main -lboost_program_options```
 
 
 And execute the code 

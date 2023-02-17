@@ -6,6 +6,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/program_options.hpp>
 #include "niw.hpp"
+#include "niwDir.hpp"
 #include "dpmm.hpp"
 
 
@@ -17,6 +18,14 @@ using namespace Eigen;
 
 int main(int argc, char **argv)
 {   
+    // std::srand(seed);
+    // if(vm.count("seed"))
+    // seed = static_cast<uint64_t>(vm["seed"].as<int>());
+    // uint64_t seed = time(0);
+    uint64_t seed = 1671503159;
+    boost::mt19937 rndGen(seed);
+    
+
     cout << "Hello Parallel World" << endl;
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -28,6 +37,7 @@ int main(int argc, char **argv)
         ("iteration,t", po::value<int>(), "Numer of Sampler Iteration")
         ("alpha,a", po::value<double>(), "Concentration value")
         ("init", po::value<int>(), "Number of initial clusters")
+        ("base", po::value<int>(), "Base type: 0 euclidean, 1 euclidean + directional")
         ("params,p", po::value< vector<double> >()->multitoken(), "parameters of the base measure")
     ;
 
@@ -37,26 +47,30 @@ int main(int argc, char **argv)
     po::notify(vm);   
 
 
-    if (vm.count("help")) {
-    cout << desc << "\n";
-    return 1;
+    if (vm.count("help")) 
+    {
+        cout << desc << "\n";
+        return 1;
     } 
 
 
-    // uint64_t seed = time(0);
-    uint64_t seed = 1671503159;
-    if(vm.count("seed"))
-        seed = static_cast<uint64_t>(vm["seed"].as<int>());
-    boost::mt19937 rndGen(seed);
-    // std::srand(seed);
+    int base = 0;
+    if(vm.count("base")) base = static_cast<uint64_t>(vm["base"].as<int>());
 
 
     int T = 0;
     if (vm.count("iteration")) T = vm["iteration"].as<int>();
+    assert(T != 0);
 
 
     double alpha = 0;
     if(vm.count("alpha")) alpha = vm["alpha"].as<double>();
+    assert(alpha != 0);
+
+    
+    int init_cluster = 0;
+    if (vm.count("init")) init_cluster = vm["init"].as<int>();
+    assert(init_cluster != 0);
 
 
     int num = 0;
@@ -64,44 +78,40 @@ int main(int argc, char **argv)
     assert(num != 0);
 
 
-    int dim = 0;
-    if (vm.count("dimension")) dim = vm["dimension"].as<int>();
-    assert(dim != 0);
-
-
-    int init_cluster = 0;
-    if (vm.count("init")) init_cluster = vm["init"].as<int>();
-
-
-    cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
-         <<"Number: " << num << "; Dimension:" << dim <<endl;
+    int dimParam = 0;
+    if (vm.count("dimension")) dimParam = vm["dimension"].as<int>();
+    assert(dimParam != 0);
 
 
     double nu;
     double kappa;
-    MatrixXd sigma(dim, dim);
-    VectorXd mu(dim);
-    if(vm.count("params")){
+    VectorXd mu(dimParam);
+    MatrixXd Sigma(dimParam, dimParam);   //Matrix variable named in capital
+    if(vm.count("params"))
+    {
         // cout << "Parameters received.\n";
-        vector<double> params = vm["params"].as< vector<double> >();
         // cout<<"params length="<<params.size()<<endl;
+        vector<double> params = vm["params"].as< vector<double> >();
         nu = params[0];
         kappa = params[1];
-        for(uint8_t i=0; i<dim; ++i)
+        for(uint8_t i=0; i<dimParam; ++i)
             mu(i) = params[2+i];
-        for(uint8_t i=0; i<dim; ++i)
-            for(uint8_t j=0; j<dim; ++j)
-                sigma(i,j) = params[2+dim+i+dim*j];
+        for(uint8_t i=0; i<dimParam; ++i)
+            for(uint8_t j=0; j<dimParam; ++j)
+                Sigma(i,j) = params[2+dimParam+i+dimParam*j];
     }
 
 
-    MatrixXd data(num, dim);
+    int dimData;
+    if (base==1) dimData = (dimParam-1)*2;
+    else  dimData = dimParam;    
+    MatrixXd Data(num, dimData);              //Matrix variable named in capital
     string pathIn ="";
     if(vm.count("input")) pathIn = vm["input"].as<string>();
     if (!pathIn.compare(""))
     {
         cout<<"please specify an input dataset"<<endl;
-        exit(1);
+        return 1;
     }
     else
     {
@@ -121,23 +131,86 @@ int main(int argc, char **argv)
         }
         fin.close();
         for (uint32_t i=0; i<num; ++i)
-            for (uint32_t j=0; j<dim; ++j)
-                data(i, j) = stod(parsedCsv[i][j]);
+            for (uint32_t j=0; j<dimData; ++j)
+                Data(i, j) = stod(parsedCsv[i][j]);
+    }
+
+
+    cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
+         <<"Number: " << num << "; Data Dimension:" << dimData << "; Parameter Dimension:" << dimParam <<endl;
+
+
+    if (base==0) 
+    {
+        NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
+        DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
+        for (uint32_t t=0; t<T; ++t)
+        {
+            cout<<"------------ t="<<t<<" -------------"<<endl;
+            cout << "Number of components: " << dpmm.K_ << endl;
+
+            dpmm.sampleCoefficientsParameters();
+            dpmm.sampleLabels();
+            dpmm.reorderAssignments();
+
+        }
+        
+        const VectorXi& z = dpmm.getLabels();
+        string pathOut;
+        if(vm.count("output")) pathOut = vm["output"].as<string>();
+        if (!pathOut.compare(""))
+        {
+            cout<<"please specify an output data file"<<endl;
+            exit(1);
+        }
+        else cout<<"Output to "<<pathOut<<endl;
+        ofstream fout(pathOut.data(),ofstream::out);
+        for (uint16_t i=0; i < z.size(); ++i)
+            fout << z[i] << endl;
+        fout.close();
+
+        return 0;
+    }
+    else if (base==1)
+    {
+        NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
+        DPMM<NIWDIR<double>> dpmm(Data, init_cluster, alpha, niwDir, rndGen);
+        for (uint32_t t=0; t<T; ++t)
+        {
+            // cout<<"------------ t="<<t<<" -------------"<<endl;
+            cout << "Number of components: " << dpmm.K_ << endl;
+            // dpmm.sampleCoefficientsParameters();
+            // dpmm.sampleLabels();
+            // dpmm.reorderAssignments();
+
+        }
+        
+        const VectorXi& z = dpmm.getLabels();
+        string pathOut;
+        if(vm.count("output")) pathOut = vm["output"].as<string>();
+        if (!pathOut.compare(""))
+        {
+            cout<<"please specify an output data file"<<endl;
+            exit(1);
+        }
+        else cout<<"Output to "<<pathOut<<endl;
+        ofstream fout(pathOut.data(),ofstream::out);
+        for (uint16_t i=0; i < z.size(); ++i)
+            fout << z[i] << endl;
+        fout.close();
+
+        return 0;
     }
     
- 
-    NIW<double> niw(sigma, mu, nu, kappa, rndGen);
-    DPMM<NIW<double>> dpmm(data, init_cluster, alpha, niw, rndGen);
+    // boost::random::uniform_int_distribution<> uni_(0, num-1);
+    // for (uint32_t t=0; t<T; ++t)
+    // {
+    //     // cout<<"------------ t="<<t<<" -------------"<<endl;
+    //     cout << "Number of components: " << dpmm.K_ << endl;
 
-    boost::random::uniform_int_distribution<> uni_(0, num-1);
-    for (uint32_t t=0; t<T; ++t)
-    {
-        cout<<"------------ t="<<t<<" -------------"<<endl;
-        cout << "Number of components: " << dpmm.K_ << endl;
-
-        // vector<vector<int>> indexLists = dpmm.getIndexLists();
-        // std::cout << indexLists[0].size() << std::endl;
-        // dpmm.splitProposal(indexLists[0]);
+    //     // vector<vector<int>> indexLists = dpmm.getIndexLists();
+    //     // std::cout << indexLists[0].size() << std::endl;
+    //     // dpmm.splitProposal(indexLists[0]);
 
     //     ////----------------testing-------------------------////
     //     // vector<vector<int>> indexLists = dpmm.getIndexLists();
@@ -147,44 +220,44 @@ int main(int argc, char **argv)
     //     ////----------------testing-------------------------////
         
 
-        dpmm.sampleCoefficientsParameters();
-        dpmm.sampleLabels();
-        dpmm.reorderAssignments();
+    //     // dpmm.sampleCoefficientsParameters();
+    //     // dpmm.sampleLabels();
+    //     // dpmm.reorderAssignments();
 
-        // int KK = dpmm.K_;
-        // for (int k=0; k<KK; ++k)
-        // {   
-        //     vector<vector<int>> indexLists = dpmm.getIndexLists();
-        //     vector<int> indexList_k = indexLists[k];   
-        //     int tt = 0;
-        //     while (tt < 3)
-        //     {
-        //         std::cout << indexList_k.size() << std::endl;
-        //         if (dpmm.splitProposal(indexList_k)==0)
-        //         break;                    
-        //         tt++;
-        //     }
-        // }
-        // /*
-        if (t%1000==0 && t<=7000 && t!=0)
-        {   
-            int KK = dpmm.K_;
-            for (int k=0; k<KK; ++k)
-            {   
-                vector<vector<int>> indexLists = dpmm.getIndexLists();
-                vector<int> indexList_k = indexLists[k];   
-                int tt = 0;
-                while (tt < 3)
-                {
-                    if (dpmm.splitProposal(indexList_k)==0)
-                    break;                    
-                    tt++;
-                }
-            }
-        }
-        // */
+    //     // int KK = dpmm.K_;
+    //     // for (int k=0; k<KK; ++k)
+    //     // {   
+    //     //     vector<vector<int>> indexLists = dpmm.getIndexLists();
+    //     //     vector<int> indexList_k = indexLists[k];   
+    //     //     int tt = 0;
+    //     //     while (tt < 3)
+    //     //     {
+    //     //         std::cout << indexList_k.size() << std::endl;
+    //     //         if (dpmm.splitProposal(indexList_k)==0)
+    //     //         break;                    
+    //     //         tt++;
+    //     //     }
+    //     // }
+    //     /*
+    //     if (t%1000==0 && t<=7000 && t!=0)
+    //     {   
+    //         int KK = dpmm.K_;
+    //         for (int k=0; k<KK; ++k)
+    //         {   
+    //             vector<vector<int>> indexLists = dpmm.getIndexLists();
+    //             vector<int> indexList_k = indexLists[k];   
+    //             int tt = 0;
+    //             while (tt < 3)
+    //             {
+    //                 if (dpmm.splitProposal(indexList_k)==0)
+    //                 break;                    
+    //                 tt++;
+    //             }
+    //         }
+    //     }
+    //     */
 
-    //     // /*
+    //     /*
     //     if (t == 80)
     //     {   
     //         for (int tt=0; tt<10; tt++)
@@ -194,22 +267,22 @@ int main(int argc, char **argv)
     //             dpmm.mergeProposal(indexLists[uni_(rndGen)], indexLists[uni_(rndGen)]);
     //         }
     //     }
-    //     // */
-    }
-
-    const VectorXi& z = dpmm.getLabels();
-    string pathOut;
-    if(vm.count("output")) pathOut = vm["output"].as<string>();
-    if (!pathOut.compare(""))
-    {
-        cout<<"please specify an output data file"<<endl;
-        exit(1);
-    }
-    else cout<<"Output to "<<pathOut<<endl;
-    ofstream fout(pathOut.data(),ofstream::out);
-    for (uint16_t i=0; i < z.size(); ++i)
-        fout << z[i] << endl;
-    fout.close();
-
-    return 0;
+    //     */
+    // }
+    
+    // /*
+    // const VectorXi& z = dpmm.getLabels();
+    // string pathOut;
+    // if(vm.count("output")) pathOut = vm["output"].as<string>();
+    // if (!pathOut.compare(""))
+    // {
+    //     cout<<"please specify an output data file"<<endl;
+    //     exit(1);
+    // }
+    // else cout<<"Output to "<<pathOut<<endl;
+    // ofstream fout(pathOut.data(),ofstream::out);
+    // for (uint16_t i=0; i < z.size(); ++i)
+    //     fout << z[i] << endl;
+    // fout.close();
+    // */
 }   

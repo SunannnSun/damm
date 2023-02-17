@@ -15,6 +15,7 @@ parser.add_argument('-d', '--data', type=int, default=1, help='Choose Matlab Dat
 parser.add_argument('-t', '--iteration', type=int, default=40, help='Number of Sampler Iterations; default=50')
 parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
 parser.add_argument('--init', type=int, default = 1, help='number of initial clusters, 0 is one cluster per data; default=1')
+parser.add_argument('--base', type=int, default = 0, help='sampling type; 0 is position; 1 is position+directional')
 args = parser.parse_args()
 
 
@@ -23,7 +24,7 @@ dataset_no        = args.data
 iteration         = args.iteration
 alpha             = args.alpha
 init_opt          = args.init
-
+base              = args.base
 
 input_path = './data/input.csv'
 output_path = './data/output.csv'
@@ -36,8 +37,8 @@ if input_opt == 2:
     nb_trajectories = 7
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
-    Data = Data[:, 0:2]
-num, dim = Data.shape
+    # Data = Data[:, 0:2]
+num = Data.shape[0]
 
 
 with open(input_path, mode='w') as data_file:
@@ -46,12 +47,27 @@ with open(input_path, mode='w') as data_file:
         data_writer.writerow(Data[i, :])
 
 
-lambda_0 = {
-    "nu_0": dim + 3,
-    "kappa_0": 1,
-    "mu_0": np.zeros(dim),
-    "sigma_0":  0.1 * np.eye(int(dim))
-}
+if base == 0:  # If only Eucliden distance is taken into account
+    dim = int(Data.shape[1]/2)
+    Data = Data[:, 0:dim]
+    lambda_0 = {
+        "nu_0": dim + 3,
+        "kappa_0": 1,
+        "mu_0": np.zeros(dim),
+        "sigma_0":  0.1 * np.eye(dim)
+    }
+elif base == 1:
+    dim = int(Data.shape[1]/2) + 1
+    sigma_0 = 0.1 * np.eye(dim)
+    sigma_0[-1, -1] = 0.001
+    lambda_0 = {
+        "nu_0": dim + 3,
+        "kappa_0": 1,
+        "mu_0": np.zeros(dim),
+        "sigma_0":  sigma_0
+    }
+
+
 params = np.r_[np.array([lambda_0['nu_0'], lambda_0['kappa_0']]), lambda_0['mu_0'].ravel(), lambda_0['sigma_0'].ravel()]
 
 
@@ -63,6 +79,7 @@ args = ['time ' + os.path.abspath(os.getcwd()) + '/main',
         '-t {}'.format(iteration),
         '-a {}'.format(alpha),
         '--init {}'.format(init_opt), 
+        '--base {}'.format(base),
         '-p ' + ' '.join([str(p) for p in params])
 ]
 

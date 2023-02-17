@@ -2,8 +2,6 @@
 
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
-
-#include "niw.hpp"
 #include "normal.hpp"
 
 using namespace Eigen;

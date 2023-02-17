@@ -6,6 +6,8 @@
 #include <boost/random/variate_generator.hpp>
 
 #include "dpmm.hpp"
+#include "niw.hpp"
+#include "niwDir.hpp"
 
 
 template <class dist_t> 
@@ -31,7 +33,7 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
   z_ = z;
 
   K_ = z_.maxCoeff() + 1; // equivalent to the number of initial clusters
-  
+  // indexList_ = 
   this -> sampleCoefficients(); //Pi_
   this -> sampleParameters();  //parameters_; components_
 };
@@ -746,4 +748,5 @@ void DPMM<dist_t>::updateIndexLists()
 // }
 
 template class DPMM<NIW<double>>;
+template class DPMM<NIWDIR<double>>;
 
