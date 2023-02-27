@@ -21,7 +21,6 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, int init_cluster, double alpha, cons
   else if (init_cluster >= 1)
   {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
-    // #pragma omp parallel for num_threads(8) schedule(static)
     for (int i=0; i<N_; ++i)z[i] = uni_(rndGen_); 
   }
   else
@@ -30,11 +29,7 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, int init_cluster, double alpha, cons
     exit(1);
   }
   z_ = z;
-
   K_ = z_.maxCoeff() + 1; // equivalent to the number of initial clusters
-  // indexList_ = 
-  // this -> sampleCoefficients(); //Pi_
-  // this -> sampleParameters();  //parameters_; components_
 };
 
 
@@ -104,8 +99,8 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters()
   {
     boost::random::gamma_distribution<> gamma_(indexLists[k].size(), 1);
     Pi(k) = gamma_(rndGen_);
-    // components_.push_back(H_.posterior(x_(indexLists[k], all)));
-    // parameters_.push_back(components_[k].sampleParameter());
+    components_.push_back(H_.posterior(x_(indexLists[k], all)));
+    parameters_.push_back(components_[k].sampleParameter());
   }
   Pi_ = Pi / Pi.sum();
 }

@@ -27,7 +27,7 @@ class NIWDIR
         boost::mt19937 rndGen_;
 
 
-        // Hyperparameters
+        // Hyperparameters remain fixed once initialized
         Matrix<T,Dynamic,Dynamic> SigmaPos_;
         T SigmaDir_;
         Matrix<T,Dynamic,Dynamic> Sigma_;
@@ -38,13 +38,11 @@ class NIWDIR
         uint32_t dim_;
 
 
-        // Sufficient statistics
-        Matrix<T,Dynamic,Dynamic> Scatter_;
+        // Sufficient statistics changes everytime when posterior method is called
         Matrix<T,Dynamic,Dynamic> ScatterPos_;
         T ScatterDir_;
         Matrix<T,Dynamic,1> meanPos_;
         Matrix<T,Dynamic,1> meanDir_;
-        Matrix<T,Dynamic,1> mean_;
         uint16_t count_;
 };
 

@@ -186,10 +186,8 @@ int main(int argc, char **argv)
                 mu(i) = params[2+i];
             for(uint8_t i=0; i<dimCov; ++i)
                 for(uint8_t j=0; j<dimCov; ++j)
-                    Sigma(i,j) = params[2+dimMu+i+dimCov*j];
+                    Sigma(i,j) = params[2+dimMu+dimCov*i+j];
         }
-
-        // std::cout << Sigma << std::endl;
 
 
         int dimData = dim;
@@ -230,7 +228,6 @@ int main(int argc, char **argv)
 
         NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init_cluster, alpha, niwDir, rndGen);
-        // niwDir.getSufficientStatistics(Data);
 
         for (uint32_t t=0; t<T; ++t)
         {
