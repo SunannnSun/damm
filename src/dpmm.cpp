@@ -34,8 +34,8 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
 
   K_ = z_.maxCoeff() + 1; // equivalent to the number of initial clusters
   // indexList_ = 
-  this -> sampleCoefficients(); //Pi_
-  this -> sampleParameters();  //parameters_; components_
+  // this -> sampleCoefficients(); //Pi_
+  // this -> sampleParameters();  //parameters_; components_
 };
 
 
@@ -748,5 +748,5 @@ void DPMM<dist_t>::updateIndexLists()
 // }
 
 template class DPMM<NIW<double>>;
-template class DPMM<NIWDIR<double>>;
+// template class DPMM<NIWDIR<double>>;
 

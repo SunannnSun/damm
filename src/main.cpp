@@ -5,9 +5,11 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/program_options.hpp>
+
 #include "niw.hpp"
 #include "niwDir.hpp"
 #include "dpmm.hpp"
+#include "dpmmDir.hpp"
 
 
 
@@ -54,13 +56,8 @@ int main(int argc, char **argv)
     } 
 
 
-    int base = 0;
-    if(vm.count("base")) base = static_cast<uint64_t>(vm["base"].as<int>());
-
-
     int T = 0;
     if (vm.count("iteration")) T = vm["iteration"].as<int>();
-    assert(T != 0);
 
 
     double alpha = 0;
@@ -78,70 +75,71 @@ int main(int argc, char **argv)
     assert(num != 0);
 
 
-    int dimParam = 0;
-    if (vm.count("dimension")) dimParam = vm["dimension"].as<int>();
-    assert(dimParam != 0);
+    int dim = 0;
+    if (vm.count("number")) dim = vm["dimension"].as<int>();
+    assert(dim != 0);
 
 
-    double nu;
-    double kappa;
-    VectorXd mu(dimParam);
-    MatrixXd Sigma(dimParam, dimParam);   //Matrix variable named in capital
-    if(vm.count("params"))
-    {
-        // cout << "Parameters received.\n";
-        // cout<<"params length="<<params.size()<<endl;
-        vector<double> params = vm["params"].as< vector<double> >();
-        nu = params[0];
-        kappa = params[1];
-        for(uint8_t i=0; i<dimParam; ++i)
-            mu(i) = params[2+i];
-        for(uint8_t i=0; i<dimParam; ++i)
-            for(uint8_t j=0; j<dimParam; ++j)
-                Sigma(i,j) = params[2+dimParam+i+dimParam*j];
-    }
-
-
-    int dimData;
-    if (base==1) dimData = (dimParam-1)*2;
-    else  dimData = dimParam;    
-    MatrixXd Data(num, dimData);              //Matrix variable named in capital
-    string pathIn ="";
-    if(vm.count("input")) pathIn = vm["input"].as<string>();
-    if (!pathIn.compare(""))
-    {
-        cout<<"please specify an input dataset"<<endl;
-        return 1;
-    }
-    else
-    {
-        ifstream  fin(pathIn);
-        string line;
-        vector<vector<string> > parsedCsv;
-        while(getline(fin,line))
-        {
-            stringstream lineStream(line);
-            string cell;
-            vector<string> parsedRow;
-            while(getline(lineStream,cell,','))
-            {
-                parsedRow.push_back(cell);
-            }
-            parsedCsv.push_back(parsedRow);
-        }
-        fin.close();
-        for (uint32_t i=0; i<num; ++i)
-            for (uint32_t j=0; j<dimData; ++j)
-                Data(i, j) = stod(parsedCsv[i][j]);
-    }
-
-
-    cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
-         <<"Number: " << num << "; Data Dimension:" << dimData << "; Parameter Dimension:" << dimParam <<endl;
+    int base = 0;
+    if(vm.count("base")) base = static_cast<uint64_t>(vm["base"].as<int>());
 
 
     if (base==0) 
     {
+        int dimParam = dim / 2;
+        double nu;
+        double kappa;
+        VectorXd mu(dimParam);
+        MatrixXd Sigma(dimParam, dimParam);   //Matrix variable named in capital
+        if(vm.count("params"))
+        {
+            vector<double> params = vm["params"].as< vector<double> >();
+            nu = params[0];
+            kappa = params[1];
+            for(uint8_t i=0; i<dimParam; ++i)
+                mu(i) = params[2+i];
+            for(uint8_t i=0; i<dimParam; ++i)
+                for(uint8_t j=0; j<dimParam; ++j)
+                    Sigma(i,j) = params[2+dimParam+i+dimParam*j];
+        }
+
+
+        int dimData = dimParam;
+        MatrixXd Data(num, dimData);              //Matrix variable named in capital
+        string pathIn ="";
+        if(vm.count("input")) pathIn = vm["input"].as<string>();
+        if (!pathIn.compare(""))
+        {
+            cout<<"please specify an input dataset"<<endl;
+            return 1;
+        }
+        else
+        {
+            ifstream  fin(pathIn);
+            string line;
+            vector<vector<string> > parsedCsv;
+            while(getline(fin,line))
+            {
+                stringstream lineStream(line);
+                string cell;
+                vector<string> parsedRow;
+                while(getline(lineStream,cell,','))
+                {
+                    parsedRow.push_back(cell);
+                }
+                parsedCsv.push_back(parsedRow);
+            }
+            fin.close();
+            for (uint32_t i=0; i<num; ++i)
+                for (uint32_t j=0; j<dimData; ++j)
+                    Data(i, j) = stod(parsedCsv[i][j]);
+        }
+
+
+        cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
+            <<"Number: " << num << "; Data Dimension:" << dimData << "; Parameter Dimension:" << dimParam <<endl;
+
+
         NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
         DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
         for (uint32_t t=0; t<T; ++t)
@@ -173,19 +171,80 @@ int main(int argc, char **argv)
     }
     else if (base==1)
     {
+        int dimMu = dim;
+        int dimCov = dim - 1;
+        double nu;
+        double kappa;
+        VectorXd mu(dimMu);
+        MatrixXd Sigma(dimCov, dimCov);   //Matrix variable named in capital
+        if(vm.count("params"))
+        {
+            vector<double> params = vm["params"].as< vector<double> >();
+            nu = params[0];
+            kappa = params[1];
+            for(uint8_t i=0; i<dimMu; ++i)
+                mu(i) = params[2+i];
+            for(uint8_t i=0; i<dimCov; ++i)
+                for(uint8_t j=0; j<dimCov; ++j)
+                    Sigma(i,j) = params[2+dimMu+i+dimCov*j];
+        }
+
+        // std::cout << Sigma << std::endl;
+
+
+        int dimData = dim;
+        MatrixXd Data(num, dimData);              //Matrix variable named in capital
+        string pathIn ="";
+        if(vm.count("input")) pathIn = vm["input"].as<string>();
+        if (!pathIn.compare(""))
+        {
+            cout<<"please specify an input dataset"<<endl;
+            return 1;
+        }
+        else
+        {
+            ifstream  fin(pathIn);
+            string line;
+            vector<vector<string> > parsedCsv;
+            while(getline(fin,line))
+            {
+                stringstream lineStream(line);
+                string cell;
+                vector<string> parsedRow;
+                while(getline(lineStream,cell,','))
+                {
+                    parsedRow.push_back(cell);
+                }
+                parsedCsv.push_back(parsedRow);
+            }
+            fin.close();
+            for (uint32_t i=0; i<num; ++i)
+                for (uint32_t j=0; j<dimData; ++j)
+                    Data(i, j) = stod(parsedCsv[i][j]);
+        }
+
+
+        cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
+            <<"Number: " << num << "; Data Dimension:" << dimData << "; Parameter Dimension:" << dimCov <<endl;
+
+
         NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
-        DPMM<NIWDIR<double>> dpmm(Data, init_cluster, alpha, niwDir, rndGen);
+        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init_cluster, alpha, niwDir, rndGen);
+        // niwDir.getSufficientStatistics(Data);
+
         for (uint32_t t=0; t<T; ++t)
         {
-            // cout<<"------------ t="<<t<<" -------------"<<endl;
-            cout << "Number of components: " << dpmm.K_ << endl;
+            cout<<"------------ t="<<t<<" -------------"<<endl;
+            cout << "Number of components: " << dpmmDir.K_ << endl;
+            dpmmDir.sampleCoefficients();
+            dpmmDir.sampleParameters();
             // dpmm.sampleCoefficientsParameters();
-            // dpmm.sampleLabels();
-            // dpmm.reorderAssignments();
+            dpmmDir.sampleLabels();
+            dpmmDir.reorderAssignments();
 
         }
         
-        const VectorXi& z = dpmm.getLabels();
+        const VectorXi& z = dpmmDir.getLabels();
         string pathOut;
         if(vm.count("output")) pathOut = vm["output"].as<string>();
         if (!pathOut.compare(""))

@@ -45,7 +45,7 @@ NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
   getSufficientStatistics(x_k);
   return NIW<T>(
-    Sigma_+scatter_ + ((kappa_*count_)/(kappa_+count_))
+    Sigma_+Scatter_ + ((kappa_*count_)/(kappa_+count_))
       *(mean_-mu_)*(mean_-mu_).transpose(), 
     (kappa_*mu_+ count_*mean_)/(kappa_+count_),
     nu_+count_,
@@ -58,11 +58,8 @@ void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
 	mean_ = x_k.colwise().mean();
   Matrix<T,Dynamic, Dynamic> x_k_mean;
-  // MatrixXd x_k
   x_k_mean = x_k.rowwise() - mean_.transpose();
-  // x_k_mean = x_k.rowwise() - x_k.colwise().mean();
-
-  scatter_ = x_k_mean.adjoint() * x_k_mean;
+  Scatter_ = x_k_mean.adjoint() * x_k_mean;
 	count_ = x_k.rows();
 };
 

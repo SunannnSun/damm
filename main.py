@@ -38,7 +38,7 @@ if input_opt == 2:
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
     # Data = Data[:, 0:2]
-num = Data.shape[0]
+num, dim = Data.shape                                  # always pass the full data and parse it later on
 
 
 with open(input_path, mode='w') as data_file:
@@ -48,22 +48,23 @@ with open(input_path, mode='w') as data_file:
 
 
 if base == 0:  # If only Eucliden distance is taken into account
-    dim = int(Data.shape[1]/2)
-    Data = Data[:, 0:dim]
+    mu_0 = np.zeros((int(Data.shape[1]/2), ))
+    sigma_0 = 0.1 * np.eye(mu_0.shape[0])
     lambda_0 = {
-        "nu_0": dim + 3,
+        "nu_0": sigma_0.shape[0] + 3,
         "kappa_0": 1,
-        "mu_0": np.zeros(dim),
-        "sigma_0":  0.1 * np.eye(dim)
+        "mu_0": mu_0, 
+        "sigma_0":  sigma_0
     }
 elif base == 1:
-    dim = int(Data.shape[1]/2) + 1
-    sigma_0 = 0.1 * np.eye(dim)
-    sigma_0[-1, -1] = 0.001
+    mu_0 = np.zeros((Data.shape[1], ))
+    mu_0[-1] = 1                                        # prior belief on direction; i.e. the last two entries [0, 1]
+    sigma_0 = 0.1 * np.eye(mu_0.shape[0]-1)             # reduced dimension of covariance
+    sigma_0[-1, -1] = 0.5                              # scalar directional variance with no correlation with position
     lambda_0 = {
-        "nu_0": dim + 3,
+        "nu_0": sigma_0.shape[0] + 3,
         "kappa_0": 1,
-        "mu_0": np.zeros(dim),
+        "mu_0": mu_0,
         "sigma_0":  sigma_0
     }
 
@@ -91,7 +92,7 @@ assignment_array = np.genfromtxt(output_path, dtype=int, delimiter=',')
 
 
 """##### Plot Results ######"""
-"""
+# """
 fig, ax = plt.subplots()
 colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
     "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
@@ -99,7 +100,7 @@ for i in range(Data.shape[0]):
     color = colors[assignment_array[i]]
     ax.scatter(Data[i, 0], Data[i, 1], c=color)
 ax.set_aspect('equal')
-"""
+# """
 
 assignment_array = regress(Data, assignment_array)
 fig, ax = plt.subplots()
@@ -110,3 +111,8 @@ for i in range(Data.shape[0]):
     ax.scatter(Data[i, 0], Data[i, 1], c=color)
 ax.set_aspect('equal')
 plt.show()
+
+
+
+# print(np.mean(Data, axis=0))
+# print(np.cov(Data.T)*(num-1))

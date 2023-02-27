@@ -37,7 +37,7 @@ class NIW
 
         
         // Sufficient statistics
-        Matrix<T,Dynamic,Dynamic> scatter_;
+        Matrix<T,Dynamic,Dynamic> Scatter_;
         Matrix<T,Dynamic,1> mean_;
         uint16_t count_;
 };
