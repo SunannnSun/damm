@@ -114,9 +114,16 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   boost::random::chi_squared_distribution<> chiSq_(nu_);
   T inv_chi_sqrd = 1 / chiSq_(rndGen_);
   covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
+  if (covDir > 0.5) covDir = 0.1;
 
 
-  meanDir = muDir_; //the mean location of the normal distribution is sampled from the posterior mu of niw which is the data mean of the data points in cluster
+  // meanDir = muDir_; 
+  boost::random::normal_distribution<> normal_(0, covDir/kappa_);
+  T angDiff = normal_(rndGen_);
+  Matrix<T,Dynamic,Dynamic> rotationMatrix(2, 2); // change the rotation matrix dimension later on to accomodate for 3D data
+  rotationMatrix << cos(angDiff), -sin(angDiff), sin(angDiff), cos(angDiff);
+  meanDir = (muDir_.transpose() * rotationMatrix).transpose();
+
 
   return NormalDir<T>(meanPos, covPos, meanDir, covDir, rndGen_);
 };

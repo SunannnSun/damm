@@ -21,8 +21,8 @@ T unsigned_angle(const Matrix<T,Dynamic, 1>&u, const Matrix<T,Dynamic, 1>&v)
 
 template <typename T>
 Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&pp, const Matrix<T,Dynamic, 1>&xx)
-{
-    //Return the coordinate of x_tp starting from the tip of p
+{   // Given the coordinate of the reference direction pp and target direction xx w.r.t world orgin
+    // Return the coordinate of x_tp w.r.t the tip of pp
     Matrix<T,Dynamic, 1> x_tp;
     T theta = unsigned_angle(pp, xx);
     if (theta < 0.01)
@@ -36,8 +36,8 @@ Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&pp, const Matrix<T,Dynam
 template <typename T>
 Matrix<T,Dynamic, 1> rie_exp(Matrix<T,Dynamic, 1>&pp, const Matrix<T,Dynamic, 1>&xx_tp)
 {
-    // Given the coordinate of x_tp starting from the tip of p,
-    // return the coordinate of x starting from the origin
+    // Given the coordinate of xx_tp w.r.t the tip of pp, and coordinate of pp w.r.t world origin
+    // Return the coordinate of x w.r.t world origin
     // T theta;
     T theta = xx_tp.norm();
     if (theta < 0.01)
