@@ -38,6 +38,7 @@ if input_opt == 2:
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
     # Data = Data[:, 0:2]
+    # Data = Data[0:400, :]
 num, dim = Data.shape                                  # always pass the full data and parse it later on
 
 

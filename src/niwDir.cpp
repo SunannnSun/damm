@@ -22,8 +22,8 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma,
 template<typename T>
 NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynamic>& SigmaPos,  
   const Matrix<T,Dynamic,1>& muDir, T SigmaDir,
-  T nu, T kappa, boost::mt19937 &rndGen):
-  SigmaPos_(SigmaPos), SigmaDir_(SigmaDir), muPos_(muPos), muDir_(muDir), nu_(nu), kappa_(kappa), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
+  T nu, T kappa, T count, boost::mt19937 &rndGen):
+  SigmaPos_(SigmaPos), SigmaDir_(SigmaDir), muPos_(muPos), muDir_(muDir), nu_(nu), kappa_(kappa), count_(count), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
 {};
 
 
@@ -42,8 +42,8 @@ void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
   Matrix<T,Dynamic, Dynamic> x_k_mean;  //this is the value of each data point subtracted from the mean value calculated from the previous procedure
   x_k_mean = x_k.rowwise() - x_k.colwise().mean(); 
   ScatterPos_ = (x_k_mean.adjoint() * x_k_mean)(seq(0, 1), seq(0, 1)); //!!!!later change the number 1 to accomodate for 3D data
-  ScatterDir_ = SigmaDir_;  //!!! This is Riemannian covariance mentioned in the paper but can be approximated as zero now and complete its form later 
-  
+  ScatterDir_ = karcherScatter(x_k, meanDir_);  //!!! This is karcher scatter
+
   count_ = x_k.rows();
 };
 
@@ -56,9 +56,10 @@ NIWDIR<T> NIWDIR<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
     (kappa_*muPos_+ count_*meanPos_)/(kappa_+count_),
     SigmaPos_+ScatterPos_ + ((kappa_*count_)/(kappa_+count_))*(meanPos_-muPos_)*(meanPos_-muPos_).transpose(),
     meanDir_,
-    ScatterDir_,
+    SigmaDir_+ScatterDir_ + ((kappa_*count_)/(kappa_+count_))*pow(rie_log(meanDir_, muDir_).norm(), 2),
     nu_+count_,
-    kappa_+count_, 
+    kappa_+count_,
+    count_, 
     rndGen_);
 };
 
@@ -108,7 +109,12 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
     meanPos[i] = gauss_(rndGen_);
   meanPos = cholFacotor * meanPos / sqrt(kappa_) + muPos_;
 
-  covDir = SigmaDir_;
+
+  // covDir = SigmaDir_;
+  boost::random::chi_squared_distribution<> chiSq_(nu_);
+  T inv_chi_sqrd = 1 / chiSq_(rndGen_);
+  covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
+
 
   meanDir = muDir_; //the mean location of the normal distribution is sampled from the posterior mu of niw which is the data mean of the data points in cluster
 

@@ -15,7 +15,7 @@ class NIWDIR
         boost::mt19937 &rndGen);
         NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynamic>& SigmaPos, 
         const Matrix<T,Dynamic,1>& muDir, T SigmaDir, 
-        T nu, T kappa, boost::mt19937 &rndGen);        
+        T nu, T kappa, T count, boost::mt19937 &rndGen);        
         ~NIWDIR();
 
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);

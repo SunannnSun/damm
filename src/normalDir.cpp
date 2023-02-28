@@ -27,7 +27,7 @@ T NormalDir<T>::logProb(const Matrix<T,Dynamic,1> &x_i)
   x_i_new(seq(0, dim-2)) = x_i(seq(0, dim-2));
   Matrix<T,Dynamic,1> x_i_dir(2);
   x_i_dir << x_i[dim-1] , x_i[dim];
-  x_i_new(dim-1) = (rie_log(x_i_dir, meanDir_)).norm();
+  x_i_new(dim-1) = (rie_log(meanDir_, x_i_dir)).norm();
  
   LLT<Matrix<T,Dynamic,Dynamic>> lltObj(cov_);
   T logProb =  dim_ * log(2*PI);
