@@ -239,11 +239,12 @@ int main(int argc, char **argv)
             if (t==100)
             {
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                for (int l=0; l<indexLists.size(); ++l)
-                {
-                    dpmmDir.splitProposal(indexLists[l]);
-                    // dpmmDir.reorderAssignments();
-                }
+                for (int l=0; l<indexLists.size(); ++l) dpmmDir.splitProposal(indexLists[l]);
+            }
+            if (t==200)
+            {
+                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+                for (int k = 1; k < indexLists.size(); ++k) dpmmDir.mergeProposal(indexLists[k], indexLists[k-1]);
             }
         }
         

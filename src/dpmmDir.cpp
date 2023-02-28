@@ -196,6 +196,9 @@ template <class dist_t>
 int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
 {
   VectorXi z_launch = z_;
+  VectorXi z_split = z_;
+  uint32_t z_split_i = z_split.maxCoeff() + 1;
+  uint32_t z_split_j = z_split[indexList[0]];
 
   DPMMDIR<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (int tt=0; tt<100; ++tt)
@@ -208,9 +211,7 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   vector<int> indexList_i = dpmm_split.indexLists_[0];
   vector<int> indexList_j = dpmm_split.indexLists_[1];
 
-  VectorXi z_split = z_;
-  uint32_t z_split_i = z_split.maxCoeff() + 1;
-  uint32_t z_split_j = z_split[indexList[0]];
+
   for (int i = 0; i < indexList_i.size(); ++i)
   {
     z_split[indexList_i[i]] = z_split_i;
@@ -225,6 +226,40 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   std::cout << "Component " << z_split_j <<": Split proposal Aceepted" << std::endl;
   return 0;
 }
+
+
+template <class dist_t> 
+int DPMMDIR<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j)
+{
+  VectorXi z_launch = z_;
+  VectorXi z_merge = z_;
+  uint32_t z_merge_i = z_merge[indexList_i[0]];
+  uint32_t z_merge_j = z_merge[indexList_j[0]];
+
+  vector<int> indexList;
+  indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
+  indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
+
+
+  DPMMDIR<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
+  for (int tt=0; tt<100; ++tt)
+  {    
+    if (dpmm_merge.indexLists_[0].size()==0 || dpmm_merge.indexLists_[1].size() ==0)
+    {
+      for (int i = 0; i < indexList_i.size(); ++i) z_merge[indexList_i[i]] = z_merge_j;
+      z_ = z_merge;
+      this -> reorderAssignments();
+      std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Aceepted" << std::endl;
+      return 0;
+    };
+    dpmm_merge.sampleCoefficientsParameters(indexList);
+    dpmm_merge.sampleLabels(indexList);
+  }
+  std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Rejected" << std::endl;
+  return 1;
+}
+
 
 
 template <class dist_t> 
@@ -297,9 +332,6 @@ void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
   indexLists_.push_back(indexList_i);
   indexLists_.push_back(indexList_j);
 }
-
-
-
 
 
 template class DPMMDIR<NIWDIR<double>>;

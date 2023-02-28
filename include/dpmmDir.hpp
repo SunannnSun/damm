@@ -30,8 +30,11 @@ public:
 
   //split proposal
   int splitProposal(vector<int> indexList);
+  int mergeProposal(vector<int> indexList_i, vector<int> indexList_j);
   void sampleCoefficientsParameters(vector<int> indexList);
   void sampleLabels(vector<int> indexList);
+  
+
 
 public:
   //class constructor(indepedent of data)

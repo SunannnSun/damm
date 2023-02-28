@@ -162,7 +162,7 @@ int DPMM<dist_t>::splitProposal(vector<int> indexList)
   
   DPMM<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
 
-  for (uint32_t t=0; t<1000; ++t)
+  for (uint32_t t=0; t<500; ++t)
   {
     // std::cout << t << std::endl;
     // dpmm_split.sampleCoefficients(index_i, index_j);
