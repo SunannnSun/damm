@@ -233,12 +233,18 @@ int main(int argc, char **argv)
         {
             cout<<"------------ t="<<t<<" -------------"<<endl;
             cout << "Number of components: " << dpmmDir.K_ << endl;
-            dpmmDir.sampleCoefficients();
-            dpmmDir.sampleParameters();
-            // dpmm.sampleCoefficientsParameters();
+            dpmmDir.sampleCoefficientsParameters();
             dpmmDir.sampleLabels();
             dpmmDir.reorderAssignments();
-
+            if (t==100)
+            {
+                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+                for (int l=0; l<indexLists.size(); ++l)
+                {
+                    dpmmDir.splitProposal(indexLists[l]);
+                    // dpmmDir.reorderAssignments();
+                }
+            }
         }
         
         const VectorXi& z = dpmmDir.getLabels();

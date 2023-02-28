@@ -28,6 +28,11 @@ public:
   vector<vector<int>> getIndexLists();
   const VectorXi & getLabels(){return z_;};
 
+  //split proposal
+  int splitProposal(vector<int> indexList);
+  void sampleCoefficientsParameters(vector<int> indexList);
+  void sampleLabels(vector<int> indexList);
+
 public:
   //class constructor(indepedent of data)
   double alpha_; 
