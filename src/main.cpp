@@ -233,19 +233,24 @@ int main(int argc, char **argv)
         {
             cout<<"------------ t="<<t<<" -------------"<<endl;
             cout << "Number of components: " << dpmmDir.K_ << endl;
+                
+            // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+            // dpmmDir.splitProposal(indexLists[0]);
+
+
             dpmmDir.sampleCoefficientsParameters();
             dpmmDir.sampleLabels();
             dpmmDir.reorderAssignments();
-            if (t==100)
+            if (t!=0 && t%100==0 && t<500)
             {
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) dpmmDir.splitProposal(indexLists[l]);
             }
-            if (t==200)
-            {
-                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                for (int k = 1; k < indexLists.size(); ++k) dpmmDir.mergeProposal(indexLists[k], indexLists[k-1]);
-            }
+            // if (t==200)
+            // {
+            //     vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+            //     for (int k = 1; k < indexLists.size(); ++k) dpmmDir.mergeProposal(indexLists[k], indexLists[k-1]);
+            // }
         }
         
         const VectorXi& z = dpmmDir.getLabels();
@@ -264,88 +269,4 @@ int main(int argc, char **argv)
 
         return 0;
     }
-    
-    // boost::random::uniform_int_distribution<> uni_(0, num-1);
-    // for (uint32_t t=0; t<T; ++t)
-    // {
-    //     // cout<<"------------ t="<<t<<" -------------"<<endl;
-    //     cout << "Number of components: " << dpmm.K_ << endl;
-
-    //     // vector<vector<int>> indexLists = dpmm.getIndexLists();
-    //     // std::cout << indexLists[0].size() << std::endl;
-    //     // dpmm.splitProposal(indexLists[0]);
-
-    //     ////----------------testing-------------------------////
-    //     // vector<vector<int>> indexLists = dpmm.getIndexLists();
-    //     // dpmm.mergeProposal(indexLists[0], indexLists[1]);
-    //     // std::cout << dpmm.K_ << std::endl;
-    //     // std::cout << dpmm.Pi_ << std::endl;
-    //     ////----------------testing-------------------------////
-        
-
-    //     // dpmm.sampleCoefficientsParameters();
-    //     // dpmm.sampleLabels();
-    //     // dpmm.reorderAssignments();
-
-    //     // int KK = dpmm.K_;
-    //     // for (int k=0; k<KK; ++k)
-    //     // {   
-    //     //     vector<vector<int>> indexLists = dpmm.getIndexLists();
-    //     //     vector<int> indexList_k = indexLists[k];   
-    //     //     int tt = 0;
-    //     //     while (tt < 3)
-    //     //     {
-    //     //         std::cout << indexList_k.size() << std::endl;
-    //     //         if (dpmm.splitProposal(indexList_k)==0)
-    //     //         break;                    
-    //     //         tt++;
-    //     //     }
-    //     // }
-    //     /*
-    //     if (t%1000==0 && t<=7000 && t!=0)
-    //     {   
-    //         int KK = dpmm.K_;
-    //         for (int k=0; k<KK; ++k)
-    //         {   
-    //             vector<vector<int>> indexLists = dpmm.getIndexLists();
-    //             vector<int> indexList_k = indexLists[k];   
-    //             int tt = 0;
-    //             while (tt < 3)
-    //             {
-    //                 if (dpmm.splitProposal(indexList_k)==0)
-    //                 break;                    
-    //                 tt++;
-    //             }
-    //         }
-    //     }
-    //     */
-
-    //     /*
-    //     if (t == 80)
-    //     {   
-    //         for (int tt=0; tt<10; tt++)
-    //         {   
-    //             vector<vector<int>> indexLists = dpmm.getIndexLists();
-    //             boost::random::uniform_int_distribution<> uni_(0, indexLists.size()-1);
-    //             dpmm.mergeProposal(indexLists[uni_(rndGen)], indexLists[uni_(rndGen)]);
-    //         }
-    //     }
-    //     */
-    // }
-    
-    // /*
-    // const VectorXi& z = dpmm.getLabels();
-    // string pathOut;
-    // if(vm.count("output")) pathOut = vm["output"].as<string>();
-    // if (!pathOut.compare(""))
-    // {
-    //     cout<<"please specify an output data file"<<endl;
-    //     exit(1);
-    // }
-    // else cout<<"Output to "<<pathOut<<endl;
-    // ofstream fout(pathOut.data(),ofstream::out);
-    // for (uint16_t i=0; i < z.size(); ++i)
-    //     fout << z[i] << endl;
-    // fout.close();
-    // */
 }   

@@ -38,7 +38,7 @@ if input_opt == 2:
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
     # Data = Data[:, 0:2]
-    # Data = Data[0:400, :]
+    # Data = Data[0:100, :]
 num, dim = Data.shape                                  # always pass the full data and parse it later on
 
 
@@ -61,7 +61,7 @@ elif base == 1:
     mu_0 = np.zeros((Data.shape[1], ))
     mu_0[-1] = 1                                        # prior belief on direction; i.e. the last two entries [0, 1]
     sigma_0 = 0.1 * np.eye(mu_0.shape[0]-1)             # reduced dimension of covariance
-    sigma_0[-1, -1] = 0.5                              # scalar directional variance with no correlation with position
+    sigma_0[-1, -1] = 1                                 # scalar directional variance with no correlation with position
     lambda_0 = {
         "nu_0": sigma_0.shape[0] + 3,
         "kappa_0": 1,
@@ -103,14 +103,14 @@ for i in range(Data.shape[0]):
 ax.set_aspect('equal')
 # """
 
-assignment_array = regress(Data, assignment_array)
-fig, ax = plt.subplots()
-colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
-    "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
-for i in range(Data.shape[0]):
-    color = colors[assignment_array[i]]
-    ax.scatter(Data[i, 0], Data[i, 1], c=color)
-ax.set_aspect('equal')
+# assignment_array = regress(Data, assignment_array)
+# fig, ax = plt.subplots()
+# colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+#     "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+# for i in range(Data.shape[0]):
+#     color = colors[assignment_array[i]]
+#     ax.scatter(Data[i, 0], Data[i, 1], c=color)
+# ax.set_aspect('equal')
 plt.show()
 
 

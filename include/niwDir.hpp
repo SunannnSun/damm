@@ -23,6 +23,10 @@ class NIWDIR
         NormalDir<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
         NormalDir<T> sampleParameter();
 
+
+        T logProb(const Matrix<T,Dynamic,1>& x_i);
+        T prob(const Matrix<T,Dynamic,1>& x_i);
+
     public:
         boost::mt19937 rndGen_;
 

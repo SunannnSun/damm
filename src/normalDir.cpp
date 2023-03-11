@@ -21,20 +21,37 @@ const Matrix<T,Dynamic,1>& meanDir, T covDir, boost::mt19937 &rndGen)
 template<class T>
 T NormalDir<T>::logProb(const Matrix<T,Dynamic,1> &x_i)
 { 
-  int dim = 3;
-  Matrix<T,Dynamic,1> x_i_new(dim);
-  x_i_new.setZero();
-  x_i_new(seq(0, dim-2)) = x_i(seq(0, dim-2));
-  Matrix<T,Dynamic,1> x_i_dir(2);
-  x_i_dir << x_i[dim-1] , x_i[dim];
-  x_i_new(dim-1) = (rie_log(meanDir_, x_i_dir)).norm();
- 
-  LLT<Matrix<T,Dynamic,Dynamic>> lltObj(cov_);
-  T logProb =  dim_ * log(2*PI);
-  logProb += 2 * log(lltObj.matrixL().determinant());
-  logProb += (lltObj.matrixL().solve(x_i_new-mean_)).squaredNorm();
-
-  return -0.5 * logProb;
+  if (x_i.rows()==2)
+  {
+    int dim = 2;
+    Matrix<T,Dynamic,Dynamic> cov(2, 2);
+    cov = cov_(seq(0, 1), seq(0, 1));
+    Matrix<T,Dynamic,1> mean(2);
+    mean = mean_(seq(0, 1));
+  
+    LLT<Matrix<T,Dynamic,Dynamic>> lltObj(cov);
+    T logProb =  dim * log(2*PI);
+    logProb += 2 * log(lltObj.matrixL().determinant());
+    logProb += (lltObj.matrixL().solve(x_i-mean)).squaredNorm();
+    return -0.5 * logProb;
+  }
+  else
+  {
+    int dim = 3;
+    Matrix<T,Dynamic,1> x_i_new(dim);
+    x_i_new.setZero();
+    x_i_new(seq(0, dim-2)) = x_i(seq(0, dim-2));
+    Matrix<T,Dynamic,1> x_i_dir(2);
+    x_i_dir << x_i[dim-1] , x_i[dim];
+    x_i_new(dim-1) = (rie_log(meanDir_, x_i_dir)).norm();
+  
+    LLT<Matrix<T,Dynamic,Dynamic>> lltObj(cov_);
+    T logProb =  dim * log(2*PI);
+    logProb += 2 * log(lltObj.matrixL().determinant());
+    logProb += (lltObj.matrixL().solve(x_i_new-mean_)).squaredNorm();
+    return -0.5 * logProb;
+  }
+  // return -0.5 * logProb;
 };
 
 

@@ -212,6 +212,15 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   vector<int> indexList_j = dpmm_split.indexLists_[1];
 
 
+
+  double logAcceptanceRatio = 0;
+  logAcceptanceRatio -= dpmm_split.logTransitionProb(indexList_i, indexList_j);
+  logAcceptanceRatio += dpmm_split.logPosteriorProb(indexList_i, indexList_j);;
+
+  std::cout << logAcceptanceRatio << std::endl;
+
+
+
   for (int i = 0; i < indexList_i.size(); ++i)
   {
     z_split[indexList_i[i]] = z_split_i;
@@ -247,6 +256,11 @@ int DPMMDIR<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexLis
   {    
     if (dpmm_merge.indexLists_[0].size()==0 || dpmm_merge.indexLists_[1].size() ==0)
     {
+      double logAcceptanceRatio = 0;
+      logAcceptanceRatio += log(dpmm_merge.transitionProb(indexList_i, indexList_j));
+      logAcceptanceRatio -= dpmm_merge.logPosteriorProb(indexList_i, indexList_j);;
+
+      std::cout << logAcceptanceRatio << std::endl;
       for (int i = 0; i < indexList_i.size(); ++i) z_merge[indexList_i[i]] = z_merge_j;
       z_ = z_merge;
       this -> reorderAssignments();
@@ -255,6 +269,20 @@ int DPMMDIR<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexLis
     };
     dpmm_merge.sampleCoefficientsParameters(indexList);
     dpmm_merge.sampleLabels(indexList);
+  }
+
+  double logAcceptanceRatio = 0;
+  logAcceptanceRatio += log(dpmm_merge.transitionProb(indexList_i, indexList_j));
+  logAcceptanceRatio -= dpmm_merge.logPosteriorProb(indexList_i, indexList_j);;
+
+  std::cout << logAcceptanceRatio << std::endl;
+  if (logAcceptanceRatio > 0)
+  {
+    for (int i = 0; i < indexList_i.size(); ++i) z_merge[indexList_i[i]] = z_merge_j;
+    z_ = z_merge;
+    this -> reorderAssignments();
+    std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Aceepted" << std::endl;
+    return 0;
   }
   std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Rejected" << std::endl;
   return 1;
@@ -325,13 +353,86 @@ void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
     else indexList_j.push_back(indexList_[i]);
   }
 
-  // std::cout << indexList_i.size() << std::endl;
-  // std::cout << indexList_j.size() << std::endl;
 
   indexLists_.clear();
   indexLists_.push_back(indexList_i);
   indexLists_.push_back(indexList_j);
 }
+
+
+template <class dist_t> 
+double DPMMDIR<dist_t>::transitionProb(vector<int> indexList_i, vector<int> indexList_j)
+{
+  double transitionProb = 1;
+
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
+  {
+    transitionProb *= Pi_(0) * components_[0].prob(x_(indexList_i[ii], all))/
+    (Pi_(0) * components_[0].prob(x_(indexList_i[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_i[ii], all)));
+  }
+
+  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)
+  {
+    transitionProb *= Pi_(0) * components_[0].prob(x_(indexList_j[ii], all))/
+    (Pi_(0) * components_[0].prob(x_(indexList_j[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_j[ii], all)));
+  }
+  
+  // std::cout << transitionProb << std::endl;
+
+  return transitionProb;
+}
+
+
+template <class dist_t> 
+double DPMMDIR<dist_t>::logTransitionProb(vector<int> indexList_i, vector<int> indexList_j)
+{
+  double logTransitionProb = 0;
+
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
+  {
+    logTransitionProb += log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all))) -
+    log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_i[ii], all)));
+  }
+
+  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)
+  {
+    logTransitionProb += log(Pi_(0) * components_[0].prob(x_(indexList_j[ii], all))) -
+    log(Pi_(0) * components_[0].prob(x_(indexList_j[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_j[ii], all)));
+  }
+  
+  // std::cout << transitionProb << std::endl;
+
+  return logTransitionProb;
+}
+
+
+template <class dist_t>
+double DPMMDIR<dist_t>::logPosteriorProb(vector<int> indexList_i, vector<int> indexList_j)
+{
+  vector<int> indexList;
+  indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
+  indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
+
+  NormalDir<double> parameter_ij = H_.posterior(x_(indexList, all)).sampleParameter();
+  NormalDir<double> parameter_i  = H_.posterior(x_(indexList_i, all)).sampleParameter();
+  NormalDir<double> parameter_j  = H_.posterior(x_(indexList_j, all)).sampleParameter();
+
+  double logPosteriorRatio = 0;
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
+  {
+    logPosteriorRatio += log(indexList_i.size()) + parameter_i.logProb(x_(indexList_i[ii], all)) ;
+    logPosteriorRatio -= parameter_ij.logProb(x_(indexList_i[ii], all));
+  }
+  for (uint32_t jj=0; jj < indexList_j.size(); ++jj)
+  {
+    logPosteriorRatio += log(indexList_j.size()) + parameter_j.logProb(x_(indexList_j[jj], all)) ;
+    logPosteriorRatio -= parameter_ij.logProb(x_(indexList_j[jj], all));
+  }
+
+  return logPosteriorRatio;
+}
+
 
 
 template class DPMMDIR<NIWDIR<double>>;

@@ -1,6 +1,8 @@
 #include "niwDir.hpp"
 #include "karcher.hpp"
 #include <cmath>
+#include <limits>
+
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/random/chi_squared_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -24,7 +26,13 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynam
   const Matrix<T,Dynamic,1>& muDir, T SigmaDir,
   T nu, T kappa, T count, boost::mt19937 &rndGen):
   SigmaPos_(SigmaPos), SigmaDir_(SigmaDir), muPos_(muPos), muDir_(muDir), nu_(nu), kappa_(kappa), count_(count), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
-{};
+{
+  Sigma_.setZero(3, 3);
+  Sigma_(seq(0,1), seq(0,1)) = SigmaPos_;
+  Sigma_(2, 2) = SigmaDir_;
+  mu_.setZero(3);
+  mu_(seq(0,1)) = muPos_;
+};
 
 
 
@@ -114,7 +122,7 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   boost::random::chi_squared_distribution<> chiSq_(nu_);
   T inv_chi_sqrd = 1 / chiSq_(rndGen_);
   covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
-  if (covDir > 0.5) covDir = 0.1;
+  if (covDir > 0.2) covDir = 0.1;
 
 
   // meanDir = muDir_; 
@@ -126,6 +134,44 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
 
 
   return NormalDir<T>(meanPos, covPos, meanDir, covDir, rndGen_);
+};
+
+
+
+template<class T>
+T NIWDIR<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
+{
+  // This is the log posterior predictive probability of x_i
+  int dim = 3;
+
+  Matrix<T,Dynamic,1> x_i_new(dim);
+  x_i_new.setZero();
+  x_i_new(seq(0, dim-2)) = x_i(seq(0, dim-2));
+  Matrix<T,Dynamic,1> x_i_dir(2);
+  x_i_dir << x_i[dim-1] , x_i[dim];
+  x_i_new(dim-1) = (rie_log(muDir_, x_i_dir)).norm();
+
+
+  T doF = nu_ - dim + 1.;
+  Matrix<T,Dynamic,Dynamic> scaledSigma = Sigma_*(kappa_+1.)/(kappa_*(nu_-dim+1));   
+  LLT<Matrix<T,Dynamic,Dynamic>> lltObj(scaledSigma);
+
+  T logProb = boost::math::lgamma(0.5*(doF + dim));
+  logProb -= boost::math::lgamma(0.5*(doF));
+  logProb -= 0.5*dim*log(doF);
+  logProb -= 0.5*dim*log(PI);
+  logProb -= 0.5*log(lltObj.matrixL().determinant());
+  logProb -= (0.5*(doF + dim))
+    *log(1.+ 1/doF*(lltObj.matrixL().solve(x_i_new-mu_)).squaredNorm());
+  return logProb;
+};
+
+
+template<class T>
+T NIWDIR<T>::prob(const Matrix<T,Dynamic,1>& x_i)
+{ 
+  T logProb = this ->logProb(x_i);
+  return exp(logProb);
 };
 
 
