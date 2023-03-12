@@ -241,7 +241,7 @@ int main(int argc, char **argv)
             dpmmDir.sampleCoefficientsParameters();
             dpmmDir.sampleLabels();
             dpmmDir.reorderAssignments();
-            if (t!=0 && t%100==0 && t<500)
+            if (t!=0 && t%50==0 && t<700)
             {
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) dpmmDir.splitProposal(indexLists[l]);

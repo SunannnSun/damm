@@ -200,10 +200,16 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   uint32_t z_split_i = z_split.maxCoeff() + 1;
   uint32_t z_split_j = z_split[indexList[0]];
 
+  std::cout << "HI" << std::endl;
+
   DPMMDIR<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (int tt=0; tt<100; ++tt)
   {
-    if (dpmm_split.indexLists_[0].size()==0 || dpmm_split.indexLists_[1].size() ==0) return 1;
+    if (dpmm_split.indexLists_[0].size()==0 || dpmm_split.indexLists_[1].size() ==0)
+    {
+      std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
+      return 1;
+    }
     dpmm_split.sampleCoefficientsParameters(indexList);
     dpmm_split.sampleLabels(indexList);
   }
@@ -217,10 +223,11 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   logAcceptanceRatio -= dpmm_split.logTransitionProb(indexList_i, indexList_j);
   logAcceptanceRatio += dpmm_split.logPosteriorProb(indexList_i, indexList_j);;
 
-  std::cout << logAcceptanceRatio << std::endl;
-
-
-
+  // if (logAcceptanceRatio < 0) 
+  // {
+  //   std::cout << "Component " << z_split_j <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  //   return 1;
+  // }
   for (int i = 0; i < indexList_i.size(); ++i)
   {
     z_split[indexList_i[i]] = z_split_i;
@@ -232,7 +239,7 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   z_ = z_split;
   K_ += 1;
   this -> updateIndexLists();    
-  std::cout << "Component " << z_split_j <<": Split proposal Aceepted" << std::endl;
+  std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   return 0;
 }
 
@@ -335,7 +342,7 @@ void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
   for(uint32_t i=0; i<indexList.size(); ++i)
   {
     VectorXd x_i;
-    x_i = x_(indexList[i], all); //current data point x_i from the index_list
+    x_i = x_(indexList[i], seq(0,1)); //current data point x_i from the index_list
     VectorXd prob(2);
     for (uint32_t k=0; k<2; ++k)
     {
@@ -422,12 +429,12 @@ double DPMMDIR<dist_t>::logPosteriorProb(vector<int> indexList_i, vector<int> in
   for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
   {
     logPosteriorRatio += log(indexList_i.size()) + parameter_i.logProb(x_(indexList_i[ii], all)) ;
-    logPosteriorRatio -= parameter_ij.logProb(x_(indexList_i[ii], all));
+    logPosteriorRatio -= log(indexList.size()) - parameter_ij.logProb(x_(indexList_i[ii], all));
   }
   for (uint32_t jj=0; jj < indexList_j.size(); ++jj)
   {
     logPosteriorRatio += log(indexList_j.size()) + parameter_j.logProb(x_(indexList_j[jj], all)) ;
-    logPosteriorRatio -= parameter_ij.logProb(x_(indexList_j[jj], all));
+    logPosteriorRatio -= log(indexList.size()) - parameter_ij.logProb(x_(indexList_j[jj], all));
   }
 
   return logPosteriorRatio;

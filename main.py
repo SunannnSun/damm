@@ -4,6 +4,9 @@ from util.modelRegression import regress
 import argparse, subprocess, os, csv, random
 
 
+a= [86, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 403, 404, 405, 406, 407, 409, 410, 411, 412, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 718, 719, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136, 1137, 1138, 1324, 1325, 1326, 1327, 1328, 1329, 1330, 1331, 1332, 1333, 1334, 1335, 1336, 1337, 1338, 1339, 1340, 1341, 1342, 1343, 1344, 1345, 1346, 1347, 1348, 1349, 1350, 1351, 1352, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 1360, 1361, 1522, 1523, 1524, 1525, 1526, 1527, 1528, 1529, 1530, 1531, 1532, 1533, 1534, 1535, 1536, 1537, 1538, 1539, 1540, 1541, 1542, 1543, 1544, 1545, 1546, 1547, 1548, 1549, 1550]
+
+
 parser = argparse.ArgumentParser(
                     prog = 'Parallel Implemention of Dirichlet Process Mixture Model',
                     description = 'parallel implementation',
@@ -37,7 +40,7 @@ if input_opt == 2:
     nb_trajectories = 7
     Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
     Data = normalize_velocity_vector(Data)
-    # Data = Data[:, 0:2]
+    Data = Data[a, :]
     # Data = Data[0:100, :]
 num, dim = Data.shape                                  # always pass the full data and parse it later on
 
@@ -114,6 +117,9 @@ ax.set_aspect('equal')
 plt.show()
 
 
+a = np.where(assignment_array==1)[0]
+print(a.tolist())
 
 # print(np.mean(Data, axis=0))
 # print(np.cov(Data.T)*(num-1))
+
