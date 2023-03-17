@@ -147,6 +147,9 @@ int main(int argc, char **argv)
             cout<<"------------ t="<<t<<" -------------"<<endl;
             cout << "Number of components: " << dpmm.K_ << endl;
 
+            // vector<vector<int>> indexLists = dpmm.getIndexLists();
+            // dpmm.splitProposal(indexLists[0]);
+
             dpmm.sampleCoefficientsParameters();
             dpmm.sampleLabels();
             dpmm.reorderAssignments();
@@ -237,15 +240,22 @@ int main(int argc, char **argv)
             // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
             // dpmmDir.splitProposal(indexLists[0]);
 
-
-            dpmmDir.sampleCoefficientsParameters();
-            dpmmDir.sampleLabels();
-            dpmmDir.reorderAssignments();
             if (t!=0 && t%50==0 && t<700)
             {
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                for (int l=0; l<indexLists.size(); ++l) dpmmDir.splitProposal(indexLists[l]);
+                // std::cout << indexLists[0].size() << std::endl;
+                // dpmmDir.splitProposal(indexLists[0]);
+                dpmmDir.splitProposal(indexLists[4]);
+                // for (int l=0; l<indexLists.size(); ++l) dpmmDir.splitProposal(indexLists[l]);
             }
+            else
+            {
+                dpmmDir.sampleCoefficientsParameters();
+                dpmmDir.sampleLabels();
+                dpmmDir.reorderAssignments();
+            }
+
+
             // if (t==200)
             // {
             //     vector<vector<int>> indexLists = dpmmDir.getIndexLists();

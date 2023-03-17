@@ -33,6 +33,7 @@ public:
   int mergeProposal(vector<int> indexList_i, vector<int> indexList_j);
   void sampleCoefficientsParameters(vector<int> indexList);
   void sampleLabels(vector<int> indexList);
+  void sampleLabelsCollapsed(vector<int> indexList);
   double transitionProb(vector<int> indexList_i, vector<int> indexList_j);
   double logTransitionProb(vector<int> indexList_i, vector<int> indexList_j);
   double logPosteriorProb(vector<int> indexList_i, vector<int> indexList_j);

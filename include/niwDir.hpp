@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <boost/random/mersenne_twister.hpp>
 #include "normalDir.hpp"
+#include "niw.hpp"
 
 
 using namespace Eigen;
@@ -18,12 +19,14 @@ class NIWDIR
         T nu, T kappa, T count, boost::mt19937 &rndGen);        
         ~NIWDIR();
 
+        NIW<T> getNIW();
+
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
         NIWDIR<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
         NormalDir<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
         NormalDir<T> sampleParameter();
 
-
+        T logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
         T logProb(const Matrix<T,Dynamic,1>& x_i);
         T prob(const Matrix<T,Dynamic,1>& x_i);
 
