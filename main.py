@@ -141,22 +141,37 @@ else:
         index_k = np.where(assignment_array==k)[0]
         Data_k = Data[index_k, :]
         ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=color, s=5)
-    
-    # for i in range(Data.shape[0]):
-    #     color = colors[assignment_array[i]]
-    #     ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=color, label='original demonstration', s=5)   
 # """
+# plt.show()
 
-# assignment_array = regress(Data, assignment_array)
-# fig, ax = plt.subplots()
-# colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
-#     "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
-# for i in range(Data.shape[0]):
-#     color = colors[assignment_array[i]]
-#     ax.scatter(Data[i, 0], Data[i, 1], c=color)
-# ax.set_aspect('equal')
-# ax.set_title('Dataset %i Base %i Init %i Iteration %i' %(dataset_no, base, init_opt, iteration))
+assignment_array = regress(Data, assignment_array)
+
+# values, counts = np.unique(assignment_array, return_counts=True)
+# print(values)# print(counts)
+
+if dim == 4:
+    fig, ax = plt.subplots()
+    colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+        "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+    for i in range(Data.shape[0]):
+        color = colors[assignment_array[i]]
+        ax.scatter(Data[i, 0], Data[i, 1], c=color)
+    ax.set_aspect('equal')
+else:
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+        "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+    for k in range(assignment_array.max()+1):
+        color = colors[k]
+        index_k = np.where(assignment_array==k)[0]
+        Data_k = Data[index_k, :]
+        ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=color, s=5)
+ax.set_title('Dataset %i Base %i Init %i Iteration %i' %(dataset_no, base, init_opt, iteration))
+
 plt.show()
+
+
 
 
 # a = np.where(assignment_array==1)[0]

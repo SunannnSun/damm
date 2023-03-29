@@ -389,7 +389,9 @@ void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
 {
-  
+  int dimPos;
+  if (x_.cols()==4) dimPos=1;
+  else if (x_.cols()==6) dimPos=2;
   int index_i = z_[indexLists_[0][0]];
   int index_j = z_[indexLists_[1][0]];
 
@@ -402,7 +404,7 @@ void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
   for(int i=0; i<indexList.size(); ++i)
   {
     VectorXd x_i;
-    x_i = x_(indexList[i], seq(0,1)); //current data point x_i from the index_list
+    x_i = x_(indexList[i], seq(0,dimPos)); //current data point x_i from the index_list
     VectorXd prob(2);
 
     for (int ii=0; ii < indexList.size(); ++ii)
@@ -419,8 +421,8 @@ void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
       return;
     } 
 
-    prob[0] = log(indexList_i.size()) + H_.logPosteriorProb(x_i, x_(indexList_i, seq(0,1))); 
-    prob[1] = log(indexList_j.size()) + H_.logPosteriorProb(x_i, x_(indexList_j, seq(0,1))); 
+    prob[0] = log(indexList_i.size()) + H_.logPosteriorProb(x_i, x_(indexList_i, seq(0,dimPos))); 
+    prob[1] = log(indexList_j.size()) + H_.logPosteriorProb(x_i, x_(indexList_j, seq(0,dimPos))); 
 
     double prob_max = prob.maxCoeff();
     prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();

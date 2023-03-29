@@ -10,7 +10,7 @@ def regress(data, assignmentArray):
         data_k = data[assignmentArray==k]
         mean_k = np.mean(data_k, axis=0)
         cov_k = np.cov(data_k.T)
-        clusterList.append(multivariate_normal(mean=mean_k, cov=cov_k))
+        clusterList.append(multivariate_normal(mean=mean_k, cov=cov_k, allow_singular=True))
         # clusterList.append((mean_k, cov_k))
 
     regressedAssignmentArray = np.zeros((data.shape[0]), dtype=int)

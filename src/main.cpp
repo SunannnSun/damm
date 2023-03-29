@@ -239,8 +239,8 @@ int main(int argc, char **argv)
                 
             // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
             // dpmmDir.splitProposal(indexLists[0]);
-            if (t==-1)
-            // if (t!=0 && t%50==0 && t<700)
+            // if (t==-1)
+            if (t!=0 && t%50==0 && t<700)
             {
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 // std::cout << indexLists[0].size() << std::endl;
