@@ -13,10 +13,20 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma,
   const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, boost::mt19937 &rndGen):
   Sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
 {
-  muPos_ = mu_(seq(0, 1));
-  SigmaPos_ = Sigma_(seq(0, 1), seq(0, 1));
-  muDir_ = mu_(seq(2, 3));
-  SigmaDir_ = Sigma_(2, 2);
+  if (mu.rows()==4)
+  {
+    muPos_ = mu_(seq(0, 1));
+    SigmaPos_ = Sigma_(seq(0, 1), seq(0, 1));
+    muDir_ = mu_(seq(2, 3));
+    SigmaDir_ = Sigma_(2, 2);
+  }
+  else if (mu.rows()==6)
+  {
+    muPos_ = mu_(seq(0, 2));
+    SigmaPos_ = Sigma_(seq(0, 2), seq(0, 2));
+    muDir_ = mu_(seq(3, 5));
+    SigmaDir_ = Sigma_(3, 3);
+  }
 };
 
 
@@ -27,11 +37,22 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynam
   T nu, T kappa, T count, boost::mt19937 &rndGen):
   SigmaPos_(SigmaPos), SigmaDir_(SigmaDir), muPos_(muPos), muDir_(muDir), nu_(nu), kappa_(kappa), count_(count), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
 {
-  Sigma_.setZero(3, 3);
-  Sigma_(seq(0,1), seq(0,1)) = SigmaPos_;
-  Sigma_(2, 2) = SigmaDir_;
-  mu_.setZero(3);
-  mu_(seq(0,1)) = muPos_;
+  if (SigmaPos.cols()==2)
+  {
+    Sigma_.setZero(3, 3);
+    Sigma_(seq(0,1), seq(0,1)) = SigmaPos_;
+    Sigma_(2, 2) = SigmaDir_;
+    mu_.setZero(3);
+    mu_(seq(0,1)) = muPos_;
+  }
+  else if (SigmaPos.cols()==3)
+  {
+    Sigma_.setZero(4, 4);
+    Sigma_(seq(0,2), seq(0,2)) = SigmaPos_;
+    Sigma_(3, 3) = SigmaDir_;
+    mu_.setZero(4);
+    mu_(seq(0,2)) = muPos_;
+  }
 };
 
 
@@ -52,14 +73,17 @@ NIW<T> NIWDIR<T>::getNIW()
 template<typename T>
 void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
+  int pos_dim;
+  if (x_k.cols()==4) pos_dim=1;
+  else if (x_k.cols()==6) pos_dim=2;
+
   meanDir_ = karcherMean(x_k);
-  meanPos_ = x_k(all, (seq(0, 1))).colwise().mean().transpose();  //!!!!later change the number 1 to accomodate for 3D data
- 
+  meanPos_ = x_k(all, (seq(0, pos_dim))).colwise().mean().transpose();  //!!!!later change the number 1 to accomodate for 3D data
+
   Matrix<T,Dynamic, Dynamic> x_k_mean;  //this is the value of each data point subtracted from the mean value calculated from the previous procedure
   x_k_mean = x_k.rowwise() - x_k.colwise().mean(); 
-  ScatterPos_ = (x_k_mean.adjoint() * x_k_mean)(seq(0, 1), seq(0, 1)); //!!!!later change the number 1 to accomodate for 3D data
+  ScatterPos_ = (x_k_mean.adjoint() * x_k_mean)(seq(0, pos_dim), seq(0, pos_dim)); //!!!!later change the number 1 to accomodate for 3D data
   ScatterDir_ = karcherScatter(x_k, meanDir_);  //!!! This is karcher scatter
-
   count_ = x_k.rows();
 };
 
@@ -91,7 +115,14 @@ NormalDir<T> NIWDIR<T>::samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic
 template<class T>
 NormalDir<T> NIWDIR<T>::sampleParameter()
 {
-  int dim = 2;
+
+  int dim;
+  if (SigmaPos_.cols()==2) dim =2;
+  else if (SigmaPos_.cols()==3) dim =3;
+
+
+  // std::cout << dim << std::endl;
+
 
   Matrix<T,Dynamic,1> meanPos(dim);
   Matrix<T,Dynamic,Dynamic> covPos(dim, dim);
@@ -132,14 +163,20 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
   if (covDir > 0.2) covDir = 0.1;
 
+  // std::cout << covDir << std::endl;
 
   // meanDir = muDir_; 
-  boost::random::normal_distribution<> normal_(0, covDir/kappa_);
-  T angDiff = normal_(rndGen_);
-  Matrix<T,Dynamic,Dynamic> rotationMatrix(2, 2); // change the rotation matrix dimension later on to accomodate for 3D data
-  rotationMatrix << cos(angDiff), -sin(angDiff), sin(angDiff), cos(angDiff);
-  meanDir = (muDir_.transpose() * rotationMatrix).transpose();
+  if (dim==2)
+  {
+    boost::random::normal_distribution<> normal_(0, covDir/kappa_);
+    T angDiff = normal_(rndGen_);
+    Matrix<T,Dynamic,Dynamic> rotationMatrix(2, 2); // change the rotation matrix dimension later on to accomodate for 3D data
+    rotationMatrix << cos(angDiff), -sin(angDiff), sin(angDiff), cos(angDiff);
+    meanDir = (muDir_.transpose() * rotationMatrix).transpose();
+  }
+  else meanDir = muDir_;
 
+  // std::cout << meanDir << std::endl;
 
   return NormalDir<T>(meanPos, covPos, meanDir, covDir, rndGen_);
 };

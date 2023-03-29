@@ -1,13 +1,11 @@
 from util.load_data import *
 from util.process_data import *
 from util.modelRegression import regress
+from util.load_plot_haihui import *
 import argparse, subprocess, os, csv, random
 
 
-# a= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 735, 736, 737, 738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755, 756, 757, 758, 759, 760, 761, 762, 763, 764, 765, 766, 767, 768, 769, 770, 771, 772, 773, 774, 775, 776, 777, 778, 779, 780, 781, 782, 783, 784, 785, 786, 787]
-a = [201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 302, 304, 320, 752, 755, 756, 757, 758, 759, 760, 761, 762, 763, 764, 765, 766, 767, 768, 769, 770, 771, 772, 773, 774, 775, 776, 777, 778, 779, 780, 781, 782, 783, 784, 785, 786, 787, 788, 789, 790, 791, 792, 793, 794, 795, 796, 797, 798, 799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821, 822, 823, 824, 825, 826, 829, 831]
-# b = [47,48,49,51,52,54,55,57,59,61,63,65,67,69,71,72,73,75,78,79,80,83,84,85,88,91,93,94,95,97,98,101,102,171,172,174,175,178,179,180,181,186,188,191,192,193,194,196,197,200,201,202,204,205,209,211,213,214,216,217,218,219,221,222,275,278,282,284,287,290,291,293,296,297,298,300,301,307,309,313,314,315,316,318,320,321,322,323,324]
-
+a = [87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 399, 406, 407, 408, 409, 410, 411, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 718, 719, 720, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136, 1137, 1138, 1335, 1336, 1337, 1338, 1339, 1340, 1341, 1342, 1343, 1344, 1345, 1346, 1347, 1348, 1349, 1350, 1351, 1352, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 1360, 1361, 1532, 1533, 1534, 1535, 1536, 1537, 1538, 1539, 1540, 1541, 1542, 1543, 1544, 1545, 1546, 1547, 1548, 1549, 1550]
 
 parser = argparse.ArgumentParser(
                     prog = 'Parallel Implemention of Dirichlet Process Mixture Model',
@@ -15,7 +13,7 @@ parser = argparse.ArgumentParser(
                     epilog = '2022, Sunan Sun <sunan@seas.upenn.edu>')
 
 
-parser.add_argument('-i', '--input', type=int, default=2, help='Choose Data Input Option: 0 handrawn; 1 load handdrawn; 2 load matlab')
+parser.add_argument('-i', '--input', type=int, default=3, help='Choose Data Input Option: 0 handrawn; 1 load handdrawn; 2 load matlab')
 parser.add_argument('-d', '--data', type=int, default=1, help='Choose Matlab Dataset, default=1')
 parser.add_argument('-t', '--iteration', type=int, default=40, help='Number of Sampler Iterations; default=50')
 parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
@@ -34,8 +32,12 @@ base              = args.base
 input_path = './data/input.csv'
 output_path = './data/output.csv'
 
-
-if input_opt == 2:
+if input_opt == 1:
+    completed_process = subprocess.run('matlab -nodesktop -sd "~/Developers/dpmm/util/drawData" -batch demo_drawData', shell=True)
+    Data = np.genfromtxt('./data/human_demonstrated_trajectories_matlab.csv', dtype=float, delimiter=',')
+elif input_opt == 2:
+    Data = np.genfromtxt('./data/human_demonstrated_trajectories_matlab.csv', dtype=float, delimiter=',')
+elif input_opt == 3:
     pkg_dir = './data/'
     chosen_data_set = dataset_no
     sub_sample = 1
@@ -44,6 +46,24 @@ if input_opt == 2:
     Data = normalize_velocity_vector(Data)
     # Data = Data[a, :]
     # Data = Data[b, :]
+elif input_opt == 4:          #Using Haihui's loading/plotting code
+    pkg_dir = './data/'
+    chosen_dataset = dataset_no  # 6 # 4 (when conducting 2D test)
+    sub_sample = 2  # '>2' for real 3D Datasets, '1' for 2D toy datasets
+    nb_trajectories = 4  # Only for real 3D data
+    Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
+    vel_samples = 10
+    vel_size = 20
+    plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
+    Data = normalize_velocity_vector(Data)
+    # print(np.linalg.norm(Data[:, 3:-1]))
+    Data = Data[np.logical_not(np.isnan(Data[:, -1]))]  # get rid of nan points
+        
+    # Data = Data.T
+    # fig = plt.figure()
+    # ax1 = plt.axes(projection='3d')
+    # ax1.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='r', label='original demonstration', s=5)
+    # plt.show()
 
 num, dim = Data.shape                                  # always pass the full data and parse it later on
 
@@ -66,7 +86,7 @@ if base == 0:  # If only Eucliden distance is taken into account
 elif base == 1:
     mu_0 = np.zeros((Data.shape[1], ))
     mu_0[-1] = 1                                        # prior belief on direction; i.e. the last two entries [0, 1]
-    sigma_0 = 0.1 * np.eye(mu_0.shape[0]-1)             # reduced dimension of covariance
+    sigma_0 = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    # reduced dimension of covariance
     sigma_0[-1, -1] = 1                                 # scalar directional variance with no correlation with position
     lambda_0 = {
         "nu_0": sigma_0.shape[0] + 3,
@@ -96,35 +116,52 @@ completed_process = subprocess.run(' '.join(args), shell=True)
 
 
 assignment_array = np.genfromtxt(output_path, dtype=int, delimiter=',')
+# print(assignment_array.max())
 
+
+# print(np.amax(assignment_array))
 
 """##### Plot Results ######"""
 # """
-fig, ax = plt.subplots()
-colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
-    "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
-for i in range(Data.shape[0]):
-    color = colors[assignment_array[i]]
-    ax.scatter(Data[i, 0], Data[i, 1], c=color)
-ax.set_aspect('equal')
+if dim == 4:
+    fig, ax = plt.subplots()
+    colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+        "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+    for i in range(Data.shape[0]):
+        color = colors[assignment_array[i]]
+        ax.scatter(Data[i, 0], Data[i, 1], c=color)
+    ax.set_aspect('equal')
+else:
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+        "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+    for k in range(assignment_array.max()+1):
+        color = colors[k]
+        index_k = np.where(assignment_array==k)[0]
+        Data_k = Data[index_k, :]
+        ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=color, s=5)
+    
+    # for i in range(Data.shape[0]):
+    #     color = colors[assignment_array[i]]
+    #     ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=color, label='original demonstration', s=5)   
 # """
 
-assignment_array = regress(Data, assignment_array)
-fig, ax = plt.subplots()
-colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
-    "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
-for i in range(Data.shape[0]):
-    color = colors[assignment_array[i]]
-    ax.scatter(Data[i, 0], Data[i, 1], c=color)
-ax.set_aspect('equal')
+# assignment_array = regress(Data, assignment_array)
+# fig, ax = plt.subplots()
+# colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+#     "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+# for i in range(Data.shape[0]):
+#     color = colors[assignment_array[i]]
+#     ax.scatter(Data[i, 0], Data[i, 1], c=color)
+# ax.set_aspect('equal')
+# ax.set_title('Dataset %i Base %i Init %i Iteration %i' %(dataset_no, base, init_opt, iteration))
 plt.show()
 
 
-a = np.where(assignment_array==3)[0]
+# a = np.where(assignment_array==1)[0]
 # print(len(a.tolist()))
-print(a.tolist())
+# print(a.tolist())
 
 
-# print(np.mean(Data, axis=0))
-# print(np.cov(Data.T)*(num-1))
 

@@ -15,6 +15,7 @@ T unsigned_angle(const Matrix<T,Dynamic, 1>&u, const Matrix<T,Dynamic, 1>&v)
     if (u.dot(v) > 1) return 0;
     if (u.dot(v) < -1) return PI;
     theta = acos(u.dot(v));
+    // std::cout << theta;
     return theta; 
 }
 
@@ -58,6 +59,8 @@ Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& x_k)
   Matrix<T, Dynamic, 1> p(x_k.cols()/2);
   
   p = x_k(0, seq(x_k.cols()/2, last)).transpose();
+
+  // std::cout << p << std::endl; 
   if (x_k.rows() == 1) return p;
 
   while (1)

@@ -7,10 +7,17 @@ def normalize_data(data):
 
 
 def normalize_velocity_vector(data):
-    vel_data = data[2:4, :]
-    vel_norm = np.linalg.norm(vel_data, axis=0)
-    normalized_vel_data = np.divide(vel_data, vel_norm)
-    return np.hstack((data[0:2, :].T, normalized_vel_data.T))
+    if data.shape[0]==4:
+        vel_data = data[2:4, :]
+        vel_norm = np.linalg.norm(vel_data, axis=0)
+        normalized_vel_data = np.divide(vel_data, vel_norm)
+        return np.hstack((data[0:2, :].T, normalized_vel_data.T))
+    elif data.shape[0]==6:
+        vel_data = data[3:6, :]
+        vel_norm = np.linalg.norm(vel_data, axis=0)
+        normalized_vel_data = np.divide(vel_data, vel_norm)
+        return np.hstack((data[0:3, :].T, normalized_vel_data.T))
+
 
 
 def add_directional_features(line_index, time_index, x_coord, y_coord, if_normalize):

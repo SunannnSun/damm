@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     else if (base==1)
     {
         int dimMu = dim;
-        int dimCov = dim - 1;
+        int dimCov = dim / 2 + 1;
         double nu;
         double kappa;
         VectorXd mu(dimMu);
@@ -239,14 +239,14 @@ int main(int argc, char **argv)
                 
             // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
             // dpmmDir.splitProposal(indexLists[0]);
-
-            if (t!=0 && t%50==0 && t<700)
+            if (t==-1)
+            // if (t!=0 && t%50==0 && t<700)
             {
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 // std::cout << indexLists[0].size() << std::endl;
                 // dpmmDir.splitProposal(indexLists[0]);
-                dpmmDir.splitProposal(indexLists[4]);
-                // for (int l=0; l<indexLists.size(); ++l) dpmmDir.splitProposal(indexLists[l]);
+                // dpmmDir.splitProposal(indexLists[0]);
+                for (int l=0; l<indexLists.size(); ++l) dpmmDir.splitProposal(indexLists[l]);
             }
             else
             {

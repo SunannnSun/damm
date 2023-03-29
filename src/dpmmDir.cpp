@@ -219,9 +219,9 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, dist, rndGen_);
   for (int tt=0; tt<50; ++tt)
   {
-    if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1)
+    if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
     {
-      std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
+      // std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
       return 1;
     }
     // dpmm_split.sampleCoefficientsParameters(indexList);
@@ -411,7 +411,13 @@ void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
       else if (z_[indexList[ii]] == index_j && ii!=i) indexList_j.push_back(indexList[ii]);
     }
 
-    if (indexList_i.empty()==true || indexList_j.empty()==true) return;
+    if (indexList_i.empty()==true || indexList_j.empty()==true)
+    {
+      indexLists_.clear();
+      indexLists_.push_back(indexList_i);
+      indexLists_.push_back(indexList_j);
+      return;
+    } 
 
     prob[0] = log(indexList_i.size()) + H_.logPosteriorProb(x_i, x_(indexList_i, seq(0,1))); 
     prob[1] = log(indexList_j.size()) + H_.logPosteriorProb(x_i, x_(indexList_j, seq(0,1))); 
@@ -440,7 +446,6 @@ void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
   indexLists_.clear();
   indexLists_.push_back(indexList_i);
   indexLists_.push_back(indexList_j);
-
 }
 
 
