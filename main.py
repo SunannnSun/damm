@@ -6,8 +6,6 @@ import argparse, subprocess, os, csv, random
 
 
 def dpmm():
-    a = [87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 399, 406, 407, 408, 409, 410, 411, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 718, 719, 720, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136, 1137, 1138, 1335, 1336, 1337, 1338, 1339, 1340, 1341, 1342, 1343, 1344, 1345, 1346, 1347, 1348, 1349, 1350, 1351, 1352, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 1360, 1361, 1532, 1533, 1534, 1535, 1536, 1537, 1538, 1539, 1540, 1541, 1542, 1543, 1544, 1545, 1546, 1547, 1548, 1549, 1550]
-
     parser = argparse.ArgumentParser(
                         prog = 'Parallel Implemention of Dirichlet Process Mixture Model',
                         description = 'parallel implementation',
@@ -117,13 +115,16 @@ def dpmm():
 
 
     assignment_array = np.genfromtxt(output_path, dtype=int, delimiter=',')
+    logNum = np.genfromtxt('./data/logNum.csv', dtype=int, delimiter=',')
+    logLogLik = np.genfromtxt('./data/logLogLik.csv', dtype=float, delimiter=',')
+
     # print(assignment_array.max())
 
 
     # print(np.amax(assignment_array))
 
     """##### Plot Results ######"""
-    """
+    # """
     if dim == 4:
         fig, ax = plt.subplots()
         colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
@@ -142,7 +143,7 @@ def dpmm():
             index_k = np.where(assignment_array==k)[0]
             Data_k = Data[index_k, :]
             ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=color, s=5)
-    """
+    # """
     # plt.show()
 
     assignment_array = regress(Data, assignment_array)       #fix the scenario where small clusters vanish after regression
@@ -168,8 +169,16 @@ def dpmm():
             index_k = np.where(assignment_array==k)[0]
             Data_k = Data[index_k, :]
             ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=color, s=5)
-    ax.set_title('Dataset %i Base %i Init %i Iteration %i' %(dataset_no, base, init_opt, iteration))
+    ax.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(dataset_no, base, init_opt, iteration))
 
+    
+    _, axes = plt.subplots(2, 1)
+    axes[0].plot(np.arange(logNum.shape[0]), logNum, c='k')
+    axes[0].set_title('Number of Components')
+    axes[1].plot(np.arange(logLogLik.shape[0]), logLogLik, c='k')
+    axes[1].set_title('Log Joint Likelihood')
+    
+    
     plt.show()
     # values, counts = np.unique(assignment_array, return_counts=True)
     # print(values)

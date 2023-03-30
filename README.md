@@ -6,6 +6,9 @@ This module consists of the parallel implementation of Dirichlet process Mixture
 
 ### Update
 
+3/29: log in the value of joint log likelihood in each iteration; can potentially increase computational load; visualize for convergence analysis
+
+
 As opposed to using CMake in previous iteration, Linux implementation will solely use terminal commands to compile, execute and debug in Vsode IDE due to the module's low complexity.
 
 

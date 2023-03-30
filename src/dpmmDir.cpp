@@ -134,16 +134,22 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters()
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleLabels()
 {
+  double logLik = 0;
   #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
   for(uint32_t i=0; i<N_; ++i)
   {
     VectorXd x_i;
     x_i = x_(i, all); //current data point x_i
     VectorXd prob(K_);
+    double logLik_i = 0;
     for (uint32_t k=0; k<K_; ++k)
-    {
-      prob[k] = log(Pi_[k]) + parameters_[k].logProb(x_i);
+    { 
+      double logProb =  parameters_[k].logProb(x_i);
+      prob[k] = log(Pi_[k]) + logProb;
+      logLik_i += Pi_[k] * exp(logProb);
     }
+    logLik += log(logLik_i);
+    // std::cout << logLik << std::endl;
 
     double prob_max = prob.maxCoeff();
     prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
@@ -156,7 +162,9 @@ void DPMMDIR<dist_t>::sampleLabels()
     uint32_t k = 0;
     while (prob[k] < uni_draw) k++;
     z_[i] = k;
-  }
+  } 
+  // std::cout << logLik << std::endl;
+  logLogLik_.push_back(logLik);
 }
 
 
@@ -181,6 +189,7 @@ void DPMMDIR<dist_t>::reorderAssignments()
     }
   }
   K_ = z_.maxCoeff() + 1;
+  logNum_.push_back(K_);
 }
 
 
@@ -256,6 +265,7 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   z_ = z_split;
   // z_ = dpmm_split.z_;
   K_ += 1;
+  logNum_.push_back(K_);
   // this -> updateIndexLists();
   std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   

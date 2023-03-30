@@ -277,6 +277,20 @@ int main(int argc, char **argv)
             fout << z[i] << endl;
         fout.close();
 
+        vector<int> logNum = dpmmDir.logNum_;
+        string pathOut_logNum = "./data/logNum.csv";
+        ofstream fout_logNum(pathOut_logNum.data(),ofstream::out);
+        for (uint16_t i=0; i < logNum.size(); ++i)
+            fout_logNum << logNum[i] << endl;
+        fout_logNum.close();
+
+        vector<double> logLogLik = dpmmDir.logLogLik_;
+        string pathOut_logLogLik = "./data/logLogLik.csv";
+        ofstream fout_logLogLik(pathOut_logLogLik.data(),ofstream::out);
+        for (uint16_t i=0; i < logLogLik.size(); ++i)
+            fout_logLogLik << logLogLik[i] << endl;
+        fout_logLogLik.close();
+
         return 0;
     }
 }   

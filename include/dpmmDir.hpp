@@ -62,4 +62,9 @@ public:
   //spilt/merge proposal
   vector<int> indexList_;
   vector<vector<int>> indexLists_;
+
+
+  //log in number of components, joint likelihood every iteration
+  vector<int> logNum_;
+  vector<double> logLogLik_; //https://stats.stackexchange.com/questions/398780/understanding-the-log-likelihood-score-in-scikit-learn-gmm
 };
