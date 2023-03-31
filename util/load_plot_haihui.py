@@ -51,7 +51,7 @@ def load_dataset_DS(pkg_dir, dataset, sub_sample, nb_trajectories):
         N = len(data_)
         traj = np.random.choice(np.arange(N), nb_trajectories, replace=False)
         # traj = np.array([6, 8, 3, 5]) - 1
-        traj = np.array([0, 1, 2, 3, 4, 5, 6]) 
+        traj = np.array([0, 1, 2, 3]) 
 
         data = data_[traj]
         for l in np.arange(nb_trajectories):

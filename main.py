@@ -1,6 +1,6 @@
 from util.load_data import *
 from util.process_data import *
-from util.modelRegression import regress
+from util.modelRegression import *  
 from util.load_plot_haihui import *
 import argparse, subprocess, os, csv, random
 
@@ -9,7 +9,7 @@ def dpmm():
     parser = argparse.ArgumentParser(
                         prog = 'Parallel Implemention of Dirichlet Process Mixture Model',
                         description = 'parallel implementation',
-                        epilog = '2022, Sunan Sun <sunan@seas.upenn.edu>')
+                        epilog = '2023, Sunan Sun <sunan@seas.upenn.edu>')
 
 
     parser.add_argument('-i', '--input', type=int, default=3, help='Choose Data Input Option: 0 handrawn; 1 load handdrawn; 2 load matlab')
@@ -27,9 +27,11 @@ def dpmm():
     alpha             = args.alpha
     init_opt          = args.init
     base              = args.base
+    
+    filepath = os.path.dirname(os.path.realpath(__file__))
 
-    input_path = './data/input.csv'
-    output_path = './data/output.csv'
+    input_path = filepath + '/data/input.csv'
+    output_path = filepath + '/data/output.csv'
 
     if input_opt == 1:
         completed_process = subprocess.run('matlab -nodesktop -sd "~/Developers/dpmm/util/drawData" -batch demo_drawData', shell=True)
@@ -37,16 +39,14 @@ def dpmm():
     elif input_opt == 2:
         Data = np.genfromtxt('./data/human_demonstrated_trajectories_matlab.csv', dtype=float, delimiter=',')
     elif input_opt == 3:
-        pkg_dir = './data/'
+        pkg_dir = filepath + '/data/'
         chosen_data_set = dataset_no
         sub_sample = 1
         nb_trajectories = 7
         Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
         Data = normalize_velocity_vector(Data)
-        # Data = Data[a, :]
-        # Data = Data[b, :]
     elif input_opt == 4:          #Using Haihui's loading/plotting code
-        pkg_dir = './data/'
+        pkg_dir = filepath + '/data/'
         chosen_dataset = dataset_no  # 6 # 4 (when conducting 2D test)
         sub_sample = 2  # '>2' for real 3D Datasets, '1' for 2D toy datasets
         nb_trajectories = 4  # Only for real 3D data
@@ -55,16 +55,8 @@ def dpmm():
         vel_size = 20
         plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
         Data = normalize_velocity_vector(Data)
-        # print(np.linalg.norm(Data[:, 3:-1]))
         Data = Data[np.logical_not(np.isnan(Data[:, -1]))]  # get rid of nan points
-            
-        # Data = Data.T
-        # fig = plt.figure()
-        # ax1 = plt.axes(projection='3d')
-        # ax1.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='r', label='original demonstration', s=5)
-        # plt.show()
-
-    num, dim = Data.shape                                  # always pass the full data and parse it later on
+    num, dim = Data.shape                                   # always pass the full data and parse it later on
 
 
     with open(input_path, mode='w') as data_file:
@@ -98,7 +90,7 @@ def dpmm():
     params = np.r_[np.array([lambda_0['nu_0'], lambda_0['kappa_0']]), lambda_0['mu_0'].ravel(), lambda_0['sigma_0'].ravel()]
 
 
-    args = ['time ' + os.path.abspath(os.getcwd()) + '/main',
+    args = ['time ' + filepath + '/main',
             '-n {}'.format(num),
             '-m {}'.format(dim),        
             '-i {}'.format(input_path),
@@ -115,13 +107,10 @@ def dpmm():
 
 
     assignment_array = np.genfromtxt(output_path, dtype=int, delimiter=',')
-    logNum = np.genfromtxt('./data/logNum.csv', dtype=int, delimiter=',')
-    logLogLik = np.genfromtxt('./data/logLogLik.csv', dtype=float, delimiter=',')
-
-    # print(assignment_array.max())
+    logNum = np.genfromtxt(filepath + '/data/logNum.csv', dtype=int, delimiter=',')
+    logLogLik = np.genfromtxt(filepath + '/data/logLogLik.csv', dtype=float, delimiter=',')
 
 
-    # print(np.amax(assignment_array))
 
     """##### Plot Results ######"""
     # """
@@ -162,7 +151,7 @@ def dpmm():
     else:
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
+        colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'lime', 'crimson'] + [
             "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
         for k in range(assignment_array.max()+1):
             color = colors[k]
@@ -180,9 +169,7 @@ def dpmm():
     
     
     plt.show()
-    # values, counts = np.unique(assignment_array, return_counts=True)
-    # print(values)
-    # print(counts)
+
 
     num_comp = assignment_array.max()+1
     Priors = np.zeros((num_comp, ))
@@ -195,15 +182,17 @@ def dpmm():
         Sigma[k, :, :] = np.cov(data_k.T)
         Priors[k] = data_k.shape[0]
     Mu = Mu.T
-    print(Priors)
-    ds_opt_dir = './../ds-opt-py/'
+    
+    
+    # print(Priors)
+    # ds_opt_dir = './../ds-opt-py/'
 
-    np.save(ds_opt_dir + 'distribution_difference_finding/Priors.npy', Priors)
-    np.save(ds_opt_dir + 'distribution_difference_finding/Mu.npy', Mu)
-    np.save(ds_opt_dir + 'distribution_difference_finding/Sigma.npy', Sigma)
+    # np.save(ds_opt_dir + 'distribution_difference_finding/Priors.npy', Priors)
+    # np.save(ds_opt_dir + 'distribution_difference_finding/Mu.npy', Mu)
+    # np.save(ds_opt_dir + 'distribution_difference_finding/Sigma.npy', Sigma)
 
-    print(Mu.shape)
-    print(Sigma.shape)
+    # print(Mu.shape)
+    # print(Sigma.shape)
 
 
 
