@@ -66,7 +66,7 @@ Now we can go back to the root directory of dpmm and compile the source code usi
 
 And execute the code 
 
-```python main.py [-i INPUT] [-d DATA] [-t ITERATION] [-a ALPHA] [--init INIT]```
+```python main.py  [-d DATA] [-t ITERATION] [-a ALPHA] [--init INIT]```
 
 <!-- 
 GCC can search for package under system directory, but both packages have unconventional names with version information, we need to specify the include path for GCC to search using the -I flag 

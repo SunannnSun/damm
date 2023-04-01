@@ -44,22 +44,22 @@ def dpmm(*args_):
     ###############################################################
     ######################### load data ###########################
     ###############################################################  
-    
     filepath = os.path.dirname(os.path.realpath(__file__))
-    input_path = filepath + '/data/input.csv'
+    input_path = filepath + '/data/input.csv'   
     
-    if input_opt == 4:                                     # Using Haihui's loading/plotting code(default)
-        pkg_dir = filepath + '/data/'
-        chosen_dataset = dataset_no   
-        sub_sample = 1   
-        nb_trajectories = 4   
-        Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
-        vel_samples = 10
-        vel_size = 20
-        plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
-
     if len(args_) == 1:
         Data = args_[0]
+    else:        
+        if input_opt == 4:                                     # Using Haihui's loading/plotting code(default)
+            pkg_dir = filepath + '/data/'
+            chosen_dataset = dataset_no   
+            sub_sample = 1   
+            nb_trajectories = 4   
+            Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
+            vel_samples = 10
+            vel_size = 20
+            plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
+
 
     Data = normalize_velocity_vector(Data)                  
     Data = Data[np.logical_not(np.isnan(Data[:, -1]))]      # get rid of nan points
