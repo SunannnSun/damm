@@ -34,8 +34,6 @@ int main(int argc, char **argv)
         ("help", "produce help message")
         ("number,n", po::value<int>(), "number of data points")
         ("dimension,m", po::value<int>(), "dimension of data points")
-        ("input,i", po::value<string>(), "path to input dataset .csv file rows: dimensions; cols: numbers")
-        ("output,o", po::value<string>(), "path to output dataset .csv file rows: dimensions; cols: numbers")
         ("iteration,t", po::value<int>(), "Numer of Sampler Iteration")
         ("alpha,a", po::value<double>(), "Concentration value")
         ("init", po::value<int>(), "Number of initial clusters")
@@ -106,34 +104,26 @@ int main(int argc, char **argv)
 
         int dimData = dimParam;
         MatrixXd Data(num, dimData);              //Matrix variable named in capital
-        string pathIn ="";
-        if(vm.count("input")) pathIn = vm["input"].as<string>();
-        if (!pathIn.compare(""))
+        string pathIn ="./data/input.csv";
+        ifstream  fin(pathIn);
+        string line;
+        vector<vector<string> > parsedCsv;
+        while(getline(fin,line))
         {
-            cout<<"please specify an input dataset"<<endl;
-            return 1;
-        }
-        else
-        {
-            ifstream  fin(pathIn);
-            string line;
-            vector<vector<string> > parsedCsv;
-            while(getline(fin,line))
+            stringstream lineStream(line);
+            string cell;
+            vector<string> parsedRow;
+            while(getline(lineStream,cell,','))
             {
-                stringstream lineStream(line);
-                string cell;
-                vector<string> parsedRow;
-                while(getline(lineStream,cell,','))
-                {
-                    parsedRow.push_back(cell);
-                }
-                parsedCsv.push_back(parsedRow);
+                parsedRow.push_back(cell);
             }
-            fin.close();
-            for (uint32_t i=0; i<num; ++i)
-                for (uint32_t j=0; j<dimData; ++j)
-                    Data(i, j) = stod(parsedCsv[i][j]);
+            parsedCsv.push_back(parsedRow);
         }
+        fin.close();
+        for (uint32_t i=0; i<num; ++i)
+            for (uint32_t j=0; j<dimData; ++j)
+                Data(i, j) = stod(parsedCsv[i][j]);
+    
 
 
         cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
@@ -157,14 +147,7 @@ int main(int argc, char **argv)
         }
         
         const VectorXi& z = dpmm.getLabels();
-        string pathOut;
-        if(vm.count("output")) pathOut = vm["output"].as<string>();
-        if (!pathOut.compare(""))
-        {
-            cout<<"please specify an output data file"<<endl;
-            exit(1);
-        }
-        else cout<<"Output to "<<pathOut<<endl;
+        string pathOut ="./data/output.csv";
         ofstream fout(pathOut.data(),ofstream::out);
         for (uint16_t i=0; i < z.size(); ++i)
             fout << z[i] << endl;
@@ -195,34 +178,26 @@ int main(int argc, char **argv)
 
         int dimData = dim;
         MatrixXd Data(num, dimData);              //Matrix variable named in capital
-        string pathIn ="";
-        if(vm.count("input")) pathIn = vm["input"].as<string>();
-        if (!pathIn.compare(""))
+        string pathIn ="./data/input.csv";
+        ifstream  fin(pathIn);
+        string line;
+        vector<vector<string> > parsedCsv;
+        while(getline(fin,line))
         {
-            cout<<"please specify an input dataset"<<endl;
-            return 1;
-        }
-        else
-        {
-            ifstream  fin(pathIn);
-            string line;
-            vector<vector<string> > parsedCsv;
-            while(getline(fin,line))
+            stringstream lineStream(line);
+            string cell;
+            vector<string> parsedRow;
+            while(getline(lineStream,cell,','))
             {
-                stringstream lineStream(line);
-                string cell;
-                vector<string> parsedRow;
-                while(getline(lineStream,cell,','))
-                {
-                    parsedRow.push_back(cell);
-                }
-                parsedCsv.push_back(parsedRow);
+                parsedRow.push_back(cell);
             }
-            fin.close();
-            for (uint32_t i=0; i<num; ++i)
-                for (uint32_t j=0; j<dimData; ++j)
-                    Data(i, j) = stod(parsedCsv[i][j]);
+            parsedCsv.push_back(parsedRow);
         }
+        fin.close();
+        for (uint32_t i=0; i<num; ++i)
+            for (uint32_t j=0; j<dimData; ++j)
+                Data(i, j) = stod(parsedCsv[i][j]);
+        
 
 
         cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
@@ -264,14 +239,7 @@ int main(int argc, char **argv)
         }
         
         const VectorXi& z = dpmmDir.getLabels();
-        string pathOut;
-        if(vm.count("output")) pathOut = vm["output"].as<string>();
-        if (!pathOut.compare(""))
-        {
-            cout<<"please specify an output data file"<<endl;
-            exit(1);
-        }
-        else cout<<"Output to "<<pathOut<<endl;
+        string pathOut = "./data/output.csv";
         ofstream fout(pathOut.data(),ofstream::out);
         for (uint16_t i=0; i < z.size(); ++i)
             fout << z[i] << endl;
