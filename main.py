@@ -27,10 +27,10 @@ def dpmm(*args_):
 
     if len(sys.argv) == 1:                              # pass arguments manually
         input_opt         = 4
-        dataset_no        = 10
+        dataset_no        = 8
         iteration         = 500
         alpha             = 1
-        init_opt          = 15
+        init_opt          = 1
         base              = 1
     else:                                               # pass arguments by command line
         input_opt         = args.input
@@ -45,11 +45,12 @@ def dpmm(*args_):
     ######################### load data ###########################
     ###############################################################  
     filepath = os.path.dirname(os.path.realpath(__file__))
-    input_path = filepath + '/data/input.csv'   
+    input_path = filepath + '/data/input.csv'
+    output_path = filepath + '/data/output.csv'
     
     if len(args_) == 1:
         Data = args_[0]
-    else:        
+    else:   
         if input_opt == 4:                                     # Using Haihui's loading/plotting code(default)
             pkg_dir = filepath + '/data/'
             chosen_dataset = dataset_no   
@@ -60,11 +61,9 @@ def dpmm(*args_):
             vel_size = 20
             plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
 
-
     Data = normalize_velocity_vector(Data)                  
-    Data = Data[np.logical_not(np.isnan(Data[:, -1]))]      # get rid of nan points
+    Data = Data[np.logical_not(np.isnan(Data[:, -1]))]         # get rid of nan points
     num, dim = Data.shape                                   
-
 
     with open(input_path, mode='w') as data_file:
         data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -107,7 +106,9 @@ def dpmm(*args_):
 
     args = ['time ' + filepath + '/main',
             '-n {}'.format(num),
-            '-m {}'.format(dim),        
+            '-m {}'.format(dim), 
+            '-i {}'.format(input_path),
+            '-o {}'.format(output_path),       
             '-t {}'.format(iteration),
             '-a {}'.format(alpha),
             '--init {}'.format(init_opt), 
