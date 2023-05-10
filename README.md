@@ -63,6 +63,10 @@ Now we can go back to the root directory of dpmm and compile the source code usi
 
 ```g++ -O1 -fopenmp -Iinclude -I/usr/include/eigen-3.4.0 -I/usr/include/boost_1_81_0 src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp  src/main.cpp -o main -lboost_program_options```
 
+Alternatively, if run on M1, use the following command,
+
+```g++ -O3 -std=c++17 -Iinclude -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.80.0/include/boost src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp src/main.cpp -o main -lboost_program_options -L/opt/homebrew/Cellar/boost/1.80.0/lib```
+
 
 And execute the code 
 
