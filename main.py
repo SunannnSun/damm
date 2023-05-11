@@ -19,26 +19,17 @@ def dpmm(*args_):
 
     parser.add_argument('--input', type=int, default=4, help='Choose Data Input Option: 4')
     parser.add_argument('-d', '--data', type=int, default=10, help='Choose Dataset, default=10')
-    parser.add_argument('-t', '--iteration', type=int, default=40, help='Number of Sampler Iterations; default=50')
+    parser.add_argument('-t', '--iteration', type=int, default=200, help='Number of Sampler Iterations; default=50')
     parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
-    parser.add_argument('--init', type=int, default = 1, help='number of initial clusters, 0 is one cluster per data; default=1')
+    parser.add_argument('--init', type=int, default = 15, help='number of initial clusters, 0 is one cluster per data; default=1')
     parser.add_argument('--base', type=int, default = 1, help='clustering option; 0: position; 1: position+directional')
-    args = parser.parse_args()
 
-    if len(sys.argv) == 1:                              # pass arguments manually
-        input_opt         = 4
-        dataset_no        = 8
-        iteration         = 500
-        alpha             = 1
-        init_opt          = 1
-        base              = 1
-    else:                                               # pass arguments by command line
-        input_opt         = args.input
-        dataset_no        = args.data
-        iteration         = args.iteration
-        alpha             = args.alpha
-        init_opt          = args.init
-        base              = args.base
+    args = parser.parse_args()
+    dataset_no        = args.data
+    iteration         = args.iteration
+    alpha             = args.alpha
+    init_opt          = args.init
+    base              = args.base
     
     
     ###############################################################
@@ -50,16 +41,15 @@ def dpmm(*args_):
     
     if len(args_) == 1:
         Data = args_[0]
-    else:   
-        if input_opt == 4:                                     # Using Haihui's loading/plotting code(default)
-            pkg_dir = filepath + '/data/'
-            chosen_dataset = dataset_no   
-            sub_sample = 1   
-            nb_trajectories = 4   
-            Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
-            vel_samples = 10
-            vel_size = 20
-            plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
+    else:                               # Using Haihui's loading/plotting code(default)
+        pkg_dir = filepath + '/data/'
+        chosen_dataset = dataset_no   
+        sub_sample = 1   
+        nb_trajectories = 4   
+        Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
+        vel_samples = 10
+        vel_size = 20
+        # plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
 
     Data = normalize_velocity_vector(Data)                  
     Data = Data[np.logical_not(np.isnan(Data[:, -1]))]         # get rid of nan points
@@ -164,6 +154,16 @@ def dpmm(*args_):
     axes[1].plot(np.arange(logLogLik.shape[0]), logLogLik, c='k')
     axes[1].set_title('Log Joint Likelihood')
     
+
+
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    k = 1
+    index_k = np.where(assignment_array==k)[0]
+    Data_k = Data[index_k, :]
+    ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=colors[k], s=5)
+
+
     plt.show()
 
     ###############################################################
@@ -184,12 +184,23 @@ def dpmm(*args_):
     
     return Priors, Mu, Sigma
 
+
 if __name__ == "__main__":
-    
-    filepath = os.path.dirname(os.path.realpath(__file__))
-    pkg_dir = filepath + '/data/'
-    chosen_dataset = 8
-    sub_sample = 1   
-    nb_trajectories = 4   
-    Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
-    dpmm(Data)
+    """
+    If no arguments are given, we run the dpmm using default settings
+    """
+    # if(len(sys.argv) == 1):
+    #     filepath = os.path.dirname(os.path.realpath(__file__))
+    #     pkg_dir = filepath + '/data/'
+    #     chosen_dataset = 10
+    #     sub_sample = 1   
+    #     nb_trajectories = 4   
+    #     Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
+    #     dpmm(Data)
+    # else:
+    #     dpmm()
+
+    data_ = loadmat(r"{}".format("data/pnp_done"))
+    data = np.array(data_["Data"])
+    print(data)
+    dpmm(data)
