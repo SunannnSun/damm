@@ -37,6 +37,9 @@ public:
   double transitionProb(vector<int> indexList_i, vector<int> indexList_j);
   double logTransitionProb(vector<int> indexList_i, vector<int> indexList_j);
   double logPosteriorProb(vector<int> indexList_i, vector<int> indexList_j);
+
+  //merge proposal
+  vector<vector<int>> computeSimilarity();
   
   
 
@@ -45,6 +48,8 @@ public:
   //class constructor(indepedent of data)
   double alpha_; 
   dist_t H_; 
+  
+
   boost::mt19937 rndGen_;
 
   //class initializer(dependent on data)

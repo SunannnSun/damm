@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <limits>
 
 #include <Eigen/Dense>
 #include <boost/random/mersenne_twister.hpp>
@@ -256,11 +257,15 @@ int main(int argc, char **argv)
             }
 
 
-            // if (t==200)
-            // {
-            //     vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-            //     for (int k = 1; k < indexLists.size(); ++k) dpmmDir.mergeProposal(indexLists[k], indexLists[k-1]);
-            // }
+            if (t!=0 && t%50==0 && t<700)
+            {   
+               vector<vector<int>> merge_indexLists = dpmmDir.computeSimilarity();
+               dpmmDir.mergeProposal(merge_indexLists[0], merge_indexLists[1]);
+
+                
+                // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+                // for (int k = 1; k < indexLists.size(); ++k) dpmmDir.mergeProposal(indexLists[k], indexLists[k-1]);
+            }
         }
         
         const VectorXi& z = dpmmDir.getLabels();

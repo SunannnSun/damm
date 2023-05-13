@@ -63,7 +63,7 @@ NIWDIR<T>::~NIWDIR()
 
 
 template<typename T>
-NIW<T> NIWDIR<T>::getNIW()
+NIW<T> NIWDIR<T>::getNIW()  //place in constructor so can be re-used in every split/merge proposal
 {
   return NIW<T>(SigmaPos_, muPos_, nu_, kappa_, rndGen_);
 };

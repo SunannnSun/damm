@@ -33,7 +33,6 @@ class NIWDIR
     public:
         boost::mt19937 rndGen_;
 
-
         // Hyperparameters remain fixed once initialized
         Matrix<T,Dynamic,Dynamic> SigmaPos_;
         T SigmaDir_;

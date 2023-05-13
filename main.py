@@ -45,7 +45,7 @@ def dpmm(*args_):
         pkg_dir = filepath + '/data/'
         chosen_dataset = dataset_no   
         sub_sample = 1   
-        nb_trajectories = 4   
+        nb_trajectories = 8   
         Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
         vel_samples = 10
         vel_size = 20
@@ -181,7 +181,22 @@ def dpmm(*args_):
         Sigma[k, :, :] = np.cov(data_k.T)
         Priors[k] = data_k.shape[0]
     Mu = Mu.T
+
+    print(Mu.T)
+    """
+    Compute similarity between Gaussian pairs
+    """
     
+    similarity_matrix = np.inf * np.ones((num_comp, num_comp))
+    for i in range(num_comp):
+        for j in np.arange(i+1, num_comp):
+            similarity_matrix[i, j] = np.linalg.norm(Mu[:, i] - Mu[:, j])
+
+    # print(similarity_matrix)
+    # print(np.unravel_index(similarity_matrix.argmin(), similarity_matrix.shape))
+
+
+
     return Priors, Mu, Sigma
 
 
@@ -189,18 +204,18 @@ if __name__ == "__main__":
     """
     If no arguments are given, we run the dpmm using default settings
     """
-    # if(len(sys.argv) == 1):
-    #     filepath = os.path.dirname(os.path.realpath(__file__))
-    #     pkg_dir = filepath + '/data/'
-    #     chosen_dataset = 10
-    #     sub_sample = 1   
-    #     nb_trajectories = 4   
-    #     Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
-    #     dpmm(Data)
-    # else:
-    #     dpmm()
+    if(len(sys.argv) == 1):
+        filepath = os.path.dirname(os.path.realpath(__file__))
+        pkg_dir = filepath + '/data/'
+        chosen_dataset = 10
+        sub_sample = 1   
+        nb_trajectories = 4   
+        Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
+        dpmm(Data)
+    else:
+        dpmm()
 
-    data_ = loadmat(r"{}".format("data/pnp_done"))
-    data = np.array(data_["Data"])
-    print(data)
-    dpmm(data)
+    # data_ = loadmat(r"{}".format("data/pnp_done"))
+    # data = np.array(data_["Data"])
+    # print(data)
+    # dpmm(data)
