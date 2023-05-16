@@ -182,7 +182,7 @@ def dpmm(*args_):
         Priors[k] = data_k.shape[0]
     Mu = Mu.T
 
-    print(Mu.T)
+    # print(Mu.T)
     """
     Compute similarity between Gaussian pairs
     """

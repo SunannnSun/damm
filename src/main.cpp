@@ -32,16 +32,16 @@ int main(int argc, char **argv)
     cout << "Hello Parallel World" << endl;
     po::options_description desc("Allowed options");
     desc.add_options()
-        ("help", "produce help message")
-        ("number,n", po::value<int>(), "number of data points")
-        ("dimension,m", po::value<int>(), "dimension of data points")
-        ("input,i", po::value<string>(), "path to input dataset .csv file rows: dimensions; cols: numbers")
-        ("output,o", po::value<string>(), "path to output dataset .csv file rows: dimensions; cols: numbers")
-        ("iteration,t", po::value<int>(), "Numer of Sampler Iteration")
-        ("alpha,a", po::value<double>(), "Concentration value")
-        ("init", po::value<int>(), "Number of initial clusters")
-        ("base", po::value<int>(), "Base type: 0 euclidean, 1 euclidean + directional")
-        ("params,p", po::value< vector<double> >()->multitoken(), "parameters of the base measure")
+        ("help"                                 , "produce help message")
+        ("number,n"     , po::value<int>()      , "number of data")
+        ("dimension,m"  , po::value<int>()      , "dimension of data")
+        ("input,i"      , po::value<string>()   , "path to input dataset .csv file: rows: dimensions; cols: numbers")
+        ("output,o"     , po::value<string>()   , "path to output dataset .csv file: rows: dimensions; cols: numbers")
+        ("iteration,t"  , po::value<int>()      , "number of iteration")
+        ("alpha,a"      , po::value<double>()   , "concentration value")
+        ("init"         , po::value<int>()      , "number of initial clusters")
+        ("base"         , po::value<int>()      , "Base type: 0 Euclidean, 1 Euclidean + directional")
+        ("params,p"     , po::value< vector<double> >()->multitoken(), "hyperparameters")
     ;
 
     
@@ -236,8 +236,6 @@ int main(int argc, char **argv)
         for (uint32_t t=0; t<T; ++t)
         {
             cout<<"------------ t="<<t<<" -------------"<<endl;
-            cout << "Number of components: " << dpmmDir.K_ << endl;
-                
             // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
             // dpmmDir.splitProposal(indexLists[0]);
             // if (t==-1)
@@ -254,6 +252,7 @@ int main(int argc, char **argv)
                 dpmmDir.sampleCoefficientsParameters();
                 dpmmDir.sampleLabels();
                 dpmmDir.reorderAssignments();
+                dpmmDir.updateIndexLists();
             }
 
 
@@ -266,6 +265,7 @@ int main(int argc, char **argv)
                 // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 // for (int k = 1; k < indexLists.size(); ++k) dpmmDir.mergeProposal(indexLists[k], indexLists[k-1]);
             }
+            cout << "Number of components: " << dpmmDir.K_ << endl;
         }
         
         const VectorXi& z = dpmmDir.getLabels();

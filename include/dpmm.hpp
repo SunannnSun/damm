@@ -27,6 +27,9 @@ public:
   void sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j);
   void sampleLabels();
   void sampleLabels(const uint32_t index_i, const uint32_t index_j);
+  void sampleLabelsCollapsed(const vector<int> &indexList);
+  void sampleCoefficientsParameters(const vector<int> &indexList);
+  void sampleLabels(const vector<int> &indexList);
 
   double transitionProb(const uint32_t index_i, const uint32_t index_j);
   double transitionProb(const uint32_t index_i, const uint32_t index_j, VectorXi z_original);

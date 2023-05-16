@@ -6,81 +6,44 @@
 #include <boost/random/variate_generator.hpp>
 
 
-#include "dpmmDir.hpp"
-#include "niwDir.hpp"
 #include "dpmm.hpp"
+#include "dpmmDir.hpp"
 #include "niw.hpp"
+#include "niwDir.hpp"
 
 
 template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen)
+DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows())
 {
   VectorXi z(x.rows());
-  if (init_cluster == 1) 
-  {
-    z.setZero();
-  }
+
+  if (init_cluster == 1) z.setZero();
   else if (init_cluster > 1)
   {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
-    for (int i=0; i<N_; ++i)z[i] = uni_(rndGen_); 
+    for (int ii=0; ii<N_; ++ii) z[ii] = uni_(rndGen_); 
   }
   else
   { 
     cout<< "Number of initial clusters not supported yet" << endl;
     exit(1);
   }
+
   z_ = z;
-  K_ = z_.maxCoeff() + 1; // equivalent to the number of initial clusters
-};
-
-
-
-template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
-{
-  vector<int> indexList_i;
-  vector<int> indexList_j;
-  int z_split_i = z_.maxCoeff() + 1;
-  int z_split_j = z_[indexList[0]];
-
-  boost::random::uniform_int_distribution<> uni_01(0, 1);
-  for (int i = 0; i<indexList_.size(); ++i)
-  {
-    if (uni_01(rndGen_) == 0)
-      {
-        indexList_i.push_back(indexList_[i]);
-        z_[indexList_[i]] = z_split_i;
-      }
-    else 
-      {
-        indexList_j.push_back(indexList_[i]);
-        z_[indexList_[i]] = z_split_j;
-      }
-  }
-  indexLists_.push_back(indexList_i);
-  indexLists_.push_back(indexList_j);
+  K_ = z_.maxCoeff() + 1; 
+  this ->updateIndexLists();
 };
 
 
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleCoefficients()
 {
-  VectorXi Nk(K_);
-  Nk.setZero();
-  for(uint32_t ii=0; ii<N_; ++ii)
-  {
-    Nk(z_(ii))++;
-  }
-
   VectorXd Pi(K_);
-  for (uint32_t k=0; k<K_; ++k)
+  for (uint32_t kk=0; kk<K_; ++kk)
   {
-    assert(Nk(k)!=0);
-    boost::random::gamma_distribution<> gamma_(Nk(k), 1);
-    Pi(k) = gamma_(rndGen_);
+    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
+    Pi(kk) = gamma_(rndGen_);
   }
   Pi_ = Pi / Pi.sum();
 }
@@ -92,18 +55,10 @@ void DPMMDIR<dist_t>::sampleParameters()
   components_.clear();
   parameters_.clear();
 
-  for (uint32_t k=0; k<K_; ++k)
+  for (uint32_t kk=0; kk<K_; ++kk)
   {
-    vector<int> indexList_k;
-    for (uint32_t ii = 0; ii<N_; ++ii)
-    {
-      if (z_[ii] == k) indexList_k.push_back(ii); 
-    }
-    MatrixXd x_k(indexList_k.size(), x_.cols()); 
-    x_k = x_(indexList_k, all);
-
-    components_.push_back(H_.posterior(x_k));  //components are NIW
-    parameters_.push_back(components_[k].sampleParameter()); //parameters are Normal
+    components_.push_back(H_.posterior(x_(indexLists_[kk], all)));     //components are NIW
+    parameters_.push_back(components_[kk].sampleParameter());          //parameters are Normal
   }
 }
 
@@ -114,19 +69,13 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters()
   components_.clear();
   parameters_.clear();
   VectorXd Pi(K_);
-
-  vector<vector<int>> indexLists(K_);
-  for (uint32_t ii = 0; ii<N_; ++ii)
-  {
-    indexLists[z_[ii]].push_back(ii); 
-  }
   
-  for (uint32_t k=0; k<K_; ++k)
+  for (uint32_t kk=0; kk<K_; ++kk)
   {
-    boost::random::gamma_distribution<> gamma_(indexLists[k].size(), 1);
-    Pi(k) = gamma_(rndGen_);
-    components_.push_back(H_.posterior(x_(indexLists[k], all)));
-    parameters_.push_back(components_[k].sampleParameter());
+    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
+    Pi(kk) = gamma_(rndGen_);
+    components_.push_back(H_.posterior(x_(indexLists_[kk], all)));
+    parameters_.push_back(components_[kk].sampleParameter());
   }
   Pi_ = Pi / Pi.sum();
 }
@@ -138,85 +87,35 @@ void DPMMDIR<dist_t>::sampleLabels()
 {
   double logLik = 0;
   #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
-  for(uint32_t i=0; i<N_; ++i)
+  for(uint32_t ii=0; ii<N_; ++ii)
   {
-    VectorXd x_i;
-    x_i = x_(i, all); //current data point x_i
     VectorXd prob(K_);
     double logLik_i = 0;
-    for (uint32_t k=0; k<K_; ++k)
+    for (uint32_t kk=0; kk<K_; ++kk)
     { 
-      double logProb =  parameters_[k].logProb(x_i);
-      prob[k] = log(Pi_[k]) + logProb;
-      logLik_i += Pi_[k] * exp(logProb);
+      double logProb =  parameters_[kk].logProb(x_(ii, all));
+      prob[kk] = log(Pi_[kk]) + logProb;
+      logLik_i += Pi_[kk] * exp(logProb);
     }
     logLik += log(logLik_i);
-    // std::cout << logLik << std::endl;
+   
 
-    double prob_max = prob.maxCoeff();
-    prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
+    prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
-    for (uint32_t ii = 1; ii < prob.size(); ++ii){
-      prob[ii] = prob[ii-1]+ prob[ii];
-    }
+    for (uint32_t kk = 1; kk < prob.size(); ++kk) prob[kk] = prob[kk-1]+ prob[kk];
+    
     boost::random::uniform_01<> uni_;   
     double uni_draw = uni_(rndGen_);
-    uint32_t k = 0;
-    while (prob[k] < uni_draw) k++;
-    z_[i] = k;
+    uint32_t kk = 0;
+    while (prob[kk] < uni_draw) kk++;
+    z_[ii] = kk;
   } 
-  // std::cout << logLik << std::endl;
   logLogLik_.push_back(logLik);
 }
 
 
-template <class dist_t>
-void DPMMDIR<dist_t>::reorderAssignments()
-{ 
-  vector<uint8_t> rearrange_list;
-  for (uint32_t i=0; i<N_; ++i)
-  {
-    if (rearrange_list.empty()) rearrange_list.push_back(z_[i]);
-    vector<uint8_t>::iterator it;
-    it = find (rearrange_list.begin(), rearrange_list.end(), z_[i]);
-    if (it == rearrange_list.end())
-    {
-      rearrange_list.push_back(z_[i]);
-      z_[i] = rearrange_list.size() - 1;
-    }
-    else if (it != rearrange_list.end())
-    {
-      int index = it - rearrange_list.begin();
-      z_[i] = index;
-    }
-  }
-  K_ = z_.maxCoeff() + 1;
-  logNum_.push_back(K_);
-}
-
-
-template <class dist_t>
-vector<vector<int>> DPMMDIR<dist_t>::getIndexLists()
-{
-  this ->updateIndexLists();
-  return indexLists_;
-}
-
-template <class dist_t>
-void DPMMDIR<dist_t>::updateIndexLists()
-{
-  assert(z_.maxCoeff()+1 == K_);
-  vector<vector<int>> indexLists(K_);
-  for (uint32_t ii = 0; ii<N_; ++ii)
-  {
-    indexLists[z_[ii]].push_back(ii); 
-  }
-  indexLists_ = indexLists;
-}
-
-
 template <class dist_t> 
-int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
+int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
 {
   VectorXi z_launch = z_;
   VectorXi z_split = z_;
@@ -224,10 +123,12 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
   uint32_t z_split_j = z_split[indexList[0]];
 
 
-  NIW<double> dist = H_.getNIW();
+  NIW<double> H_NIW = H_.getNIW();
   // NIWDIR<double> dist = H_;
   
-  DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, dist, rndGen_);
+  DPMM<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
+
+  // DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
   for (int tt=0; tt<50; ++tt)
   {
     if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
@@ -235,10 +136,10 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
       // std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
       return 1;
     }
-    // dpmm_split.sampleCoefficientsParameters(indexList);
-    // dpmm_split.sampleLabels(indexList);
+    dpmm_split.sampleCoefficientsParameters(indexList);
+    dpmm_split.sampleLabels(indexList);
     // std::cout << "H" << std::endl;
-    dpmm_split.sampleLabelsCollapsed(indexList);
+    // dpmm_split.sampleLabelsCollapsed(indexList);
   }
 
   vector<int> indexList_i = dpmm_split.indexLists_[0];
@@ -276,7 +177,7 @@ int DPMMDIR<dist_t>::splitProposal(vector<int> indexList)
 
 
 template <class dist_t> 
-int DPMMDIR<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j)
+int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {
   VectorXi z_launch = z_;
   VectorXi z_merge = z_;
@@ -289,7 +190,9 @@ int DPMMDIR<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexLis
   indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
 
   NIW<double> NIW_dist = H_.getNIW();
-  DPMMDIR<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
+  DPMM<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
+
+  // DPMMDIR<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
 
   // DPMMDIR<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (int tt=0; tt<50; ++tt)
@@ -307,7 +210,9 @@ int DPMMDIR<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexLis
       std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Aceepted" << std::endl;
       return 0;
     };
-    dpmm_merge.sampleLabelsCollapsed(indexList);
+    // dpmm_merge.sampleLabelsCollapsed(indexList);
+    dpmm_merge.sampleCoefficientsParameters(indexList);
+    dpmm_merge.sampleLabels(indexList);
   }
 
   return 1;
@@ -329,6 +234,145 @@ int DPMMDIR<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexLis
   // return 1;
 }
 
+
+template <class dist_t>
+void DPMMDIR<dist_t>::reorderAssignments()  //mainly called after clusters vanish during parallel sampling
+{ 
+
+  vector<uint8_t> rearrange_list;
+  for (uint32_t ii=0; ii<N_; ++ii)
+  {
+    if (rearrange_list.empty()) rearrange_list.push_back(z_[ii]);
+    vector<uint8_t>::iterator it;
+    it = find (rearrange_list.begin(), rearrange_list.end(), z_[ii]);
+    if (it == rearrange_list.end())
+    {
+      rearrange_list.push_back(z_[ii]);
+      z_[ii] = rearrange_list.size() - 1;
+    }
+    else if (it != rearrange_list.end())
+    {
+      int index = it - rearrange_list.begin();
+      z_[ii] = index;
+    }
+  }
+  K_ = z_.maxCoeff() + 1;
+  logNum_.push_back(K_);
+}
+
+
+template <class dist_t>
+vector<vector<int>> DPMMDIR<dist_t>::getIndexLists()
+{
+  this ->updateIndexLists();
+  return indexLists_;
+}
+
+
+template <class dist_t>
+void DPMMDIR<dist_t>::updateIndexLists()
+{
+  vector<vector<int>> indexLists(K_);
+  for (uint32_t ii = 0; ii<N_; ++ii) indexLists[z_[ii]].push_back(ii); 
+  
+  indexLists_ = indexLists;
+}
+
+
+template <class dist_t> 
+vector<vector<int>> DPMMDIR<dist_t>::computeSimilarity()
+{
+  // std::cout << "Compute similarity" << std::endl;
+  int num_comp = K_;
+  vector<vector<int>> indexLists = this-> getIndexLists();
+  assert(indexLists.size()==num_comp);
+  vector<MatrixXd>       muLists;
+
+  for (int kk=0; kk< num_comp; ++kk)
+  {
+    MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
+    // std::cout << x_k.colwise().mean() << std::endl;
+    muLists.push_back(x_k.colwise().mean().transpose());
+  }
+
+  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());
+  // std::cout << similarityMatrix << std::endl;
+  
+  for (int ii=0; ii<num_comp; ++ii)
+      for (int jj=ii+1; jj<num_comp; ++jj)
+          similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
+  // std::cout << similarityMatrix<< std::endl;
+
+  MatrixXd similarityMatrix_flattened;
+  similarityMatrix_flattened = similarityMatrix.transpose(); 
+  similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
+
+  // std::cout << similarityMatrix_flattened<< std::endl;
+
+  Eigen::MatrixXf::Index min_index;
+  similarityMatrix_flattened.row(0).minCoeff(&min_index);
+  // std::cout << similarityMatrix_flattened.row(0).minCoeff(&min_index) << std::endl;
+  // std::cout << min_index << std::endl;
+
+  int merge_i;
+  int merge_j;
+  int min_index_int = min_index;
+
+  merge_i = min_index_int / num_comp;
+  merge_j = min_index_int % num_comp;
+
+  // std::cout << merge_i << std::endl;
+  // std::cout << merge_j << std::endl;
+
+  vector<vector<int>> merge_indexLists;
+
+  merge_indexLists.push_back(indexLists[merge_i]);
+  merge_indexLists.push_back(indexLists[merge_j]);
+
+ return merge_indexLists;
+}
+
+
+template class DPMMDIR<NIWDIR<double>>;
+
+
+
+/*---------------------------------------------------*/
+//Following class methods are currently not being used 
+/*---------------------------------------------------*/
+
+/*
+
+template <class dist_t> 
+DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
+{
+  
+  // Initialize the data points of given indexList by randomly assigning them into one of the two clusters
+  
+
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+  int z_split_i = z_.maxCoeff() + 1;
+  int z_split_j = z_[indexList[0]];
+
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (int i = 0; i<indexList_.size(); ++i)
+  {
+    if (uni_01(rndGen_) == 0)
+      {
+        indexList_i.push_back(indexList_[i]);
+        z_[indexList_[i]] = z_split_i;
+      }
+    else 
+      {
+        indexList_j.push_back(indexList_[i]);
+        z_[indexList_[i]] = z_split_j;
+      }
+  }
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+};
 
 
 template <class dist_t> 
@@ -539,61 +583,4 @@ double DPMMDIR<dist_t>::logPosteriorProb(vector<int> indexList_i, vector<int> in
   return logPosteriorRatio;
 }
 
-
-template <class dist_t> 
-vector<vector<int>> DPMMDIR<dist_t>::computeSimilarity()
-{
-  // std::cout << "Compute similarity" << std::endl;
-  int num_comp = K_;
-  vector<vector<int>> indexLists = this-> getIndexLists();
-  assert(indexLists.size()==num_comp);
-  vector<MatrixXd>       muLists;
-
-  for (int kk=0; kk< num_comp; ++kk)
-  {
-    MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
-    // std::cout << x_k.colwise().mean() << std::endl;
-    muLists.push_back(x_k.colwise().mean().transpose());
-  }
-
-  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());
-  // std::cout << similarityMatrix << std::endl;
-  
-  for (int ii=0; ii<num_comp; ++ii)
-      for (int jj=ii+1; jj<num_comp; ++jj)
-          similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
-  // std::cout << similarityMatrix<< std::endl;
-
-  MatrixXd similarityMatrix_flattened;
-  similarityMatrix_flattened = similarityMatrix.transpose(); 
-  similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
-
-  // std::cout << similarityMatrix_flattened<< std::endl;
-
-  Eigen::MatrixXf::Index min_index;
-  similarityMatrix_flattened.row(0).minCoeff(&min_index);
-  // std::cout << similarityMatrix_flattened.row(0).minCoeff(&min_index) << std::endl;
-  // std::cout << min_index << std::endl;
-
-  int merge_i;
-  int merge_j;
-  int min_index_int = min_index;
-
-  merge_i = min_index_int / num_comp;
-  merge_j = min_index_int % num_comp;
-
-  // std::cout << merge_i << std::endl;
-  // std::cout << merge_j << std::endl;
-
-  vector<vector<int>> merge_indexLists;
-
-  merge_indexLists.push_back(indexLists[merge_i]);
-  merge_indexLists.push_back(indexLists[merge_j]);
-
- return merge_indexLists;
-}
-
-
-
-template class DPMMDIR<NIWDIR<double>>;
-
+*/

@@ -41,8 +41,41 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
 
 template <class dist_t> 
 DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
-{};
+: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
+{
+  /*
+  Slice the data if containing directional info
+  */
+
+  if (x.cols()==4 || x.cols()==6)  x_ = x(all, seq(0, x.cols()/2-1));
+
+
+  /*
+  Initialize the data points of given indexList by randomly assigning them into one of the two clusters
+  */ 
+
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+  int z_split_i = z_.maxCoeff() + 1; 
+  int z_split_j = z_[indexList[0]];
+
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (int i = 0; i<indexList_.size(); ++i)
+  {
+    if (uni_01(rndGen_) == 0)
+      {
+        indexList_i.push_back(indexList_[i]);
+        z_[indexList_[i]] = z_split_i;
+      }
+    else 
+      {
+        indexList_j.push_back(indexList_[i]);
+        z_[indexList_[i]] = z_split_j;
+      }
+  }
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+};
 
 
 template <class dist_t> 
@@ -599,6 +632,141 @@ void DPMM<dist_t>::sampleLabels()
     while (prob[k] < uni_draw) k++;
     z_[i] = k;
   }
+}
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
+{
+  vector<int> indexList_i = indexLists_[0];
+  vector<int> indexList_j = indexLists_[1];
+
+  MatrixXd x_i(indexList_i.size(), x_.cols()); 
+  MatrixXd x_j(indexList_j.size(), x_.cols()); 
+  x_i = x_(indexList_i, all);
+  x_j = x_(indexList_j, all);
+
+  components_.clear();
+  parameters_.clear();
+  components_.push_back(H_.posterior(x_i));
+  components_.push_back(H_.posterior(x_j));
+  parameters_.push_back(components_[0].sampleParameter());
+  parameters_.push_back(components_[1].sampleParameter());
+  
+
+  VectorXi Nk(2);
+  Nk(0) = indexList_i.size();
+  Nk(1) = indexList_j.size();
+
+
+  VectorXd Pi(2);
+  for (uint32_t k=0; k<2; ++k)
+  {
+    boost::random::gamma_distribution<> gamma_(Nk(k), 1);
+    Pi(k) = gamma_(rndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
+{
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+
+  boost::random::uniform_01<> uni_;    
+  // #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
+  for(uint32_t i=0; i<indexList.size(); ++i)
+  {
+    VectorXd x_i;
+    x_i = x_(indexList[i], all); //current data point x_i from the index_list
+    VectorXd prob(2);
+    for (uint32_t k=0; k<2; ++k)
+    {
+      prob[k] = log(Pi_[k]) + parameters_[k].logProb(x_i); //first component is always the set of x_i (different notion from x_i here)
+    }
+
+    double prob_max = prob.maxCoeff();
+    prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    for (uint32_t ii = 1; ii < prob.size(); ++ii){
+      prob[ii] = prob[ii-1]+ prob[ii];
+    }
+    double uni_draw = uni_(rndGen_);
+    if (uni_draw < prob[0]) indexList_i.push_back(indexList_[i]);
+    else indexList_j.push_back(indexList_[i]);
+  }
+
+  indexLists_.clear();
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+}
+
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleLabelsCollapsed(const vector<int> &indexList)
+{
+  int dimPos;
+  if (x_.cols()==4) dimPos=1;
+  else if (x_.cols()==6) dimPos=2;
+  int index_i = z_[indexLists_[0][0]];
+  int index_j = z_[indexLists_[1][0]];
+
+
+  boost::random::uniform_01<> uni_;
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+
+  // #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
+  for(int i=0; i<indexList.size(); ++i)
+  {
+    VectorXd x_i;
+    x_i = x_(indexList[i], seq(0,dimPos)); //current data point x_i from the index_list
+    VectorXd prob(2);
+
+    for (int ii=0; ii < indexList.size(); ++ii)
+    {
+      if (z_[indexList[ii]] == index_i && ii!=i) indexList_i.push_back(indexList[ii]);
+      else if (z_[indexList[ii]] == index_j && ii!=i) indexList_j.push_back(indexList[ii]);
+    }
+
+    if (indexList_i.empty()==true || indexList_j.empty()==true)
+    {
+      indexLists_.clear();
+      indexLists_.push_back(indexList_i);
+      indexLists_.push_back(indexList_j);
+      return;
+    } 
+
+    prob[0] = log(indexList_i.size()) + H_.logPosteriorProb(x_i, x_(indexList_i, seq(0,dimPos))); 
+    prob[1] = log(indexList_j.size()) + H_.logPosteriorProb(x_i, x_(indexList_j, seq(0,dimPos))); 
+
+    double prob_max = prob.maxCoeff();
+    prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    for (uint32_t ii = 1; ii < prob.size(); ++ii)
+    {
+      prob[ii] = prob[ii-1]+ prob[ii];
+    }
+    double uni_draw = uni_(rndGen_);
+    if (uni_draw < prob[0]) z_[indexList[i]] = index_i;
+    else z_[indexList[i]] = index_j;
+    
+    indexList_i.clear();
+    indexList_j.clear();
+  }
+
+
+  for (int i=0; i < indexList.size(); ++i)
+  {
+    if (z_[indexList[i]] == index_i) indexList_i.push_back(indexList[i]);
+    else if (z_[indexList[i]] == index_j)indexList_j.push_back(indexList[i]);
+  }
+  indexLists_.clear();
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
 }
 
 
