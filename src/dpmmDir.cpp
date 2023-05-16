@@ -52,13 +52,13 @@ void DPMMDIR<dist_t>::sampleCoefficients()
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleParameters()
 { 
-  components_.clear();
   parameters_.clear();
+  components_.clear();
 
   for (uint32_t kk=0; kk<K_; ++kk)
   {
-    components_.push_back(H_.posterior(x_(indexLists_[kk], all)));     //components are NIW
-    parameters_.push_back(components_[kk].sampleParameter());          //parameters are Normal
+    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));     
+    components_.push_back(parameters_[kk].sampleParameter());          
   }
 }
 
@@ -66,17 +66,18 @@ void DPMMDIR<dist_t>::sampleParameters()
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleCoefficientsParameters()
 { 
-  components_.clear();
   parameters_.clear();
+  components_.clear();
   VectorXd Pi(K_);
-  
+
   for (uint32_t kk=0; kk<K_; ++kk)
   {
     boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
     Pi(kk) = gamma_(rndGen_);
-    components_.push_back(H_.posterior(x_(indexLists_[kk], all)));
-    parameters_.push_back(components_[kk].sampleParameter());
+    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));
+    components_.push_back(parameters_[kk].sampleParameter());
   }
+
   Pi_ = Pi / Pi.sum();
 }
 
@@ -86,20 +87,20 @@ template <class dist_t>
 void DPMMDIR<dist_t>::sampleLabels()
 {
   double logLik = 0;
-  #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
+  #pragma omp parallel for num_threads(6) schedule(static) private(rndGen_)
   for(uint32_t ii=0; ii<N_; ++ii)
   {
     VectorXd prob(K_);
     double logLik_i = 0;
+
     for (uint32_t kk=0; kk<K_; ++kk)
     { 
-      double logProb =  parameters_[kk].logProb(x_(ii, all));
+      double logProb =  components_[kk].logProb(x_(ii, all));
       prob[kk] = log(Pi_[kk]) + logProb;
       logLik_i += Pi_[kk] * exp(logProb);
     }
     logLik += log(logLik_i);
    
-
     prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
     for (uint32_t kk = 1; kk < prob.size(); ++kk) prob[kk] = prob[kk-1]+ prob[kk];

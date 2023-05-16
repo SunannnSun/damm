@@ -63,8 +63,8 @@ class DPMMDIR
     uint16_t K_;
 
     //sampled parameters
-    vector<dist_t> components_; // NIW
-    vector<NormalDir<double>> parameters_; //Normal
+    vector<dist_t>            parameters_ ;     // Normal Inverse-Wishart 
+    vector<NormalDir<double>> components_;      // Multi-variate Normal
 
     //spilt/merge proposal
     vector<int> indexList_;
