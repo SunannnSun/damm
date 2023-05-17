@@ -64,27 +64,17 @@ def dpmm(*args_):
     ###############################################################
     ####################### hyperparameters #######################
     ###############################################################  
-
-    if base == 0:                                           # Only Eucliden distance is taken into account
-        mu_0 = np.zeros((int(Data.shape[1]/2), ))
-        sigma_0 = 0.1 * np.eye(mu_0.shape[0])
-        lambda_0 = {
-            "nu_0": sigma_0.shape[0] + 3,
-            "kappa_0": 1,
-            "mu_0": mu_0, 
-            "sigma_0":  sigma_0
-        }
-    elif base == 1:
-        mu_0 = np.zeros((Data.shape[1], ))
-        mu_0[-1] = 1                                        # prior belief on direction; i.e. the last two entries [0, 1]
-        sigma_0 = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    # reduced dimension of covariance
-        sigma_0[-1, -1] = 1                                 # scalar directional variance with no correlation with position
-        lambda_0 = {
-            "nu_0": sigma_0.shape[0] + 3,
-            "kappa_0": 1,
-            "mu_0": mu_0,
-            "sigma_0":  sigma_0
-        }
+    
+    mu_0 = np.zeros((Data.shape[1], ))
+    mu_0[-1] = 1                                        
+    sigma_0 = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
+    sigma_0[-1, -1] = 1                                
+    lambda_0 = {
+        "nu_0": sigma_0.shape[0] + 3,
+        "kappa_0": 1,
+        "mu_0": mu_0,
+        "sigma_0":  sigma_0
+    }
 
 
     ###############################################################
