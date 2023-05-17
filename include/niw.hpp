@@ -12,12 +12,11 @@ template<typename T>
 class NIW
 {
     public:
-            NIW(const Matrix<T,Dynamic,Dynamic> &Sigma, const Matrix<T,Dynamic,Dynamic> &mu, T nu, T kappa, boost::mt19937 &rndGen);
-            ~NIW();
+        NIW(const Matrix<T,Dynamic,Dynamic> &Sigma, const Matrix<T,Dynamic,Dynamic> &mu, T nu, T kappa, boost::mt19937 &rndGen);
+        ~NIW();
 
-        T logPosteriorProb(const Vector<T,Dynamic> &x_i, const Matrix<T,Dynamic, Dynamic> &x_k);
-        T logProb(const Matrix<T,Dynamic,1> &x_i);
-        T prob(const Matrix<T,Dynamic,1> &x_i);
+        T logPostPredProb(const Matrix<T,Dynamic,1> &x_i);
+        T postPredProb(const Matrix<T,Dynamic,1> &x_i);
 
         Normal<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
         NIW<T> posterior(const Matrix<T,Dynamic, Dynamic> &x_k);

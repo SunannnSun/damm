@@ -15,8 +15,7 @@ class NIWDIR
         NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa,
         boost::mt19937 &rndGen);
         NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynamic>& SigmaPos, 
-        const Matrix<T,Dynamic,1>& muDir, T SigmaDir, 
-        T nu, T kappa, T count, boost::mt19937 &rndGen);        
+        const Matrix<T,Dynamic,1>& muDir, T SigmaDir, T nu, T kappa, T count, boost::mt19937 &rndGen);        
         ~NIWDIR();
 
         NIW<T> getNIW();

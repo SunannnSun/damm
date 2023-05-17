@@ -23,12 +23,12 @@ NIW<T>::~NIW()
 {};
 
 
-template<class T>
-T NIW<T>::logPosteriorProb(const Vector<T,Dynamic> &x_i, const Matrix<T,Dynamic, Dynamic> &x_k)
-{
-  NIW<T> posterior = this->posterior(x_k);
-  return posterior.logProb(x_i);
-};
+// template<class T>
+// T NIW<T>::logPosteriorProb(const Vector<T,Dynamic> &x_i, const Matrix<T,Dynamic, Dynamic> &x_k)
+// {
+//   NIW<T> posterior = this->posterior(x_k);
+//   return posterior.logProb(x_i);
+// };
 
 
 // template<class T>
@@ -65,33 +65,30 @@ void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k)
 
 
 template<class T>
-T NIW<T>::logProb(const Matrix<T,Dynamic,1>& x_i)
+T NIW<T>::logPostPredProb(const Matrix<T,Dynamic,1>& x_i)
 {
-  // std::cout << x_i << std::endl;
-  // using multivariate student-t distribution; missing terms?
+  // Multivariate student-t distribution
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
   // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
   T doF = nu_ - dim_ + 1.;
-  Matrix<T,Dynamic,Dynamic> scaledSigma = Sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1));   
-  // scaledSigma(dim_-1, dim_-1) = Sigma_(dim_-1, dim_-1); //testing the z-value effects if all zeros
-                    
+  Matrix<T,Dynamic,Dynamic> scaledSigma = Sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1.));   
+  LLT<Matrix<T,Dynamic,Dynamic>> lltObj(scaledSigma);
+  
   T logProb = boost::math::lgamma(0.5*(doF + dim_));
   logProb -= boost::math::lgamma(0.5*(doF));
   logProb -= 0.5*dim_*log(doF);
   logProb -= 0.5*dim_*log(PI);
-  logProb -= 0.5*log(scaledSigma.determinant());
-  // logProb -= 0.5*((scaledSigma.eigenvalues()).array().log().sum()).real();
-  logProb -= (0.5*(doF + dim_))
-    *log(1.+ 1/doF*((x_i-mu_).transpose()*scaledSigma.inverse()*(x_i-mu_)).sum());
-  // approximate using moment-matched Gaussian; Erik Sudderth PhD essay
+  logProb -= 0.5*2*log(lltObj.matrixL().determinant());
+  logProb -= 0.5*(doF + dim_)*log(1.+1./doF*(lltObj.matrixL().solve(x_i-mu_)).squaredNorm());
+
   return logProb;
 };
 
 
 template<class T>
-T NIW<T>::prob(const Matrix<T,Dynamic,1>& x_i)
+T NIW<T>::postPredProb(const Matrix<T,Dynamic,1>& x_i)
 { 
-  T logProb = this ->logProb(x_i);
+  T logProb = this ->logPostPredProb(x_i);
   return exp(logProb);
 };
 

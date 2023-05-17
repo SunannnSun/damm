@@ -154,6 +154,7 @@ int main(int argc, char **argv)
             dpmm.sampleCoefficientsParameters();
             dpmm.sampleLabels();
             dpmm.reorderAssignments();
+            dpmm.updateIndexLists();
 
         }
         
