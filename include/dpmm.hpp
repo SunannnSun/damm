@@ -39,6 +39,9 @@ class DPMM {
     double logPosteriorProb(const vector<int> &indexList_i, const vector<int> &indexList_j);
     double logTransitionProb(const vector<int> &indexList_i, const vector<int> &indexList_j);
 
+    int splitProposal(const vector<int> &indexList);
+    // int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
+
     /*---------------------------------------------------*/
     //---------------------Utilities---------------------
     /*---------------------------------------------------*/    
@@ -46,7 +49,7 @@ class DPMM {
     void updateIndexLists();
     vector<vector<int>> getIndexLists();
     const VectorXi & getLabels(){return z_;};
-
+    vector<vector<int>> computeSimilarity();
 
     /*---------------------------------------------------*/
     //-------------------Inactive Methods-----------------

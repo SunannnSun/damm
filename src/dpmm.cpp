@@ -244,11 +244,71 @@ double DPMM<dist_t>::logTransitionProb(const vector<int> &indexList_i, const vec
 }
 
 
+template <class dist_t> 
+int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
+{
+  VectorXi z_launch = z_;
+  VectorXi z_split = z_;
+  uint32_t z_split_i = z_split.maxCoeff() + 1;
+  uint32_t z_split_j = z_split[indexList[0]];
+
+
+  NIW<double> H_NIW = H_.getNIW();
+  // NIWDIR<double> dist = H_;
+  
+  DPMM<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
+
+  // DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
+  for (int tt=0; tt<50; ++tt)
+  {
+    if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
+    {
+      // std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
+      return 1;
+    }
+    dpmm_split.sampleCoefficientsParameters(indexList);
+    dpmm_split.sampleLabels(indexList);
+    // std::cout << "H" << std::endl;
+    // dpmm_split.sampleLabelsCollapsed(indexList);
+  }
+
+  vector<int> indexList_i = dpmm_split.indexLists_[0];
+  vector<int> indexList_j = dpmm_split.indexLists_[1];
+
+
+  
+  double logAcceptanceRatio = 0;
+  // logAcceptanceRatio -= dpmm_split.logTransitionProb(indexList_i, indexList_j);
+  // logAcceptanceRatio += dpmm_split.logPosteriorProb(indexList_i, indexList_j);;
+  // if (logAcceptanceRatio < 0) 
+  // {
+  //   std::cout << "Component " << z_split_j <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  //   return 1;
+  // }
+  
+  for (int i = 0; i < indexList_i.size(); ++i)
+  {
+    z_split[indexList_i[i]] = z_split_i;
+  }
+  for (int i = 0; i < indexList_j.size(); ++i)
+  {
+    z_split[indexList_j[i]] = z_split_j;
+  }
+
+  z_ = z_split;
+  // z_ = dpmm_split.z_;
+  K_ += 1;
+  logNum_.push_back(K_);
+  // this -> updateIndexLists();
+  std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  
+  return 0;
+}
+
 
 template <class dist_t>
 void DPMM<dist_t>::reorderAssignments()
 { 
-  
   vector<uint8_t> rearrange_list;
   for (uint32_t ii=0; ii<N_; ++ii)
   {
@@ -292,6 +352,58 @@ template class DPMM<NIW<double>>;
 
 
 
+template <class dist_t> 
+vector<vector<int>> DPMM<dist_t>::computeSimilarity()
+{
+  // std::cout << "Compute similarity" << std::endl;
+  int num_comp = K_;
+  vector<vector<int>> indexLists = this-> getIndexLists();
+  assert(indexLists.size()==num_comp);
+  vector<MatrixXd>       muLists;
+
+  for (int kk=0; kk< num_comp; ++kk)
+  {
+    MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
+    // std::cout << x_k.colwise().mean() << std::endl;
+    muLists.push_back(x_k.colwise().mean().transpose());
+  }
+
+  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());
+  // std::cout << similarityMatrix << std::endl;
+  
+  for (int ii=0; ii<num_comp; ++ii)
+      for (int jj=ii+1; jj<num_comp; ++jj)
+          similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
+  // std::cout << similarityMatrix<< std::endl;
+
+  MatrixXd similarityMatrix_flattened;
+  similarityMatrix_flattened = similarityMatrix.transpose(); 
+  similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
+
+  // std::cout << similarityMatrix_flattened<< std::endl;
+
+  Eigen::MatrixXf::Index min_index;
+  similarityMatrix_flattened.row(0).minCoeff(&min_index);
+  // std::cout << similarityMatrix_flattened.row(0).minCoeff(&min_index) << std::endl;
+  // std::cout << min_index << std::endl;
+
+  int merge_i;
+  int merge_j;
+  int min_index_int = min_index;
+
+  merge_i = min_index_int / num_comp;
+  merge_j = min_index_int % num_comp;
+
+  // std::cout << merge_i << std::endl;
+  // std::cout << merge_j << std::endl;
+
+  vector<vector<int>> merge_indexLists;
+
+  merge_indexLists.push_back(indexLists[merge_i]);
+  merge_indexLists.push_back(indexLists[merge_j]);
+
+ return merge_indexLists;
+}
 
 
 

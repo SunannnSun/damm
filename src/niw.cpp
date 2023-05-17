@@ -23,6 +23,14 @@ NIW<T>::~NIW()
 {};
 
 
+
+template<typename T>
+NIWDIR<T> NIW<T>::getNIWDIR()  //place in constructor so can be re-used in every split/merge proposal
+{
+  return NIWDIR<T>(SigmaPos_, muPos_, nu_, kappa_, rndGen_);
+};
+
+
 // template<class T>
 // T NIW<T>::logPosteriorProb(const Vector<T,Dynamic> &x_i, const Matrix<T,Dynamic, Dynamic> &x_k)
 // {
