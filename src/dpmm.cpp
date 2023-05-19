@@ -12,14 +12,19 @@
 
 template <class dist_t> 
 DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows())
+: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
-  VectorXi z(x.rows());
+  // Store both the full Data and only Pos Data
+  x_full_ = x;
+  x_      = x_full_(all, seq(0, x_full_.cols()/2-1));
 
-  if (init_cluster == 1) z.setZero();
+  VectorXi z(x_.rows());
+
+  if (init_cluster == 1) 
+    z.setZero();
   else if (init_cluster >= 1) {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
-    for (int i=0; i<N_; ++i)z[i] = uni_(rndGen_); 
+    for (int i=0; i<N_; ++i) z[i] = uni_(rndGen_); 
   }
   else { 
     cout<< "Invalid Number of Initial Components" << endl;
@@ -120,10 +125,9 @@ void DPMM<dist_t>::sampleLabels()
 {
   #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
   for(uint32_t ii=0; ii<N_; ++ii)
-  {
+  { 
     VectorXd prob(K_);
-    for (uint32_t kk=0; kk<K_; ++kk)
-    {
+    for (uint32_t kk=0; kk<K_; ++kk) {
       prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(ii, all));
     }
 
@@ -342,8 +346,8 @@ template <class dist_t>
 void DPMM<dist_t>::updateIndexLists()
 {
   vector<vector<int>> indexLists(K_);
-  for (uint32_t ii = 0; ii<N_; ++ii)  indexLists[z_[ii]].push_back(ii); 
-  
+  for (uint32_t ii = 0; ii<N_; ++ii)  
+    indexLists[z_[ii]].push_back(ii); 
   indexLists_ = indexLists;
 }
 

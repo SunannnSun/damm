@@ -101,78 +101,33 @@ int main(int argc, char **argv)
 
     MatrixXd Data(num, dim);              
     string pathIn ="";
-    if(vm.count("input")) pathIn = vm["input"].as<string>();
+    if(vm.count("input"))
+        pathIn = vm["input"].as<string>();
     if (!pathIn.compare("")){
         cout<<"please specify an input dataset"<<endl;
         return 1;
     }
-    else {
-        ifstream  fin(pathIn);
-        string line;
-        vector<vector<string> > parsedCsv;
-        while(getline(fin,line)){
-            stringstream lineStream(line);
-            string cell;
-            vector<string> parsedRow;
-            while(getline(lineStream,cell,','))  
-                parsedRow.push_back(cell);
-            parsedCsv.push_back(parsedRow);
-        }
-        fin.close();
-        for (uint32_t i=0; i<num; ++i)
-            for (uint32_t j=0; j<dim; ++j)
-                Data(i, j) = stod(parsedCsv[i][j]);
+    ifstream  fin(pathIn);
+    string line;
+    vector<vector<string> > parsedCsv;
+    while(getline(fin,line)){
+        stringstream lineStream(line);
+        string cell;
+        vector<string> parsedRow;
+        while(getline(lineStream,cell,','))  
+            parsedRow.push_back(cell);
+        parsedCsv.push_back(parsedRow);
     }
+    fin.close();
+    for (uint32_t i=0; i<num; ++i)
+        for (uint32_t j=0; j<dim; ++j)
+            Data(i, j) = stod(parsedCsv[i][j]);
 
 
-    
+
+    VectorXi z;
+    vector<int> logNum;
     if (base==0)  {
-        int dimParam = dim / 2;
-        double nu;
-        double kappa;
-        VectorXd mu(dimParam);
-        MatrixXd Sigma(dimParam, dimParam);   //Matrix variable named in capital
-        if(vm.count("params"))  {
-            vector<double> params = vm["params"].as<vector<double>>();
-            nu = params[0];
-            kappa = params[1];
-            for(uint8_t i=0; i<dimParam; ++i)
-                mu(i) = params[2+i];
-            for(uint8_t i=0; i<dimParam; ++i)
-                for(uint8_t j=0; j<dimParam; ++j)
-                    Sigma(i,j) = params[2+dimParam+i+dimParam*j];
-        }
-
-        MatrixXd Data(num, dim);              
-        string pathIn ="";
-        if(vm.count("input")) pathIn = vm["input"].as<string>();
-        if (!pathIn.compare("")){
-            cout<<"please specify an input dataset"<<endl;
-            return 1;
-        }
-        else {
-            ifstream  fin(pathIn);
-            string line;
-            vector<vector<string> > parsedCsv;
-            while(getline(fin,line)){
-                stringstream lineStream(line);
-                string cell;
-                vector<string> parsedRow;
-                while(getline(lineStream,cell,','))  
-                    parsedRow.push_back(cell);
-                parsedCsv.push_back(parsedRow);
-            }
-            fin.close();
-            for (uint32_t i=0; i<num; ++i)
-                for (uint32_t j=0; j<dim; ++j)
-                    Data(i, j) = stod(parsedCsv[i][j]);
-        }
-
-
-        // cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
-        //     <<"Number: " << num << "; Data Dimension:" << dimData << "; Parameter Dimension:" << dimParam <<endl;
-
-
         NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
         DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
         for (uint32_t t=0; t<T; ++t){
@@ -185,36 +140,14 @@ int main(int argc, char **argv)
 
             cout << "Number of components: " << dpmm.K_ << endl;
         }
-        
-        const VectorXi& z = dpmm.getLabels();
-        string pathOut;
-        if(vm.count("output")) pathOut = vm["output"].as<string>();
-        if (!pathOut.compare("")) {
-            cout<<"please specify an output data file"<<endl;
-            exit(1);
-        }
-        else cout<<"Output to "<<pathOut<<endl;
-        ofstream fout(pathOut.data(),ofstream::out);
-        for (uint16_t i=0; i < z.size(); ++i)
-            fout << z[i] << endl;
-        fout.close();
-
-        return 0;
+        z = dpmm.getLabels();
     }
     else if (base==1){
-        // cout << "Iteration: " << T <<  "; Concentration: " << alpha << endl
-        //     <<"Number: " << num << "; Data Dimension:" << dimData << "; Parameter Dimension:" << dim/2+1 <<endl;
-
-
         NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init_cluster, alpha, niwDir, rndGen);
-
-        for (uint32_t t=0; t<T; ++t)
-        {
+        for (uint32_t t=0; t<T; ++t)        {
             cout<<"------------ t="<<t<<" -------------"<<endl;
-            // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-            // dpmmDir.splitProposal(indexLists[0]);
-            // if (t==-1)
+            
             if (t!=0 && t%50==0 && t<700)
             {
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
@@ -244,25 +177,11 @@ int main(int argc, char **argv)
             cout << "Number of components: " << dpmmDir.K_ << endl;
         }
         
-        const VectorXi& z = dpmmDir.getLabels();
-        string pathOut;
-        if(vm.count("output")) pathOut = vm["output"].as<string>();
-        if (!pathOut.compare("")){
-            cout<<"please specify an output data file"<<endl;
-            exit(1);
-        }
-        else cout<<"Output to "<<pathOut<<endl;
-        ofstream fout(pathOut.data(),ofstream::out);
-        for (uint16_t i=0; i < z.size(); ++i)
-            fout << z[i] << endl;
-        fout.close();
+        z = dpmmDir.getLabels();
 
-        vector<int> logNum = dpmmDir.logNum_;
-        string pathOut_logNum = "./data/logNum.csv";
-        ofstream fout_logNum(pathOut_logNum.data(),ofstream::out);
-        for (uint16_t i=0; i < logNum.size(); ++i)
-            fout_logNum << logNum[i] << endl;
-        fout_logNum.close();
+
+        logNum = dpmmDir.logNum_;
+
 
         vector<double> logLogLik = dpmmDir.logLogLik_;
         string pathOut_logLogLik = "./data/logLogLik.csv";
@@ -271,6 +190,27 @@ int main(int argc, char **argv)
             fout_logLogLik << logLogLik[i] << endl;
         fout_logLogLik.close();
 
-        return 0;
     }
+
+
+    string pathOut;
+    if(vm.count("output")) pathOut = vm["output"].as<string>();
+    pathOut += "output.csv";
+    if (!pathOut.compare("")){
+        cout<<"please specify an output data file"<<endl;
+        return 1;
+    }
+    cout<<"Output to "<<pathOut<<endl;
+    ofstream fout(pathOut.data(),ofstream::out);
+    for (uint16_t i=0; i < z.size(); ++i)
+        fout << z[i] << endl;
+    fout.close();
+
+    string pathOut_logNum = pathOut + "logNum.csv";
+    ofstream fout_logNum(pathOut_logNum.data(),ofstream::out);
+    for (uint16_t i=0; i < logNum.size(); ++i)
+        fout_logNum << logNum[i] << endl;
+    fout_logNum.close();
+
+    return 0;
 }   

@@ -13,7 +13,7 @@ template<typename T>
 class NIW
 {
     public:
-        NIW(const Matrix<T,Dynamic,Dynamic> &Sigma, const Matrix<T,Dynamic,Dynamic> &mu, T nu, T kappa, boost::mt19937 &rndGen);
+        NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
         ~NIW();
 
         // NIWDIR<T> getNIWDIR();
@@ -36,6 +36,11 @@ class NIW
         Matrix<T,Dynamic,1> mu_;
         T nu_,kappa_;
         uint32_t dim_;
+
+        Matrix<T,Dynamic,Dynamic> SigmaPos_;
+        T SigmaDir_;
+        Matrix<T,Dynamic,1> muPos_;
+        Matrix<T,Dynamic,1> muDir_;
 
         
         // Sufficient statistics

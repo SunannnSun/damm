@@ -37,7 +37,7 @@ def dpmm(*args_):
     ###############################################################  
     filepath = os.path.dirname(os.path.realpath(__file__))
     input_path = filepath + '/data/input.csv'
-    output_path = filepath + '/data/output.csv'
+    output_path = filepath + '/data/'
     
     if len(args_) == 1:
         Data = args_[0]

@@ -9,12 +9,26 @@
 
 
 template<class T>
-NIW<T>::NIW(const Matrix<T,Dynamic,Dynamic> &Sigma, 
-  const Matrix<T,Dynamic,Dynamic> &mu, T nu, T kappa, boost::mt19937 &rndGen)
-: Sigma_(Sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), rndGen_(rndGen) 
+NIW<T>::NIW(const MatrixXd &Sigma, 
+  const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen)
+: nu_(nu), kappa_(kappa), rndGen_(rndGen) 
 {
-  assert(Sigma_.rows()==mu_.size()); 
-  assert(Sigma_.cols()==mu_.size());
+  if (Sigma.rows()==4 ||  Sigma.rows()==6){
+    dim_ = mu.rows()/2;
+    muPos_ = mu(seq(0, dim_-1), all);
+    muDir_ = mu(seq(dim_, last), all);
+    SigmaPos_ = Sigma(seq(0, dim_-1), seq(0, dim_-1));
+    SigmaDir_ = Sigma(last, last);
+
+    Sigma_ = SigmaPos_;
+    mu_    = muPos_;
+  }
+  else {
+    dim_ = mu.rows();
+    Sigma_ = Sigma;
+    mu_    = mu;
+  }
+  
 };
 
 
@@ -141,7 +155,6 @@ Normal<T> NIW<T>::sampleParameter()
   for (uint32_t i=0; i<dim_; ++i)
     sampledMean[i] = gauss_(rndGen_);
   sampledMean = cholFacotor * sampledMean / sqrt(kappa_) + mu_;
-
   
   return Normal<T>(sampledMean, sampledCov, rndGen_);
 };

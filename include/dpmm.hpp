@@ -78,6 +78,7 @@ class DPMM {
 
     //class initializer(dependent on data)
     MatrixXd x_;
+    MatrixXd x_full_;
     VectorXi z_;  
     VectorXd Pi_; 
     VectorXi index_; 
