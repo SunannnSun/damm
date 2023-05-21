@@ -23,15 +23,13 @@ NIW<T>::NIW(const MatrixXd &Sigma,
 
     Sigma_ = SigmaPos_;
     mu_    = muPos_;
+    NIWDIR_ = this -> getNIWDIR();
   }
   else {
     dim_ = mu.rows();
     Sigma_ = Sigma;
     mu_    = mu;
   }
-
-  NIWDIR_ = this -> getNIWDIR();
-  
 };
 
 

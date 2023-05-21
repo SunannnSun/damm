@@ -123,13 +123,10 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   uint32_t z_split_i = z_split.maxCoeff() + 1;
   uint32_t z_split_j = z_split[indexList[0]];
 
-
-  NIW<double> H_NIW = * H_.NIW_;
-  // NIWDIR<double> dist = H_;
   
+  NIW<double> H_NIW = * H_.NIW_ptr;  
   DPMM<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
 
-  // DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
   for (int tt=0; tt<50; ++tt)
   {
     if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
@@ -180,43 +177,43 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
 template <class dist_t> 
 int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {
-  VectorXi z_launch = z_;
-  VectorXi z_merge = z_;
-  uint32_t z_merge_i = z_merge[indexList_i[0]];
-  uint32_t z_merge_j = z_merge[indexList_j[0]];
+  // VectorXi z_launch = z_;
+  // VectorXi z_merge = z_;
+  // uint32_t z_merge_i = z_merge[indexList_i[0]];
+  // uint32_t z_merge_j = z_merge[indexList_j[0]];
 
-  vector<int> indexList;
-  indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
-  indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
-  indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
+  // vector<int> indexList;
+  // indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  // indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
+  // indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
 
-  NIW<double> NIW_dist = * H_.NIW_;
-  DPMM<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
+  // NIW<double> NIW_dist = * H_.NIW_;
+  // DPMM<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
 
-  // DPMMDIR<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
+  // // DPMMDIR<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
 
-  // DPMMDIR<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
-  for (int tt=0; tt<50; ++tt)
-  {    
-    if (dpmm_merge.indexLists_[0].size()==0 || dpmm_merge.indexLists_[1].size() ==0  || dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
-    {
-      // double logAcceptanceRatio = 0;
-      // logAcceptanceRatio += log(dpmm_merge.transitionProb(indexList_i, indexList_j));
-      // logAcceptanceRatio -= dpmm_merge.logPosteriorProb(indexList_i, indexList_j);;
+  // // DPMMDIR<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
+  // for (int tt=0; tt<50; ++tt)
+  // {    
+  //   if (dpmm_merge.indexLists_[0].size()==0 || dpmm_merge.indexLists_[1].size() ==0  || dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
+  //   {
+  //     // double logAcceptanceRatio = 0;
+  //     // logAcceptanceRatio += log(dpmm_merge.transitionProb(indexList_i, indexList_j));
+  //     // logAcceptanceRatio -= dpmm_merge.logPosteriorProb(indexList_i, indexList_j);;
 
-      // std::cout << logAcceptanceRatio << std::endl;
-      for (int i = 0; i < indexList_i.size(); ++i) z_merge[indexList_i[i]] = z_merge_j;
-      z_ = z_merge;
-      this -> reorderAssignments();
-      std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Aceepted" << std::endl;
-      return 0;
-    };
-    // dpmm_merge.sampleLabelsCollapsed(indexList);
-    dpmm_merge.sampleCoefficientsParameters(indexList);
-    dpmm_merge.sampleLabels(indexList);
-  }
+  //     // std::cout << logAcceptanceRatio << std::endl;
+  //     for (int i = 0; i < indexList_i.size(); ++i) z_merge[indexList_i[i]] = z_merge_j;
+  //     z_ = z_merge;
+  //     this -> reorderAssignments();
+  //     std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Aceepted" << std::endl;
+  //     return 0;
+  //   };
+  //   // dpmm_merge.sampleLabelsCollapsed(indexList);
+  //   dpmm_merge.sampleCoefficientsParameters(indexList);
+  //   dpmm_merge.sampleLabels(indexList);
+  // }
 
-  return 1;
+  // return 1;
 
   // double logAcceptanceRatio = 0;
   // logAcceptanceRatio += log(dpmm_merge.transitionProb(indexList_i, indexList_j));
@@ -232,7 +229,7 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
   //   return 0;
   // }
   // std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Rejected" << std::endl;
-  // return 1;
+  return 1;
 }
 
 

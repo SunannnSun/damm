@@ -4,6 +4,8 @@
 #include <boost/random/mersenne_twister.hpp>
 #include "normalDir.hpp"
 #include "niw.hpp"
+#include <memory>
+
 
 
 using namespace Eigen;
@@ -19,8 +21,6 @@ class NIWDIR
         const Matrix<T,Dynamic,1>& muDir, T SigmaDir, T nu, T kappa, T count, boost::mt19937 &rndGen);        
         ~NIWDIR();
 
-        NIW<T> * getNIW();
-
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
         NIWDIR<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
         NormalDir<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
@@ -32,7 +32,8 @@ class NIWDIR
 
     public:
         boost::mt19937 rndGen_;
-        NIW<T> * NIW_;
+        std::shared_ptr<NIW<T>> NIW_ptr;
+
 
 
         // Hyperparameters remain fixed once initialized
