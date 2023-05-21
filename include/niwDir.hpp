@@ -35,7 +35,6 @@ class NIWDIR
         std::shared_ptr<NIW<T>> NIW_ptr;
 
 
-
         // Hyperparameters remain fixed once initialized
         Matrix<T,Dynamic,Dynamic> SigmaPos_;
         T SigmaDir_;

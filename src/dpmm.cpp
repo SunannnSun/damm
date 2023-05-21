@@ -5,6 +5,7 @@
 #include <boost/random/gamma_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
 
+#include "dpmmDir.hpp"
 #include "dpmm.hpp"
 #include "niw.hpp"
 #include "niwDir.hpp"
@@ -42,7 +43,8 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
 {
   // Slice the data if containing directional info
-  if (x.cols()==4 || x.cols()==6)  x_ = x(all, seq(0, x.cols()/2-1));
+  if (x.cols()==4 || x.cols()==6)  
+    x_ = x(all, seq(0, x.cols()/2-1));
 
 
   //Initialize the data points of given indexList by randomly assigning them into one of the two clusters
@@ -258,39 +260,37 @@ int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
   uint32_t z_split_j = z_split[indexList[0]];
 
 
-  NIWDIR<double> H_NIWDIR = * H_.NIWDIR_;
+  NIWDIR<double> H_NIWDIR = * H_.NIWDIR_ptr;
+  DPMMDIR<NIWDIR<double>> dpmm_split(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
+
+  for (int tt=0; tt<50; ++tt)
+  {
+    if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
+    {
+      // std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
+      return 1;
+    }
+    dpmm_split.sampleCoefficientsParameters(indexList);
+    dpmm_split.sampleLabels(indexList);
+  }
+
+  vector<int> indexList_i = dpmm_split.indexLists_[0];
+  vector<int> indexList_j = dpmm_split.indexLists_[1];
+
+
+  double logAcceptanceRatio = 0;
   
-  // DPMMDIR<NIWDIR<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
+  for (int i = 0; i < indexList_i.size(); ++i)
+    z_split[indexList_i[i]] = z_split_i;
+  for (int i = 0; i < indexList_j.size(); ++i)
+    z_split[indexList_j[i]] = z_split_j;
 
-  // // DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
-  // for (int tt=0; tt<50; ++tt)
-  // {
-  //   if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
-  //   {
-  //     // std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
-  //     return 1;
-  //   }
-  //   dpmm_split.sampleCoefficientsParameters(indexList);
-  //   dpmm_split.sampleLabels(indexList);
-  // }
-
-  // vector<int> indexList_i = dpmm_split.indexLists_[0];
-  // vector<int> indexList_j = dpmm_split.indexLists_[1];
-
-
-  // double logAcceptanceRatio = 0;
-  
-  // for (int i = 0; i < indexList_i.size(); ++i)
-  //   z_split[indexList_i[i]] = z_split_i;
-  // for (int i = 0; i < indexList_j.size(); ++i)
-  //   z_split[indexList_j[i]] = z_split_j;
-
-  // z_ = z_split;
-  // // z_ = dpmm_split.z_;
-  // K_ += 1;
-  // logNum_.push_back(K_);
-  // // this -> updateIndexLists();
-  // std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  z_ = z_split;
+  // z_ = dpmm_split.z_;
+  K_ += 1;
+  logNum_.push_back(K_);
+  // this -> updateIndexLists();
+  std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   
   return 0;
 }

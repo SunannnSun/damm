@@ -14,6 +14,7 @@ class DPMMDIR
   public:
     // constructor & desctructor
     DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen);
+    DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
     ~DPMMDIR(){};
 
     // parallel sampling
@@ -41,7 +42,6 @@ class DPMMDIR
     /*---------------------------------------------------*/
     //Following class methods are currently not being used 
     /*---------------------------------------------------*/
-    // DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
     // void sampleCoefficientsParameters(vector<int> indexList);
     // double transitionProb(vector<int> indexList_i, vector<int> indexList_j);
     // double logTransitionProb(vector<int> indexList_i, vector<int> indexList_j);

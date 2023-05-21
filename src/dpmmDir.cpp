@@ -19,13 +19,11 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
   VectorXi z(x.rows());
 
   if (init_cluster == 1) z.setZero();
-  else if (init_cluster > 1)
-  {
+  else if (init_cluster > 1)  {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
     for (int ii=0; ii<N_; ++ii) z[ii] = uni_(rndGen_); 
   }
-  else
-  { 
+  else  { 
     cout<< "Number of initial clusters not supported yet" << endl;
     exit(1);
   }
@@ -34,6 +32,39 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
   K_ = z_.maxCoeff() + 1; 
   this ->updateIndexLists();
 };
+
+
+
+template <class dist_t> 
+DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
+{
+  
+  // Initialize the data points of given indexList by randomly assigning them into one of the two clusters
+
+
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+  int z_i = z_.maxCoeff() + 1;
+  int z_j = z_[indexList[0]];
+
+
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (int ii = 0; ii<indexList_.size(); ++ii)
+  {
+    if (uni_01(rndGen_) == 0) {
+        indexList_i.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_i;
+      }
+    else  {
+        indexList_j.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_j;
+      }
+  }
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+};
+
 
 
 template <class dist_t> 
@@ -394,41 +425,6 @@ template class DPMMDIR<NIWDIR<double>>;
 /*---------------------------------------------------*/
 
 /*
-
-template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
-{
-  
-  // Initialize the data points of given indexList by randomly assigning them into one of the two clusters
-  
-
-  vector<int> indexList_i;
-  vector<int> indexList_j;
-  int z_split_i = z_.maxCoeff() + 1;
-  int z_split_j = z_[indexList[0]];
-
-  boost::random::uniform_int_distribution<> uni_01(0, 1);
-  for (int i = 0; i<indexList_.size(); ++i)
-  {
-    if (uni_01(rndGen_) == 0)
-      {
-        indexList_i.push_back(indexList_[i]);
-        z_[indexList_[i]] = z_split_i;
-      }
-    else 
-      {
-        indexList_j.push_back(indexList_[i]);
-        z_[indexList_[i]] = z_split_j;
-      }
-  }
-  indexLists_.push_back(indexList_i);
-  indexLists_.push_back(indexList_j);
-};
-
-
-
-
 
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)

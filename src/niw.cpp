@@ -23,7 +23,7 @@ NIW<T>::NIW(const MatrixXd &Sigma,
 
     Sigma_ = SigmaPos_;
     mu_    = muPos_;
-    NIWDIR_ = this -> getNIWDIR();
+    NIWDIR_ptr = std::make_shared<NIWDIR<T>>(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
   }
   else {
     dim_ = mu.rows();
@@ -40,14 +40,14 @@ NIW<T>::~NIW()
 
 
 
-template<class T>
-NIWDIR<T>* NIW<T>::getNIWDIR()  //place in constructor so can be re-used in every split/merge proposal
-{
-  NIWDIR<T> * NIWDIR_ptr;
-  NIWDIR<T> NIWDIR(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
-  NIWDIR_ptr = & NIWDIR;
-  return NIWDIR_ptr;
-};
+// template<class T>
+// NIWDIR<T>* NIW<T>::getNIWDIR()  //place in constructor so can be re-used in every split/merge proposal
+// {
+//   NIWDIR<T> * NIWDIR_ptr;
+//   NIWDIR<T> NIWDIR(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
+//   NIWDIR_ptr = & NIWDIR;
+//   return NIWDIR_ptr;
+// };
 
 
 // template<class T>

@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <boost/random/mersenne_twister.hpp>
 #include "normal.hpp"
-
+#include <memory>
 
 #define PI 3.141592653589793
 
@@ -20,7 +20,6 @@ class NIW
         NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
         ~NIW();
 
-        NIWDIR<T>* getNIWDIR();
 
         T logPostPredProb(const Matrix<T,Dynamic,1> &x_i);
         T postPredProb(const Matrix<T,Dynamic,1> &x_i);
@@ -33,7 +32,8 @@ class NIW
  
     public:
         boost::mt19937 rndGen_;
-        NIWDIR<T> * NIWDIR_;
+        std::shared_ptr<NIWDIR<T>> NIWDIR_ptr;
+
 
         // Hyperparameters
         Matrix<T,Dynamic,Dynamic> Sigma_;
