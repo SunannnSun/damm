@@ -356,7 +356,8 @@ template <class dist_t>
 void DPMMDIR<dist_t>::updateIndexLists()
 {
   vector<vector<int>> indexLists(K_);
-  for (uint32_t ii = 0; ii<N_; ++ii) indexLists[z_[ii]].push_back(ii); 
+  for (uint32_t ii = 0; ii<N_; ++ii) 
+    indexLists[z_[ii]].push_back(ii); 
   
   indexLists_ = indexLists;
 }

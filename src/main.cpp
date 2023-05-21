@@ -148,6 +148,7 @@ int main(int argc, char **argv)
                 vector<vector<int>> indexLists = dpmm.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmm.splitProposal(indexLists[l]);
+                dpmm.updateIndexLists();
             }
             else{
                 dpmm.sampleCoefficientsParameters();
@@ -169,6 +170,7 @@ int main(int argc, char **argv)
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmmDir.splitProposal(indexLists[l]);
+                dpmmDir.updateIndexLists();
             }
             else{
                 dpmmDir.sampleCoefficientsParameters();
