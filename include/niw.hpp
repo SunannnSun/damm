@@ -10,13 +10,17 @@
 using namespace Eigen;
 
 template<typename T>
+class NIWDIR;
+
+
+template<typename T>
 class NIW
 {
     public:
         NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
         ~NIW();
 
-        // NIWDIR<T> getNIWDIR();
+        NIWDIR<T>* getNIWDIR();
 
         T logPostPredProb(const Matrix<T,Dynamic,1> &x_i);
         T postPredProb(const Matrix<T,Dynamic,1> &x_i);
@@ -29,7 +33,7 @@ class NIW
  
     public:
         boost::mt19937 rndGen_;
-
+        NIWDIR<T> * NIWDIR_;
 
         // Hyperparameters
         Matrix<T,Dynamic,Dynamic> Sigma_;

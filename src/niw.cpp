@@ -1,4 +1,5 @@
 #include "niw.hpp"
+#include "niwDir.hpp"
 #include <cmath>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/random/chi_squared_distribution.hpp>
@@ -28,8 +29,11 @@ NIW<T>::NIW(const MatrixXd &Sigma,
     Sigma_ = Sigma;
     mu_    = mu;
   }
+
+  NIWDIR_ = this -> getNIWDIR();
   
 };
+
 
 
 template<class T>
@@ -38,11 +42,14 @@ NIW<T>::~NIW()
 
 
 
-// template<typename T>
-// NIWDIR<T> NIW<T>::getNIWDIR()  //place in constructor so can be re-used in every split/merge proposal
-// {
-//   return NIWDIR<T>(SigmaPos_, muPos_, nu_, kappa_, rndGen_);
-// };
+template<class T>
+NIWDIR<T>* NIW<T>::getNIWDIR()  //place in constructor so can be re-used in every split/merge proposal
+{
+  NIWDIR<T> * NIWDIR_ptr;
+  NIWDIR<T> NIWDIR(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
+  NIWDIR_ptr = & NIWDIR;
+  return NIWDIR_ptr;
+};
 
 
 // template<class T>

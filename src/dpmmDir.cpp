@@ -124,7 +124,7 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   uint32_t z_split_j = z_split[indexList[0]];
 
 
-  NIW<double> H_NIW = H_.getNIW();
+  NIW<double> H_NIW = * H_.NIW_;
   // NIWDIR<double> dist = H_;
   
   DPMM<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
@@ -190,7 +190,7 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
   indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
   indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
 
-  NIW<double> NIW_dist = H_.getNIW();
+  NIW<double> NIW_dist = * H_.NIW_;
   DPMM<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
 
   // DPMMDIR<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, NIW_dist, rndGen_);
@@ -234,6 +234,60 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
   // std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Rejected" << std::endl;
   // return 1;
 }
+
+
+
+template <class dist_t> 
+void DPMMDIR<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
+{
+  parameters_.clear();
+  components_.clear();
+
+  parameters_.push_back(H_.posterior(x_(indexLists_[0], all)));
+  parameters_.push_back(H_.posterior(x_(indexLists_[1], all)));
+  components_.push_back(parameters_[0].sampleParameter());
+  components_.push_back(parameters_[1].sampleParameter());
+  
+
+  VectorXd Pi(2);
+  for (uint32_t kk=0; kk<2; ++kk)
+  {
+    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
+    Pi(kk) = gamma_(rndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+template <class dist_t> 
+void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
+{
+  indexLists_.clear();
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+
+  boost::random::uniform_01<> uni_;    
+  for(uint32_t ii=0; ii<indexList.size(); ++ii)
+  {
+    VectorXd prob(2);
+
+    for (uint32_t kk=0; kk<2; ++kk)
+    {
+      prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(indexList[ii], all)); 
+    }
+
+    prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    
+    double uni_draw = uni_(rndGen_);
+    if (uni_draw < prob[0]) indexList_i.push_back(indexList[ii]);
+    else indexList_j.push_back(indexList[ii]);
+  }
+
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+}
+
 
 
 template <class dist_t>
@@ -376,74 +430,7 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int>
 };
 
 
-template <class dist_t> 
-void DPMMDIR<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
-{
-  vector<int> indexList_i = indexLists_[0];
-  vector<int> indexList_j = indexLists_[1];
 
-  MatrixXd x_i(indexList_i.size(), x_.cols()); 
-  MatrixXd x_j(indexList_j.size(), x_.cols()); 
-  x_i = x_(indexList_i, all);
-  x_j = x_(indexList_j, all);
-  
-  components_.clear();
-  parameters_.clear();
-  components_.push_back(H_.posterior(x_i));
-  components_.push_back(H_.posterior(x_j));
-  parameters_.push_back(components_[0].sampleParameter());
-  parameters_.push_back(components_[1].sampleParameter());
-  
-
-  VectorXi Nk(2);
-  Nk(0) = indexList_i.size();
-  Nk(1) = indexList_j.size();
-
-
-  VectorXd Pi(2);
-  for (uint32_t k=0; k<2; ++k)
-  {
-    boost::random::gamma_distribution<> gamma_(Nk(k), 1);
-    Pi(k) = gamma_(rndGen_);
-  }
-  Pi_ = Pi / Pi.sum();
-}
-
-
-template <class dist_t> 
-void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
-{
-  vector<int> indexList_i;
-  vector<int> indexList_j;
-
-  boost::random::uniform_01<> uni_;    
-  // #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
-  for(uint32_t i=0; i<indexList.size(); ++i)
-  {
-    VectorXd x_i;
-    x_i = x_(indexList[i], seq(0,1)); //current data point x_i from the index_list
-    VectorXd prob(2);
-    for (uint32_t k=0; k<2; ++k)
-    {
-      prob[k] = log(Pi_[k]) + parameters_[k].logProb(x_i); //first component is always the set of x_i (different notion from x_i here)
-    }
-
-    double prob_max = prob.maxCoeff();
-    prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
-    prob = prob / prob.sum();
-    for (uint32_t ii = 1; ii < prob.size(); ++ii){
-      prob[ii] = prob[ii-1]+ prob[ii];
-    }
-    double uni_draw = uni_(rndGen_);
-    if (uni_draw < prob[0]) indexList_i.push_back(indexList_[i]);
-    else indexList_j.push_back(indexList_[i]);
-  }
-
-
-  indexLists_.clear();
-  indexLists_.push_back(indexList_i);
-  indexLists_.push_back(indexList_j);
-}
 
 
 template <class dist_t> 

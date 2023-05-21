@@ -127,6 +127,8 @@ int main(int argc, char **argv)
 
     VectorXi z;
     vector<int> logNum;
+    vector<double> logLogLik;
+
     if (base==0)  {
         NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
         DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
@@ -163,8 +165,6 @@ int main(int argc, char **argv)
                 dpmmDir.reorderAssignments();
                 dpmmDir.updateIndexLists();
             }
-
-
             if (t!=0 && t%50==0 && t<700)
             {   
                vector<vector<int>> merge_indexLists = dpmmDir.computeSimilarity();
@@ -178,19 +178,15 @@ int main(int argc, char **argv)
         }
         
         z = dpmmDir.getLabels();
-
-
         logNum = dpmmDir.logNum_;
-
-
-        vector<double> logLogLik = dpmmDir.logLogLik_;
-        string pathOut_logLogLik = "./data/logLogLik.csv";
-        ofstream fout_logLogLik(pathOut_logLogLik.data(),ofstream::out);
-        for (uint16_t i=0; i < logLogLik.size(); ++i)
-            fout_logLogLik << logLogLik[i] << endl;
-        fout_logLogLik.close();
-
+        logLogLik = dpmmDir.logLogLik_;
     }
+
+
+
+
+
+
 
 
     string pathOut;
@@ -212,5 +208,11 @@ int main(int argc, char **argv)
         fout_logNum << logNum[i] << endl;
     fout_logNum.close();
 
+    string pathOut_logLogLik = pathOut + "logLogLik.csv";
+    ofstream fout_logLogLik(pathOut_logLogLik.data(),ofstream::out);
+    for (uint16_t i=0; i < logLogLik.size(); ++i)
+        fout_logLogLik << logLogLik[i] << endl;
+    fout_logLogLik.close();
+        
     return 0;
 }   

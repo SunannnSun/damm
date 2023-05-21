@@ -248,66 +248,53 @@ double DPMM<dist_t>::logTransitionProb(const vector<int> &indexList_i, const vec
 }
 
 
-// template <class dist_t> 
-// int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
-// {
-//   VectorXi z_launch = z_;
-//   VectorXi z_split = z_;
-//   uint32_t z_split_i = z_split.maxCoeff() + 1;
-//   uint32_t z_split_j = z_split[indexList[0]];
+
+template <class dist_t> 
+int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
+{
+  VectorXi z_launch = z_;
+  VectorXi z_split = z_;
+  uint32_t z_split_i = z_split.maxCoeff() + 1;
+  uint32_t z_split_j = z_split[indexList[0]];
 
 
-//   NIW<double> H_NIW = H_.getNIW();
-//   // NIWDIR<double> dist = H_;
+  NIWDIR<double> H_NIWDIR = * H_.NIWDIR_;
   
-//   DPMM<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
+  // DPMMDIR<NIWDIR<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
 
-//   // DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
-//   for (int tt=0; tt<50; ++tt)
-//   {
-//     if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
-//     {
-//       // std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
-//       return 1;
-//     }
-//     dpmm_split.sampleCoefficientsParameters(indexList);
-//     dpmm_split.sampleLabels(indexList);
-//     // std::cout << "H" << std::endl;
-//     // dpmm_split.sampleLabelsCollapsed(indexList);
-//   }
+  // // DPMMDIR<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
+  // for (int tt=0; tt<50; ++tt)
+  // {
+  //   if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
+  //   {
+  //     // std::cout << "Component " << z_split_j <<": Split proposal Rejected" << std::endl;
+  //     return 1;
+  //   }
+  //   dpmm_split.sampleCoefficientsParameters(indexList);
+  //   dpmm_split.sampleLabels(indexList);
+  // }
 
-//   vector<int> indexList_i = dpmm_split.indexLists_[0];
-//   vector<int> indexList_j = dpmm_split.indexLists_[1];
+  // vector<int> indexList_i = dpmm_split.indexLists_[0];
+  // vector<int> indexList_j = dpmm_split.indexLists_[1];
 
 
+  // double logAcceptanceRatio = 0;
   
-//   double logAcceptanceRatio = 0;
-//   // logAcceptanceRatio -= dpmm_split.logTransitionProb(indexList_i, indexList_j);
-//   // logAcceptanceRatio += dpmm_split.logPosteriorProb(indexList_i, indexList_j);;
-//   // if (logAcceptanceRatio < 0) 
-//   // {
-//   //   std::cout << "Component " << z_split_j <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
-//   //   return 1;
-//   // }
-  
-//   for (int i = 0; i < indexList_i.size(); ++i)
-//   {
-//     z_split[indexList_i[i]] = z_split_i;
-//   }
-//   for (int i = 0; i < indexList_j.size(); ++i)
-//   {
-//     z_split[indexList_j[i]] = z_split_j;
-//   }
+  // for (int i = 0; i < indexList_i.size(); ++i)
+  //   z_split[indexList_i[i]] = z_split_i;
+  // for (int i = 0; i < indexList_j.size(); ++i)
+  //   z_split[indexList_j[i]] = z_split_j;
 
-//   z_ = z_split;
-//   // z_ = dpmm_split.z_;
-//   K_ += 1;
-//   logNum_.push_back(K_);
-//   // this -> updateIndexLists();
-//   std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  // z_ = z_split;
+  // // z_ = dpmm_split.z_;
+  // K_ += 1;
+  // logNum_.push_back(K_);
+  // // this -> updateIndexLists();
+  // std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   
-//   return 0;
-// }
+  return 0;
+}
+
 
 
 template <class dist_t>

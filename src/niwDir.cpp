@@ -13,20 +13,20 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma,
   const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, boost::mt19937 &rndGen):
   Sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
 {
-  if (mu.rows()==4)
-  {
+  if (mu.rows()==4){
     muPos_ = mu_(seq(0, 1));
     SigmaPos_ = Sigma_(seq(0, 1), seq(0, 1));
     muDir_ = mu_(seq(2, 3));
     SigmaDir_ = Sigma_(2, 2);
   }
-  else if (mu.rows()==6)
-  {
+  else if (mu.rows()==6){
     muPos_ = mu_(seq(0, 2));
     SigmaPos_ = Sigma_(seq(0, 2), seq(0, 2));
     muDir_ = mu_(seq(3, 5));
     SigmaDir_ = Sigma_(3, 3);
   }
+
+  NIW_ = this->getNIW();
 };
 
 
@@ -37,16 +37,14 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynam
   T nu, T kappa, T count, boost::mt19937 &rndGen):
   SigmaPos_(SigmaPos), SigmaDir_(SigmaDir), muPos_(muPos), muDir_(muDir), nu_(nu), kappa_(kappa), count_(count), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
 {
-  if (SigmaPos.cols()==2)
-  {
+  if (SigmaPos.cols()==2) {
     Sigma_.setZero(3, 3);
     Sigma_(seq(0,1), seq(0,1)) = SigmaPos_;
     Sigma_(2, 2) = SigmaDir_;
     mu_.setZero(3);
     mu_(seq(0,1)) = muPos_;
   }
-  else if (SigmaPos.cols()==3)
-  {
+  else if (SigmaPos.cols()==3) {
     Sigma_.setZero(4, 4);
     Sigma_(seq(0,2), seq(0,2)) = SigmaPos_;
     Sigma_(3, 3) = SigmaDir_;
@@ -62,10 +60,14 @@ NIWDIR<T>::~NIWDIR()
 {};
 
 
+
 template<typename T>
-NIW<T> NIWDIR<T>::getNIW()  //place in constructor so can be re-used in every split/merge proposal
-{
-  return NIW<T>(SigmaPos_, muPos_, nu_, kappa_, rndGen_);
+NIW<T> * NIWDIR<T>::getNIW()  
+{ 
+  NIW<T> * NIW_ptr;
+  NIW<T> NIW(SigmaPos_, muPos_, nu_, kappa_, rndGen_);
+  NIW_ptr = & NIW;
+  return NIW_ptr;
 };
 
 

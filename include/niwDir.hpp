@@ -8,6 +8,7 @@
 
 using namespace Eigen;
 
+
 template<typename T>
 class NIWDIR
 {
@@ -18,7 +19,7 @@ class NIWDIR
         const Matrix<T,Dynamic,1>& muDir, T SigmaDir, T nu, T kappa, T count, boost::mt19937 &rndGen);        
         ~NIWDIR();
 
-        NIW<T> getNIW();
+        NIW<T> * getNIW();
 
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
         NIWDIR<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
@@ -31,6 +32,8 @@ class NIWDIR
 
     public:
         boost::mt19937 rndGen_;
+        NIW<T> * NIW_;
+
 
         // Hyperparameters remain fixed once initialized
         Matrix<T,Dynamic,Dynamic> SigmaPos_;
