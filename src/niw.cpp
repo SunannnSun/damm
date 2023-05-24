@@ -40,15 +40,6 @@ NIW<T>::~NIW()
 
 
 
-// template<class T>
-// NIWDIR<T>* NIW<T>::getNIWDIR()  //place in constructor so can be re-used in every split/merge proposal
-// {
-//   NIWDIR<T> * NIWDIR_ptr;
-//   NIWDIR<T> NIWDIR(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
-//   NIWDIR_ptr = & NIWDIR;
-//   return NIWDIR_ptr;
-// };
-
 
 // template<class T>
 // T NIW<T>::logPosteriorProb(const Vector<T,Dynamic> &x_i, const Matrix<T,Dynamic, Dynamic> &x_k)
@@ -92,7 +83,7 @@ void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k)
 
 
 template<class T>
-T NIW<T>::logPostPredProb(const Matrix<T,Dynamic,1>& x_i)
+T NIW<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
 {
   // Multivariate student-t distribution
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
@@ -101,22 +92,22 @@ T NIW<T>::logPostPredProb(const Matrix<T,Dynamic,1>& x_i)
   Matrix<T,Dynamic,Dynamic> scaledSigma = Sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1.));   
   LLT<Matrix<T,Dynamic,Dynamic>> lltObj(scaledSigma);
   
-  T logProb = boost::math::lgamma(0.5*(doF + dim_));
-  logProb -= boost::math::lgamma(0.5*(doF));
-  logProb -= 0.5*dim_*log(doF);
-  logProb -= 0.5*dim_*log(PI);
-  logProb -= 0.5*2*log(lltObj.matrixL().determinant());
-  logProb -= 0.5*(doF + dim_)*log(1.+1./doF*(lltObj.matrixL().solve(x_i-mu_)).squaredNorm());
+  T logPredProb = boost::math::lgamma(0.5*(doF + dim_));
+  logPredProb -= boost::math::lgamma(0.5*(doF));
+  logPredProb -= 0.5*dim_*log(doF);
+  logPredProb -= 0.5*dim_*log(PI);
+  logPredProb -= 0.5*2*log(lltObj.matrixL().determinant());
+  logPredProb -= 0.5*(doF + dim_)*log(1.+1./doF*(lltObj.matrixL().solve(x_i-mu_)).squaredNorm());
 
-  return logProb;
+  return logPredProb;
 };
 
 
 template<class T>
-T NIW<T>::postPredProb(const Matrix<T,Dynamic,1>& x_i)
+T NIW<T>::predProb(const Matrix<T,Dynamic,1>& x_i)
 { 
-  T logProb = this ->logPostPredProb(x_i);
-  return exp(logProb);
+  T logPredProb = this ->logPredProb(x_i);
+  return exp(logPredProb);
 };
 
 
@@ -141,14 +132,11 @@ Normal<T> NIW<T>::sampleParameter()
   Matrix<T,Dynamic,Dynamic> matrixA(dim_,dim_);
   matrixA.setZero();
   boost::random::normal_distribution<> gauss_;
-  for (uint32_t i=0; i<dim_; ++i)
-  {
+  for (uint32_t i=0; i<dim_; ++i)  {
     boost::random::chi_squared_distribution<> chiSq_(nu_-i);
     matrixA(i,i) = sqrt(chiSq_(rndGen_)); 
     for (uint32_t j=i+1; j<dim_; ++j)
-    {
       matrixA(j, i) = gauss_(rndGen_);
-    }
   }
   sampledCov = matrixA.inverse()*cholFacotor;
   sampledCov = sampledCov.transpose()*sampledCov;

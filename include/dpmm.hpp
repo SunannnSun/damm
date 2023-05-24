@@ -36,8 +36,8 @@ class DPMM {
     void sampleCoefficientsParameters(const vector<int> &indexList);
     void sampleLabels(const vector<int> &indexList);
 
-    double logPosteriorProb(const vector<int> &indexList_i, const vector<int> &indexList_j);
-    double logTransitionProb(const vector<int> &indexList_i, const vector<int> &indexList_j);
+    // double logPosteriorProb(const vector<int> &indexList_i, const vector<int> &indexList_j);
+    // double logTransitionProb(const vector<int> &indexList_i, const vector<int> &indexList_j);
 
     int splitProposal(const vector<int> &indexList);
     // int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);

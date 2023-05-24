@@ -119,13 +119,11 @@ void DPMMDIR<dist_t>::sampleLabels()
 {
   double logLik = 0;
   #pragma omp parallel for num_threads(6) schedule(static) private(rndGen_)
-  for(uint32_t ii=0; ii<N_; ++ii)
-  {
+  for(uint32_t ii=0; ii<N_; ++ii) {
     VectorXd prob(K_);
     double logLik_i = 0;
 
-    for (uint32_t kk=0; kk<K_; ++kk)
-    { 
+    for (uint32_t kk=0; kk<K_; ++kk) { 
       double logProb =  components_[kk].logProb(x_(ii, all));
       prob[kk] = log(Pi_[kk]) + logProb;
       logLik_i += Pi_[kk] * exp(logProb);
@@ -134,12 +132,14 @@ void DPMMDIR<dist_t>::sampleLabels()
    
     prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
-    for (uint32_t kk = 1; kk < prob.size(); ++kk) prob[kk] = prob[kk-1]+ prob[kk];
+    for (uint32_t kk = 1; kk < prob.size(); ++kk) 
+      prob[kk] = prob[kk-1]+ prob[kk];
     
     boost::random::uniform_01<> uni_;   
     double uni_draw = uni_(rndGen_);
     uint32_t kk = 0;
-    while (prob[kk] < uni_draw) kk++;
+    while (prob[kk] < uni_draw) 
+      kk++;
     z_[ii] = kk;
   } 
   logLogLik_.push_back(logLik);
@@ -186,13 +186,10 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   // }
   
   for (int i = 0; i < indexList_i.size(); ++i)
-  {
     z_split[indexList_i[i]] = z_split_i;
-  }
   for (int i = 0; i < indexList_j.size(); ++i)
-  {
     z_split[indexList_j[i]] = z_split_j;
-  }
+
 
   z_ = z_split;
   // z_ = dpmm_split.z_;
@@ -278,8 +275,7 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
   
 
   VectorXd Pi(2);
-  for (uint32_t kk=0; kk<2; ++kk)
-  {
+  for (uint32_t kk=0; kk<2; ++kk)  {
     boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
     Pi(kk) = gamma_(rndGen_);
   }
@@ -294,28 +290,92 @@ void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
   vector<int> indexList_i;
   vector<int> indexList_j;
 
-  boost::random::uniform_01<> uni_;    
-  for(uint32_t ii=0; ii<indexList.size(); ++ii)
-  {
+  boost::random::uniform_01<> uni_;
+  #pragma omp parallel for num_threads(6) schedule(static) private(rndGen_)    
+  for(uint32_t ii=0; ii<indexList.size(); ++ii)  {
     VectorXd prob(2);
-
     for (uint32_t kk=0; kk<2; ++kk)
-    {
       prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(indexList[ii], all)); 
-    }
-
+    
     prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
-    
+
     double uni_draw = uni_(rndGen_);
-    if (uni_draw < prob[0]) indexList_i.push_back(indexList[ii]);
-    else indexList_j.push_back(indexList[ii]);
+    
+    #pragma omp critical
+    if (uni_draw < prob[0]) 
+      indexList_i.push_back(indexList[ii]);
+    else 
+      indexList_j.push_back(indexList[ii]);
   }
 
   indexLists_.push_back(indexList_i);
   indexLists_.push_back(indexList_j);
 }
 
+
+template <class dist_t> 
+double DPMMDIR<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  double logProposalRatio = 0;
+
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
+    logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
+  }
+
+  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
+    logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
+  }
+
+  return logProposalRatio;
+}
+
+
+template <class dist_t>
+double DPMMDIR<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  vector<int> indexList_ij;
+  indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
+  indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
+
+  this ->sampleCoefficientsParameters(indexList_ij);
+  NIWDIR<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
+  NIWDIR<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  NIWDIR<double> parameter_j  = H_.posterior(x_(indexList_j, all));
+
+  double logTargetRatio = 0;
+  // for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
+  //   logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
+  //   logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+  // }
+  // for (uint32_t jj=0; jj < indexList_j.size(); ++jj)
+  // {
+  //   logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
+  //   logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+  // }
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
+    logTargetRatio += parameters_[0].logPredProb(x_(indexList_i[ii], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+  }
+  for (uint32_t jj=0; jj < indexList_j.size(); ++jj)
+  {
+    logTargetRatio += parameters_[1].logPredProb(x_(indexList_j[jj], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+  }
+
+  double logPrior = indexList_i.size() * log(indexList_i.size()) + 
+                    indexList_j.size() * log(indexList_j.size()) - 
+                    indexList_ij.size() * log(indexList_ij.size());
+
+  // std::cout << logPrior << std::endl;
+  logTargetRatio += logPrior;
+
+
+  return logTargetRatio;
+}
 
 
 template <class dist_t>
@@ -492,27 +552,7 @@ void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
 }
 
 
-template <class dist_t> 
-double DPMMDIR<dist_t>::transitionProb(vector<int> indexList_i, vector<int> indexList_j)
-{
-  double transitionProb = 1;
 
-  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
-  {
-    transitionProb *= Pi_(0) * components_[0].prob(x_(indexList_i[ii], all))/
-    (Pi_(0) * components_[0].prob(x_(indexList_i[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_i[ii], all)));
-  }
-
-  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)
-  {
-    transitionProb *= Pi_(0) * components_[0].prob(x_(indexList_j[ii], all))/
-    (Pi_(0) * components_[0].prob(x_(indexList_j[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_j[ii], all)));
-  }
-  
-  // std::cout << transitionProb << std::endl;
-
-  return transitionProb;
-}
 
 
 template <class dist_t> 
@@ -539,30 +579,29 @@ double DPMMDIR<dist_t>::logTransitionProb(vector<int> indexList_i, vector<int> i
 
 
 template <class dist_t>
-double DPMMDIR<dist_t>::logPosteriorProb(vector<int> indexList_i, vector<int> indexList_j)
+double DPMMDIR<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
-  vector<int> indexList;
-  indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
-  indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
-  indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
+  vector<int> indexList_ij;
+  indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
+  indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
 
-  NormalDir<double> parameter_ij = H_.posterior(x_(indexList, all)).sampleParameter();
-  NormalDir<double> parameter_i  = H_.posterior(x_(indexList_i, all)).sampleParameter();
-  NormalDir<double> parameter_j  = H_.posterior(x_(indexList_j, all)).sampleParameter();
+  NIWDIR<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
+  NIWDIR<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  NIWDIR<double> parameter_j  = H_.posterior(x_(indexList_j, all));
 
-  double logPosteriorRatio = 0;
-  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
-  {
-    logPosteriorRatio += log(indexList_i.size()) + parameter_i.logProb(x_(indexList_i[ii], all)) ;
-    logPosteriorRatio -= log(indexList.size()) - parameter_ij.logProb(x_(indexList_i[ii], all));
+  double logTargetRatio = 0;
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
+    logTargetRatio += log(indexList_i.size()) + parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
+    logTargetRatio -= log(indexList_ij.size()) - parameter_ij.logPredProb(x_(indexList_i[ii], all));
   }
   for (uint32_t jj=0; jj < indexList_j.size(); ++jj)
   {
-    logPosteriorRatio += log(indexList_j.size()) + parameter_j.logProb(x_(indexList_j[jj], all)) ;
-    logPosteriorRatio -= log(indexList.size()) - parameter_ij.logProb(x_(indexList_j[jj], all));
+    logTargetRatio += log(indexList_j.size()) + parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
+    logTargetRatio -= log(indexList_ij.size()) - parameter_ij.logPredProb(x_(indexList_j[jj], all));
   }
 
-  return logPosteriorRatio;
+  return logTargetRatio;
 }
 
 */

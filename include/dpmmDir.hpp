@@ -27,8 +27,12 @@ class DPMMDIR
     //split/merge proposal
     int splitProposal(const vector<int> &indexList);
     int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
+
+    
     void sampleCoefficientsParameters(vector<int> indexList);
     void sampleLabels(vector<int> indexList);
+    double logProposalRatio(vector<int> indexList_i, vector<int> indexList_j);
+    double logTargetRatio(vector<int> indexList_i, vector<int> indexList_j);
 
 
     // utilies
@@ -43,9 +47,7 @@ class DPMMDIR
     //Following class methods are currently not being used 
     /*---------------------------------------------------*/
     // void sampleCoefficientsParameters(vector<int> indexList);
-    // double transitionProb(vector<int> indexList_i, vector<int> indexList_j);
-    // double logTransitionProb(vector<int> indexList_i, vector<int> indexList_j);
-    // double logPosteriorProb(vector<int> indexList_i, vector<int> indexList_j);
+
 
 
   public:
