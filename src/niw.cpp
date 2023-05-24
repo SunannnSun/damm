@@ -14,7 +14,7 @@ NIW<T>::NIW(const MatrixXd &Sigma,
   const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen)
 : nu_(nu), kappa_(kappa), rndGen_(rndGen) 
 {
-  if (Sigma.rows()==4 ||  Sigma.rows()==6){
+  if (mu.rows()==4 ||  mu.rows()==6){
     dim_ = mu.rows()/2;
     muPos_ = mu(seq(0, dim_-1), all);
     muDir_ = mu(seq(dim_, last), all);

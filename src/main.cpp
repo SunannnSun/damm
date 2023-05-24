@@ -128,8 +128,7 @@ int main(int argc, char **argv)
         for (uint32_t j=0; j<dim; ++j)
             Data(i, j) = stod(parsedCsv[i][j]);
 
-
-
+    
     /*---------------------------------------------------*/
     //----------------------Sampler----------------------
     /*---------------------------------------------------*/
@@ -148,6 +147,11 @@ int main(int argc, char **argv)
                 vector<vector<int>> indexLists = dpmm.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmm.splitProposal(indexLists[l]);
+                dpmm.updateIndexLists();
+            }
+            else if (t!=0 && t%51==0 && t<700){   
+                vector<vector<int>> merge_indexLists = dpmm.computeSimilarity();
+                dpmm.mergeProposal(merge_indexLists[0], merge_indexLists[1]);
                 dpmm.updateIndexLists();
             }
             else{

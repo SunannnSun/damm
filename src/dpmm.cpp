@@ -199,57 +199,6 @@ void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
 
 
 
-// template <class dist_t>
-// double DPMM<dist_t>::logPosteriorProb(const vector<int> &indexList_i, const vector<int> &indexList_j)
-// {
-//   vector<int> indexList;
-//   indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
-//   indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
-//   indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
-
-//   Normal<double> component_ij = H_.posterior(x_(indexList, all)).sampleParameter();
-//   Normal<double> component_i  = H_.posterior(x_(indexList_i, all)).sampleParameter();
-//   Normal<double> component_j  = H_.posterior(x_(indexList_j, all)).sampleParameter();
-
-//   double logPosteriorRatio = 0;
-//   for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
-//   {
-//     logPosteriorRatio += log(indexList_i.size()) + component_i.logProb(x_(indexList_i[ii], all)) ;
-//     logPosteriorRatio -= log(indexList.size())   - component_ij.logProb(x_(indexList_i[ii], all));
-//   }
-//   for (uint32_t jj=0; jj < indexList_j.size(); ++jj)
-//   {
-//     logPosteriorRatio += log(indexList_j.size()) + component_j.logProb(x_(indexList_j[jj], all)) ;
-//     logPosteriorRatio -= log(indexList.size())   - component_ij.logProb(x_(indexList_j[jj], all));
-//   }
-
-//   return logPosteriorRatio;
-// }
-
-
-
-// template <class dist_t> 
-// double DPMM<dist_t>::logTransitionProb(const vector<int> &indexList_i, const vector<int> &indexList_j)
-// {
-//   double logTransitionProb = 0;
-
-//   for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
-//   {
-//     logTransitionProb += log(Pi_(0) * parameters_[0].postPredProb(x_(indexList_i[ii], all))) -
-//     log(Pi_(0) * parameters_[0].postPredProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].postPredProb(x_(indexList_i[ii], all)));
-//   }
-
-//   for (uint32_t ii=0; ii < indexList_j.size(); ++ii)
-//   {
-//     logTransitionProb += log(Pi_(1) * parameters_[1].postPredProb(x_(indexList_j[ii], all))) -
-//     log(Pi_(0) * parameters_[0].postPredProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].postPredProb(x_(indexList_j[ii], all)));
-//   }
-  
-//   return logTransitionProb;
-// }
-
-
-
 template <class dist_t> 
 int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
 {
@@ -262,7 +211,7 @@ int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
   DPMMDIR<NIWDIR<double>> dpmm_split(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
 
   for (int tt=0; tt<50; ++tt)  {
-    if (dpmm_split.indexLists_[0].size()==1 || dpmm_split.indexLists_[1].size() ==1 || dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
+    if (dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
       return 1;
     dpmm_split.sampleCoefficientsParameters(indexList);
     dpmm_split.sampleLabels(indexList);
@@ -290,6 +239,62 @@ int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
   }
   else
     return 1;
+}
+
+
+
+template <class dist_t> 
+int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
+{
+  double logAcceptanceRatio = 0;
+  VectorXi z_launch = z_;
+  VectorXi z_merge = z_;
+  uint32_t z_merge_i = z_merge[indexList_i[0]];
+  uint32_t z_merge_j = z_merge[indexList_j[0]];
+
+  vector<int> indexList;
+  indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
+  indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
+
+  // NIWDIR<double> H_NIWDIR = * H_.NIWDIR_ptr;
+  // DPMMDIR<NIWDIR<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
+
+  DPMM<NIW<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_, rndGen_);
+
+  for (int tt=0; tt<50; ++tt)  {    
+    if (dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
+    {
+      // double logAcceptanceRatio = 0;
+      // logAcceptanceRatio += log(dpmm_merge.transitionProb(indexList_i, indexList_j));
+      // logAcceptanceRatio -= dpmm_merge.logPosteriorProb(indexList_i, indexList_j);;
+
+      // std::cout << logAcceptanceRatio << std::endl;
+      for (int i = 0; i < indexList_i.size(); ++i) 
+        z_merge[indexList_i[i]] = z_merge_j;
+      z_ = z_merge;
+      this -> reorderAssignments();
+      std::cout << "Component " << z_merge_j << "and" << z_merge_i <<": Merge proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+      return 0;
+    };
+    dpmm_merge.sampleCoefficientsParameters(indexList);
+    dpmm_merge.sampleLabels(indexList);
+  }
+
+
+  logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
+  logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);;
+
+  if (logAcceptanceRatio > 0)  {
+    for (int i = 0; i < indexList_i.size(); ++i) 
+      z_merge[indexList_i[i]] = z_merge_j;
+    z_ = z_merge;
+    this -> reorderAssignments();
+    std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+    return 0;
+  }
+  std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  return 1;
 }
 
 
@@ -336,44 +341,33 @@ void DPMM<dist_t>::updateIndexLists()
 }
 
 
-template class DPMM<NIW<double>>;
-
 
 
 template <class dist_t> 
 vector<vector<int>> DPMM<dist_t>::computeSimilarity()
 {
-  // std::cout << "Compute similarity" << std::endl;
   int num_comp = K_;
   vector<vector<int>> indexLists = this-> getIndexLists();
-  assert(indexLists.size()==num_comp);
   vector<MatrixXd>       muLists;
 
   for (int kk=0; kk< num_comp; ++kk)
   {
     MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
-    // std::cout << x_k.colwise().mean() << std::endl;
     muLists.push_back(x_k.colwise().mean().transpose());
   }
 
   MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());
-  // std::cout << similarityMatrix << std::endl;
-  
   for (int ii=0; ii<num_comp; ++ii)
       for (int jj=ii+1; jj<num_comp; ++jj)
           similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
-  // std::cout << similarityMatrix<< std::endl;
 
   MatrixXd similarityMatrix_flattened;
   similarityMatrix_flattened = similarityMatrix.transpose(); 
   similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
 
-  // std::cout << similarityMatrix_flattened<< std::endl;
 
   Eigen::MatrixXf::Index min_index;
   similarityMatrix_flattened.row(0).minCoeff(&min_index);
-  // std::cout << similarityMatrix_flattened.row(0).minCoeff(&min_index) << std::endl;
-  // std::cout << min_index << std::endl;
 
   int merge_i;
   int merge_j;
@@ -381,9 +375,6 @@ vector<vector<int>> DPMM<dist_t>::computeSimilarity()
 
   merge_i = min_index_int / num_comp;
   merge_j = min_index_int % num_comp;
-
-  // std::cout << merge_i << std::endl;
-  // std::cout << merge_j << std::endl;
 
   vector<vector<int>> merge_indexLists;
 
@@ -395,6 +386,7 @@ vector<vector<int>> DPMM<dist_t>::computeSimilarity()
 
 
 
+template class DPMM<NIW<double>>;
 
 
 /*---------------------------------------------------*/

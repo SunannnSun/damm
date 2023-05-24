@@ -40,7 +40,7 @@ class DPMM {
     // double logTransitionProb(const vector<int> &indexList_i, const vector<int> &indexList_j);
 
     int splitProposal(const vector<int> &indexList);
-    // int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
+    int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
 
     /*---------------------------------------------------*/
     //---------------------Utilities---------------------
