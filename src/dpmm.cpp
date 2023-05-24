@@ -257,11 +257,10 @@ int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int
   indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
   indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
 
-  // NIWDIR<double> H_NIWDIR = * H_.NIWDIR_ptr;
-  // DPMMDIR<NIWDIR<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
-
-  DPMM<NIW<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_, rndGen_);
-
+  NIWDIR<double> H_NIWDIR = * H_.NIWDIR_ptr;
+  DPMMDIR<NIWDIR<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
+  // DPMM<NIW<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_, rndGen_);
+  
   for (int tt=0; tt<50; ++tt)  {    
     if (dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
     {
@@ -297,6 +296,55 @@ int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int
   return 1;
 }
 
+
+template <class dist_t> 
+double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  double logProposalRatio = 0;
+
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
+    logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
+  }
+
+  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
+    logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
+  }
+
+  return logProposalRatio;
+}
+
+
+template <class dist_t>
+double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  vector<int> indexList_ij;
+  indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
+  indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
+
+  NIW<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
+  NIW<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  NIW<double> parameter_j  = H_.posterior(x_(indexList_j, all));
+
+  double logTargetRatio = 0;
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
+    logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+  }
+  for (uint32_t jj=0; jj < indexList_j.size(); ++jj)  {
+    logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+  }
+
+  double logPrior = indexList_i.size() * log(indexList_i.size()) + 
+                    indexList_j.size() * log(indexList_j.size()) - 
+                    indexList_ij.size() * log(indexList_ij.size());
+  logTargetRatio += logPrior;
+
+  return logTargetRatio;
+}
 
 
 template <class dist_t>

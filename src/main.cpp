@@ -170,7 +170,7 @@ int main(int argc, char **argv)
         for (uint32_t t=0; t<T; ++t)    {
             cout<<"------------ t="<<t<<" -------------"<<endl;
             
-            if (t!=0 && t%50==0 && t<700){
+            if (t!=0 && t%10==0 && t<700){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmmDir.splitProposal(indexLists[l]);
@@ -182,9 +182,14 @@ int main(int argc, char **argv)
                 dpmmDir.reorderAssignments();
                 dpmmDir.updateIndexLists();
             }
-            if (t!=0 && t%25==0 && t<700){   
-            //    vector<vector<int>> merge_indexLists = dpmmDir.computeSimilarity();
-            //    dpmmDir.mergeProposal(merge_indexLists[0], merge_indexLists[1]);
+            if (t!=0 && t%5==0 && t<700){   
+                vector<vector<vector<int>>> merge_indexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_/2));
+                for (int i_merge =0; i_merge < merge_indexLists.size(); ++i_merge){
+                    vector<vector<int>> merge_indexList = merge_indexLists[i_merge];
+                    if (!dpmmDir.mergeProposal(merge_indexList[0], merge_indexList[1]))
+                        break;
+                }
+                dpmmDir.updateIndexLists();
             }
             cout << "Number of components: " << dpmmDir.K_ << endl;
         }

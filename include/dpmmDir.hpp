@@ -40,9 +40,10 @@ class DPMMDIR
     void updateIndexLists();
     vector<vector<int>> getIndexLists();
     const VectorXi & getLabels(){return z_;};
-    vector<vector<int>> computeSimilarity();
+    vector<vector<vector<int>>> computeSimilarity(int num);
 
-
+    private:
+      double KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q);
     /*---------------------------------------------------*/
     //Following class methods are currently not being used 
     /*---------------------------------------------------*/
