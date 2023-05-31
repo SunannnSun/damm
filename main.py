@@ -1,5 +1,6 @@
 from util.load_data import *
 from util.process_data import *
+from util.animate import *
 from util.modelRegression import *  
 from util.load_plot_haihui import *
 import argparse, subprocess, os, sys, csv, random
@@ -19,7 +20,7 @@ def dpmm(*args_):
 
     parser.add_argument('--input', type=int, default=4, help='Choose Data Input Option: 4')
     parser.add_argument('-d', '--data', type=int, default=10, help='Choose Dataset, default=10')
-    parser.add_argument('-t', '--iteration', type=int, default=200, help='Number of Sampler Iterations; default=50')
+    parser.add_argument('-t', '--iteration', type=int, default=100, help='Number of Sampler Iterations; default=50')
     parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
     parser.add_argument('--init', type=int, default = 15, help='number of initial clusters, 0 is one cluster per data; default=1')
     parser.add_argument('--base', type=int, default = 1, help='clustering option; 0: position; 1: position+directional')
@@ -45,11 +46,19 @@ def dpmm(*args_):
         pkg_dir = filepath + '/data/'
         chosen_dataset = dataset_no   
         sub_sample = 1   
-        nb_trajectories = 8   
+        if dataset_no == 10:
+            nb_trajectories = 4
+        else:
+            nb_trajectories = 6
         Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
         vel_samples = 10
         vel_size = 20
-        # plot_reference_trajectories_DS(Data, att, vel_samples, vel_size)
+
+        # pkg_dir = filepath + '/data/'
+        # chosen_data_set = dataset_no
+        # sub_sample = 1
+        # nb_trajectories = 7
+        # Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
 
     Data = normalize_velocity_vector(Data)                  
     Data = Data[np.logical_not(np.isnan(Data[:, -1]))]         # get rid of nan points
@@ -98,9 +107,14 @@ def dpmm(*args_):
 
     completed_process = subprocess.run(' '.join(args), shell=True)
     assignment_array = np.genfromtxt(filepath + '/data/output.csv', dtype=int, delimiter=',')
+    logZ             = np.genfromtxt(filepath + '/data/logZ.csv', dtype=int, delimiter=None)
     logNum           = np.genfromtxt(filepath + '/data/logNum.csv', dtype=int, delimiter=',')
     logLogLik        = np.genfromtxt(filepath + '/data/logLogLik.csv', dtype=float, delimiter=',')
 
+
+    unique_elements, counts = np.unique(assignment_array, return_counts=True)
+    for element, count in zip(unique_elements, counts):
+        print("Number of", element, ":", count)
 
     ###############################################################
     ####################### plot results ##########################
@@ -108,34 +122,29 @@ def dpmm(*args_):
 
     colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
     "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
-    
+    color_mapping = np.take(colors, assignment_array)
+
     if dim == 4:
         fig, ax = plt.subplots()
-        for i in range(Data.shape[0]):
-            ax.scatter(Data[i, 0], Data[i, 1], c=colors[assignment_array[i]])
+        ax.scatter(Data[:, 0], Data[:, 1], c=color_mapping)
         ax.set_aspect('equal')
     else:
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        for k in range(assignment_array.max()+1):
-            index_k = np.where(assignment_array==k)[0]
-            Data_k = Data[index_k, :]
-            ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=colors[k], s=5)
+        ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=color_mapping, s=5)
+
 
     assignment_array = regress(Data, assignment_array)       
+    color_mapping = np.take(colors, assignment_array)
 
     if dim == 4:
         fig, ax = plt.subplots()
-        for i in range(Data.shape[0]):
-            ax.scatter(Data[i, 0], Data[i, 1], c=colors[assignment_array[i]])
+        ax.scatter(Data[:, 0], Data[:, 1], c=color_mapping)
         ax.set_aspect('equal')
     else:
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        for k in range(assignment_array.max()+1):
-            index_k = np.where(assignment_array==k)[0]
-            Data_k = Data[index_k, :]
-            ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=colors[k], s=5)
+        ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=color_mapping, s=5)
     ax.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(dataset_no, base, init_opt, iteration))
     
     _, axes = plt.subplots(2, 1)
@@ -146,12 +155,12 @@ def dpmm(*args_):
     
 
 
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    k = 1
-    index_k = np.where(assignment_array==k)[0]
-    Data_k = Data[index_k, :]
-    ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=colors[k], s=5)
+    # fig = plt.figure()
+    # ax = plt.axes(projection='3d')
+    # k = 1
+    # index_k = np.where(assignment_array==k)[0]
+    # Data_k = Data[index_k, :]
+    # ax.scatter(Data_k[:, 0], Data_k[:, 1], Data_k[:, 2], c=colors[k], s=5)
 
 
     plt.show()
@@ -171,20 +180,6 @@ def dpmm(*args_):
         Sigma[k, :, :] = np.cov(data_k.T)
         Priors[k] = data_k.shape[0]
     Mu = Mu.T
-
-    # print(Mu.T)
-    """
-    Compute similarity between Gaussian pairs
-    """
-    
-    similarity_matrix = np.inf * np.ones((num_comp, num_comp))
-    for i in range(num_comp):
-        for j in np.arange(i+1, num_comp):
-            similarity_matrix[i, j] = np.linalg.norm(Mu[:, i] - Mu[:, j])
-
-    # print(similarity_matrix)
-    # print(np.unravel_index(similarity_matrix.argmin(), similarity_matrix.shape))
-
 
 
     return Priors, Mu, Sigma
@@ -207,5 +202,4 @@ if __name__ == "__main__":
 
     # data_ = loadmat(r"{}".format("data/pnp_done"))
     # data = np.array(data_["Data"])
-    # print(data)
     # dpmm(data)

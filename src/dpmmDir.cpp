@@ -29,6 +29,7 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
   }
 
   z_ = z;
+  logZ_.push_back(z_);
   K_ = z_.maxCoeff() + 1; 
   this ->updateIndexLists();
 };
@@ -205,11 +206,10 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
 
   NIW<double> H_NIW = * H_.NIW_ptr;
   DPMM<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
-  // DPMMDIR<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
   
   for (int tt=0; tt<50; ++tt)
   {    
-    if (dpmm_merge.indexLists_[0].size()==0 || dpmm_merge.indexLists_[1].size() ==0  || dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
+    if (dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
     {
       // logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
       // logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
@@ -227,7 +227,7 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
 
 
   logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
-  logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
+  // logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
     for (int i = 0; i < indexList_i.size(); ++i) 
@@ -391,56 +391,61 @@ void DPMMDIR<dist_t>::updateIndexLists()
 
 
 template <class dist_t> 
-vector<vector<vector<int>>> DPMMDIR<dist_t>::computeSimilarity(int num)
+vector<array<int, 2>>  DPMMDIR<dist_t>::computeSimilarity(int mergeNum, int mergeIdx)
 {
-  int num_comp = K_;
-  vector<vector<int>> indexLists = this-> getIndexLists();
-  vector<MatrixXd>       muLists;
-  vector<MatrixXd>       SigmaLists;
+  std::cout << "Sim Matrix Idx: " << mergeIdx << std::endl;
+  vector<vector<int>>     indexLists = this-> getIndexLists();
+  vector<MatrixXd>        muLists;
+  vector<MatrixXd>        SigmaLists;
+  vector<array<int, 2>>   mergeIndexLists;
 
 
-  for (int kk=0; kk< num_comp; ++kk)  {
+  if (mergeIdx ==0){
+    for (int ii=0; ii<mergeNum/2; ++ii)
+      mergeIndexLists.push_back({ii, ii+1});
+    return mergeIndexLists;
+  }
+  else if (mergeIdx==1){
+    for (int ii=0; ii<mergeNum/2; ++ii)
+      mergeIndexLists.push_back({K_-ii-1, K_-ii-2});
+    return mergeIndexLists;
+  }
+
+  for (int kk=0; kk< K_; ++kk)  {
     MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
     MatrixXd centered = x_k.rowwise() - x_k.colwise().mean();
     MatrixXd cov = (centered.adjoint() * centered) / double(x_k.rows() - 1);
-
     muLists.push_back(x_k.colwise().mean().transpose());
     SigmaLists.push_back(cov);
   }
 
-  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());  
-  for (int ii=0; ii<num_comp; ++ii)
-      for (int jj=ii+1; jj<num_comp; ++jj)
-          // similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
+  MatrixXd similarityMatrix = MatrixXd::Constant(mergeNum, mergeNum, numeric_limits<float>::infinity());  
+  for (int ii=0; ii<mergeNum; ++ii)
+      for (int jj=ii+1; jj<mergeNum; ++jj){
+        if (mergeIdx==2)
+          similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
+        else if (mergeIdx==3)
           similarityMatrix(ii, jj) = this->KL_div(SigmaLists[ii], SigmaLists[jj], muLists[ii], muLists[jj]);
-  // std::cout << similarityMatrix<< std::endl;
+      }
 
   MatrixXd similarityMatrix_flattened;
   similarityMatrix_flattened = similarityMatrix.transpose(); 
   similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
 
 
-  vector<vector<vector<int>>> merge_indexLists;
-  for (int ii=0; ii<num; ++ii){
-    Eigen::MatrixXf::Index min_index;
-    similarityMatrix_flattened.row(0).minCoeff(&min_index);
+  for (int ii=0; ii<mergeNum; ++ii){
+    Eigen::MatrixXf::Index minIdx;
+    similarityMatrix_flattened.row(0).minCoeff(&minIdx);
 
-    int merge_i;
-    int merge_j;
-    int min_index_int = min_index;
+    int merge_i = int(minIdx) / K_;
+    int merge_j = int(minIdx) % K_;
 
-    merge_i = min_index_int / num_comp;
-    merge_j = min_index_int % num_comp;
-    vector<vector<int>> merge_indexList;
-
-    merge_indexList.push_back(indexLists[merge_i]);
-    merge_indexList.push_back(indexLists[merge_j]);
-    merge_indexLists.push_back(merge_indexList);
-
-    similarityMatrix_flattened(min_index) = numeric_limits<float>::infinity();
+    mergeIndexLists.push_back({merge_i, merge_j});
+    similarityMatrix_flattened(minIdx) = numeric_limits<float>::infinity();
   }
 
- return merge_indexLists;
+
+  return mergeIndexLists;
 }
 
 template <class dist_t> 

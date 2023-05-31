@@ -14,6 +14,7 @@ class Normal
         Normal(const Matrix<T,Dynamic,1> &mu, const Matrix<T,Dynamic,Dynamic> &Sigma, boost::mt19937 &rndGen);
         ~Normal();
         T logProb(const Matrix<T,Dynamic,1> &x_i);
+        T prob(const Matrix<T,Dynamic,1> &x_i);
 
         // T logPosteriorProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
         // T logProb(const Matrix<T,Dynamic,1>& x_i);

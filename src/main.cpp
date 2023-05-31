@@ -134,6 +134,7 @@ int main(int argc, char **argv)
     /*---------------------------------------------------*/
 
     VectorXi z;
+    vector<VectorXi> logZ;
     vector<int> logNum;
     vector<double> logLogLik;
 
@@ -142,16 +143,24 @@ int main(int argc, char **argv)
         DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
         for (uint32_t t=0; t<T; ++t){
             cout<<"------------ t="<<t<<" -------------"<<endl;
-
-            if (t!=0 && t%50==0 && t<700){
+            dpmm.sampleCoefficientsParameters();
+            dpmm.sampleLabels();
+            dpmm.reorderAssignments();
+            dpmm.updateIndexLists();
+            /*
+            if (t!=0 && t%10==0 && t<700){
                 vector<vector<int>> indexLists = dpmm.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmm.splitProposal(indexLists[l]);
                 dpmm.updateIndexLists();
             }
-            else if (t!=0 && t%51==0 && t<700){   
-                vector<vector<int>> merge_indexLists = dpmm.computeSimilarity();
-                dpmm.mergeProposal(merge_indexLists[0], merge_indexLists[1]);
+            else if (t!=0 && t%5==0 && t<700){   
+                vector<vector<vector<int>>> merge_indexLists = dpmm.computeSimilarity(int(dpmm.K_));
+                for (int i_merge =0; i_merge < merge_indexLists.size(); ++i_merge){
+                    vector<vector<int>> merge_indexList = merge_indexLists[i_merge];
+                    if (!dpmm.mergeProposal(merge_indexList[0], merge_indexList[1]))
+                        break;
+                }
                 dpmm.updateIndexLists();
             }
             else{
@@ -160,17 +169,19 @@ int main(int argc, char **argv)
                 dpmm.reorderAssignments();
                 dpmm.updateIndexLists();
             }
+            */
             cout << "Number of components: " << dpmm.K_ << endl;
         }
         z = dpmm.getLabels();
     }
     else if (base==1){
+        boost::random::uniform_int_distribution<> uni(0, 3);  
         NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init_cluster, alpha, niwDir, rndGen);
         for (uint32_t t=0; t<T; ++t)    {
             cout<<"------------ t="<<t<<" -------------"<<endl;
             
-            if (t!=0 && t%10==0 && t<700){
+            if (t!=0 && t%100==0 && t<=800){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmmDir.splitProposal(indexLists[l]);
@@ -182,11 +193,11 @@ int main(int argc, char **argv)
                 dpmmDir.reorderAssignments();
                 dpmmDir.updateIndexLists();
             }
-            if (t!=0 && t%5==0 && t<700){   
-                vector<vector<vector<int>>> merge_indexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_/2));
-                for (int i_merge =0; i_merge < merge_indexLists.size(); ++i_merge){
-                    vector<vector<int>> merge_indexList = merge_indexLists[i_merge];
-                    if (!dpmmDir.mergeProposal(merge_indexList[0], merge_indexList[1]))
+            if (t!=0 && t%51==0 && t>50){ 
+                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+                vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
+                for (int i =0; i < mergeIndexLists.size(); ++i){
+                    if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
                         break;
                 }
                 dpmmDir.updateIndexLists();
@@ -194,9 +205,11 @@ int main(int argc, char **argv)
             cout << "Number of components: " << dpmmDir.K_ << endl;
         }
         
-        z = dpmmDir.getLabels();
-        logNum = dpmmDir.logNum_;
-        logLogLik = dpmmDir.logLogLik_;
+        z           = dpmmDir.getLabels();
+        logZ        = dpmmDir.logZ_;
+        logZ.push_back(z);
+        logNum      = dpmmDir.logNum_;
+        logLogLik   = dpmmDir.logLogLik_;
     }
 
 
@@ -208,13 +221,10 @@ int main(int argc, char **argv)
 
     string pathOut;
     if(vm.count("output")) pathOut = vm["output"].as<string>();
-    pathOut += "output.csv";
-    if (!pathOut.compare("")){
-        cout<<"please specify an output data file"<<endl;
-        return 1;
-    }
-    cout<<"Output to "<<pathOut<<endl;
-    ofstream fout(pathOut.data(),ofstream::out);
+
+
+    string pathOut_output = pathOut + "output.csv";
+    ofstream fout(pathOut_output.data(),ofstream::out);
     for (uint16_t i=0; i < z.size(); ++i)
         fout << z[i] << endl;
     fout.close();
@@ -230,6 +240,23 @@ int main(int argc, char **argv)
     for (uint16_t i=0; i < logLogLik.size(); ++i)
         fout_logLogLik << logLogLik[i] << endl;
     fout_logLogLik.close();
+
+
+
+    // Populate the vector with Eigen::VectorXd elements
+    // ... (add your data)
+
+    std::ofstream outputFile(pathOut + "logZ.csv");
+    if (outputFile.is_open()) {
+        for (const auto& vector : logZ) {
+            outputFile << vector.transpose() << "\n";
+        }
+        outputFile.close();
+        std::cout << "Data exported successfully.\n";
+    } else {
+        std::cout << "Failed to open the file.\n";
+    }
+
         
     return 0;
 }   

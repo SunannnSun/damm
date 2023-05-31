@@ -301,16 +301,29 @@ template <class dist_t>
 double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
   double logProposalRatio = 0;
+//  log(Pi_[kk]) + components_[kk].logProb(x_(indexList[ii], all)); 
+
+
 
   for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
-    logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
-    log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
+    logProposalRatio += log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all))) -
+    log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_i[ii], all)));
   }
 
-  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
-    logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
-    log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
-  }
+  // for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
+  //   logProposalRatio += log(Pi_(1) * components_[1].prob(x_(indexList_j[ii], all))) -
+  //   log(Pi_(0) * components_[0].prob(x_(indexList_j[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_j[ii], all)));
+  // }
+
+  // for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
+  //   logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
+  //   log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
+  // }
+
+  // for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
+  //   logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
+  //   log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
+  // }
 
   return logProposalRatio;
 }
@@ -392,47 +405,73 @@ void DPMM<dist_t>::updateIndexLists()
 
 
 template <class dist_t> 
-vector<vector<int>> DPMM<dist_t>::computeSimilarity()
+vector<vector<vector<int>>> DPMM<dist_t>::computeSimilarity(int num)
 {
   int num_comp = K_;
   vector<vector<int>> indexLists = this-> getIndexLists();
   vector<MatrixXd>       muLists;
+  vector<MatrixXd>       SigmaLists;
 
-  for (int kk=0; kk< num_comp; ++kk)
-  {
+
+  for (int kk=0; kk< num_comp; ++kk)  {
     MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
+    MatrixXd centered = x_k.rowwise() - x_k.colwise().mean();
+    MatrixXd cov = (centered.adjoint() * centered) / double(x_k.rows() - 1);
+
     muLists.push_back(x_k.colwise().mean().transpose());
+    SigmaLists.push_back(cov);
   }
 
-  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());
+  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());  
   for (int ii=0; ii<num_comp; ++ii)
       for (int jj=ii+1; jj<num_comp; ++jj)
-          similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
+          // similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
+          similarityMatrix(ii, jj) = this->KL_div(SigmaLists[ii], SigmaLists[jj], muLists[ii], muLists[jj]);
+  // std::cout << similarityMatrix<< std::endl;
 
   MatrixXd similarityMatrix_flattened;
   similarityMatrix_flattened = similarityMatrix.transpose(); 
   similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
 
 
-  Eigen::MatrixXf::Index min_index;
-  similarityMatrix_flattened.row(0).minCoeff(&min_index);
+  vector<vector<vector<int>>> merge_indexLists;
+  for (int ii=0; ii<num; ++ii){
+    Eigen::MatrixXf::Index min_index;
+    similarityMatrix_flattened.row(0).minCoeff(&min_index);
 
-  int merge_i;
-  int merge_j;
-  int min_index_int = min_index;
+    int merge_i;
+    int merge_j;
+    int min_index_int = min_index;
 
-  merge_i = min_index_int / num_comp;
-  merge_j = min_index_int % num_comp;
+    merge_i = min_index_int / num_comp;
+    merge_j = min_index_int % num_comp;
+    vector<vector<int>> merge_indexList;
 
-  vector<vector<int>> merge_indexLists;
+    merge_indexList.push_back(indexLists[merge_i]);
+    merge_indexList.push_back(indexLists[merge_j]);
+    merge_indexLists.push_back(merge_indexList);
 
-  merge_indexLists.push_back(indexLists[merge_i]);
-  merge_indexLists.push_back(indexLists[merge_j]);
+    similarityMatrix_flattened(min_index) = numeric_limits<float>::infinity();
+  }
 
  return merge_indexLists;
 }
 
+template <class dist_t> 
+double DPMM<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q)
+{
+  double div = 0;
+  LLT<MatrixXd> lltObjp(Sigma_p);
+  LLT<MatrixXd> lltObjq(Sigma_q);
 
+  div += 2*log(lltObjq.matrixL().determinant());
+  div -= 2*log(lltObjp.matrixL().determinant());
+  div -= Sigma_p.cols();
+  div += (lltObjq.matrixL().solve(mu_p-mu_q)).squaredNorm();
+  div += (Sigma_q.inverse() * Sigma_p).trace();
+
+  return div;
+}
 
 template class DPMM<NIW<double>>;
 

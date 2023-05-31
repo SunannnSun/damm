@@ -32,4 +32,12 @@ T Normal<T>::logProb(const Matrix<T,Dynamic,1> &x_i)
 };
 
 
+template<class T>
+T Normal<T>::prob(const Matrix<T,Dynamic,1> &x_i)
+{ 
+  T logProb = this ->logProb(x_i);
+  return exp(logProb);
+};
+
+
 template class Normal<double>;

@@ -40,7 +40,7 @@ class DPMMDIR
     void updateIndexLists();
     vector<vector<int>> getIndexLists();
     const VectorXi & getLabels(){return z_;};
-    vector<vector<vector<int>>> computeSimilarity(int num);
+    vector<array<int, 2>>  computeSimilarity(int mergeNum, int mergeIdx);
 
     private:
       double KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q);
@@ -75,6 +75,7 @@ class DPMMDIR
 
 
     //log in number of components, joint likelihood every iteration
+    vector<VectorXi> logZ_;
     vector<int> logNum_;
     vector<double> logLogLik_; //https://stats.stackexchange.com/questions/398780/understanding-the-log-likelihood-score-in-scikit-learn-gmm
 };
