@@ -20,7 +20,7 @@ class NIW
         NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
         ~NIW();
 
-
+        T logPostPredProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
         T logPredProb(const Matrix<T,Dynamic,1> &x_i);
         T predProb(const Matrix<T,Dynamic,1> &x_i);
 

@@ -143,35 +143,16 @@ int main(int argc, char **argv)
         DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
         for (uint32_t t=0; t<T; ++t){
             cout<<"------------ t="<<t<<" -------------"<<endl;
+            // if (dpmm.sampleLabelsCollapsed())
+            //     break;
             dpmm.sampleCoefficientsParameters();
-            dpmm.sampleLabels();
+            dpmm.sampleLabelsCollapsedParallel();
+            // dpmm.sampleLabels();
             dpmm.reorderAssignments();
             dpmm.updateIndexLists();
-            /*
-            if (t!=0 && t%10==0 && t<700){
-                vector<vector<int>> indexLists = dpmm.getIndexLists();
-                for (int l=0; l<indexLists.size(); ++l) 
-                    dpmm.splitProposal(indexLists[l]);
-                dpmm.updateIndexLists();
-            }
-            else if (t!=0 && t%5==0 && t<700){   
-                vector<vector<vector<int>>> merge_indexLists = dpmm.computeSimilarity(int(dpmm.K_));
-                for (int i_merge =0; i_merge < merge_indexLists.size(); ++i_merge){
-                    vector<vector<int>> merge_indexList = merge_indexLists[i_merge];
-                    if (!dpmm.mergeProposal(merge_indexList[0], merge_indexList[1]))
-                        break;
-                }
-                dpmm.updateIndexLists();
-            }
-            else{
-                dpmm.sampleCoefficientsParameters();
-                dpmm.sampleLabels();
-                dpmm.reorderAssignments();
-                dpmm.updateIndexLists();
-            }
-            */
             cout << "Number of components: " << dpmm.K_ << endl;
         }
+        logZ        = dpmm.logZ_;
         z = dpmm.getLabels();
     }
     else if (base==1){
@@ -181,7 +162,7 @@ int main(int argc, char **argv)
         for (uint32_t t=0; t<T; ++t)    {
             cout<<"------------ t="<<t<<" -------------"<<endl;
             
-            if (t!=0 && t%100==0 && t<=800){
+            if (t!=0 && t%100==0){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmmDir.splitProposal(indexLists[l]);
@@ -246,7 +227,7 @@ int main(int argc, char **argv)
     // Populate the vector with Eigen::VectorXd elements
     // ... (add your data)
 
-    std::ofstream outputFile(pathOut + "logZ.csv");
+    ofstream outputFile(pathOut + "logZ.csv");
     if (outputFile.is_open()) {
         for (const auto& vector : logZ) {
             outputFile << vector.transpose() << "\n";

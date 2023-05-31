@@ -1,8 +1,8 @@
 from util.load_data import *
 from util.process_data import *
-from util.animate import *
 from util.modelRegression import *  
 from util.load_plot_haihui import *
+import matplotlib.animation as animation
 import argparse, subprocess, os, sys, csv, random
 
 class dpmm:
@@ -107,7 +107,7 @@ class dpmm:
 
         completed_process     = subprocess.run(' '.join(args), shell=True)
         self.assignment_array = np.genfromtxt(filepath + '/data/output.csv', dtype=int, delimiter=',')
-        self.reg_assignment_array = regress(self.Data, self.assignment_array)       
+        # self.reg_assignment_array = regress(self.Data, self.assignment_array)       
         self.logZ             = np.genfromtxt(filepath + '/data/logZ.csv', dtype=int, delimiter=None)
         self.logNum           = np.genfromtxt(filepath + '/data/logNum.csv', dtype=int, delimiter=',')
         self.logLogLik        = np.genfromtxt(filepath + '/data/logLogLik.csv', dtype=float, delimiter=',')
@@ -115,6 +115,8 @@ class dpmm:
         unique_elements, counts = np.unique(self.assignment_array, return_counts=True)
         for element, count in zip(unique_elements, counts):
             print("Number of", element, ":", count)
+        
+        self.plot()
 
 
     def plot(self, aniFlag=True):
@@ -122,12 +124,16 @@ class dpmm:
         ####################### plot results ##########################
         ###############################################################
         Data = self.Data
+        logZ = self.logZ
         colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
         "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
 
 
         color_mapping = np.take(colors, self.assignment_array)
-        reg_color_mapping = np.take(colors, self.reg_assignment_array)
+        # reg_color_mapping = np.take(colors, self.reg_assignment_array)
+        def update(frame):          
+            scatter.set_color(np.take(colors, logZ[frame,:]))
+            ax.set_title(f'Frame: {frame}')
 
 
         if self.dim == 4:
@@ -135,9 +141,14 @@ class dpmm:
             ax1.scatter(Data[:, 0], Data[:, 1], c=color_mapping)
             ax1.set_aspect('equal')
 
-            _, ax2 = plt.subplots()
-            ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping)
-            ax2.set_aspect('equal')
+            # _, ax2 = plt.subplots()
+            # ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping)
+            # ax2.set_aspect('equal')
+            if aniFlag:
+                fig_ani, ax = plt.subplots()
+                ax.set_aspect('equal')
+                scatter = ax.scatter(Data[:, 0], Data[:, 1], c='k')
+                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=800, repeat=True)
 
 
         else:
@@ -145,11 +156,16 @@ class dpmm:
             ax1 = plt.axes(projection='3d')
             ax1.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=color_mapping, s=5)
 
-            plt.figure()
-            ax2 = plt.axes(projection='3d')
-            ax2.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=reg_color_mapping, s=5)
+            # plt.figure()
+            # ax2 = plt.axes(projection='3d')
+            # ax2.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=reg_color_mapping, s=5)
+            if aniFlag:
+                fig_ani = plt.figure()
+                ax = plt.axes(projection='3d')
+                scatter = ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='k', s=5)
+                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=800, repeat=True)
 
-        ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
+        # ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
         
 
         _, axes = plt.subplots(2, 1)
@@ -158,18 +174,6 @@ class dpmm:
         axes[1].plot(np.arange(self.logLogLik.shape[0]), self.logLogLik, c='k')
         axes[1].set_title('Log Joint Likelihood')
 
-
-
-        if aniFlag:
-            logZ = self.logZ
-            fig_ani = plt.figure()
-            ax = plt.axes(projection='3d')
-            scatter = ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='k', s=5)
-
-            def update(frame):
-                scatter.set_color(np.take(colors, logZ[frame,:]))
-
-            ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=800, repeat=True)
 
         plt.show()
 
@@ -209,12 +213,10 @@ if __name__ == "__main__":
         Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
         DPMM = dpmm(Data)
         DPMM.begin()
-        DPMM.plot()
 
     else:
         DPMM = dpmm()
         DPMM.begin()
-        DPMM.plot()
         # print(DPMM.base)
 
     # data_ = loadmat(r"{}".format("data/pnp_done"))

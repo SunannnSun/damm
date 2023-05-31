@@ -170,16 +170,18 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
 
 
   double logAcceptanceRatio = 0;
-  logAcceptanceRatio -= dpmm_split.logProposalRatio(indexList_i, indexList_j);
+  // logAcceptanceRatio -= dpmm_split.logProposalRatio(indexList_i, indexList_j);
   logAcceptanceRatio += dpmm_split.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
+    logZ_.push_back(z_);
     for (int i = 0; i < indexList_i.size(); ++i)
       z_split[indexList_i[i]] = z_split_i;
     for (int i = 0; i < indexList_j.size(); ++i)
       z_split[indexList_j[i]] = z_split_j;
 
     z_ = z_split;
+    logZ_.push_back(z_);
     K_ += 1;
     logNum_.push_back(K_);
     std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
@@ -226,8 +228,8 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
   }
 
 
-  logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
-  // logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
+  // logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
+  logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
     for (int i = 0; i < indexList_i.size(); ++i) 

@@ -111,6 +111,14 @@ T NIW<T>::predProb(const Matrix<T,Dynamic,1>& x_i)
 };
 
 
+template<typename T>
+T NIW<T>::logPostPredProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k)
+{
+  NIW<T> posterior = this ->posterior(x_k);
+  return posterior.logPredProb(x_i);
+};
+
+
 template<class T>
 Normal<T> NIW<T>::samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic>& x_k)
 {

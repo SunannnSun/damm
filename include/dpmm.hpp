@@ -58,6 +58,10 @@ class DPMM {
     /*---------------------------------------------------*/
     //-------------------Inactive Methods-----------------
     /*---------------------------------------------------*/
+    public:
+      int sampleLabelsCollapsed();
+      void sampleLabelsCollapsedParallel();
+
     // void sampleCoefficients(const uint32_t index_i, const uint32_t index_j);
     // void sampleParameters(const uint32_t index_i, const uint32_t index_j);
     // Normal<double> sampleParameters(vector<int> indexList);
@@ -69,7 +73,6 @@ class DPMM {
     // double transitionProb(const uint32_t index_i, const uint32_t index_j);
     // double transitionProb(const uint32_t index_i, const uint32_t index_j, VectorXi z_original);
     // double posteriorRatio(vector<int> indexList_i, vector<int> indexList_j, vector<int> indexList_ij);
-    // void sampleLabelsCollapsed(const vector<int> &indexList);
 
 
 
@@ -98,6 +101,7 @@ class DPMM {
     vector<vector<int>> indexLists_;
 
     //log in number of components, joint likelihood every iteration
+    vector<VectorXi> logZ_;
     vector<int> logNum_;
     vector<double> logLogLik_; //https://stats.stackexchange.com/questions/398780/understanding-the-log-likelihood-score-in-scikit-learn-gmm
 };

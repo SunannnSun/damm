@@ -25,14 +25,15 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
     z.setZero();
   else if (init_cluster >= 1) {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
-    for (int i=0; i<N_; ++i) z[i] = uni_(rndGen_); 
+    for (int i=0; i<N_; ++i) 
+      z[i] = uni_(rndGen_); 
   }
   else { 
     cout<< "Invalid Number of Initial Components" << endl;
     exit(1);
   }
   z_ = z;
-
+  logZ_.push_back(z_);
   K_ = z_.maxCoeff() + 1; 
   this ->updateIndexLists();
 };
@@ -124,16 +125,15 @@ template <class dist_t>
 void DPMM<dist_t>::sampleLabels()
 {
   #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
-  for(uint32_t ii=0; ii<N_; ++ii)
-  { 
+  for(uint32_t ii=0; ii<N_; ++ii) { 
     VectorXd prob(K_);
-    for (uint32_t kk=0; kk<K_; ++kk) {
+    for (uint32_t kk=0; kk<K_; ++kk) 
       prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(ii, all));
-    }
-
+    
     prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
-    for (uint32_t kk = 1; kk < prob.size(); ++kk)  prob[kk] = prob[kk-1]+ prob[kk];
+    for (uint32_t kk = 1; kk < prob.size(); ++kk)  
+      prob[kk] = prob[kk-1]+ prob[kk];
 
     boost::random::uniform_01<> uni_;   
     double uni_draw = uni_(rndGen_);
@@ -180,6 +180,7 @@ void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
     VectorXd prob(2);
     for (uint32_t kk=0; kk<2; ++kk)
       prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(indexList[ii], all)); 
+      // prob[kk] = log(indexLists_[kk].size()) + parameters_[kk].logPostPredProb(x_(indexList[ii], all), x_(indexLists_[kk], all)); 
 
     prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
@@ -341,21 +342,39 @@ double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexLi
   NIW<double> parameter_i  = H_.posterior(x_(indexList_i, all));
   NIW<double> parameter_j  = H_.posterior(x_(indexList_j, all));
 
+  Normal<double> component_ij = parameter_ij.sampleParameter();
+  Normal<double> component_i  = parameter_i.sampleParameter();
+  Normal<double> component_j  = parameter_j.sampleParameter();
+  
   double logTargetRatio = 0;
   for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
-    logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
-    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+    logTargetRatio += log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all))) -
+    log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all)) + Pi_(1) *  component_j.prob(x_(indexList_i[ii], all)));
+    logTargetRatio -= component_ij.logProb(x_(indexList_i[ii], all));
   }
   for (uint32_t jj=0; jj < indexList_j.size(); ++jj)  {
-    logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
-    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+    logTargetRatio += log(Pi_(1) * component_j.prob(x_(indexList_j[jj], all))) -
+    log(Pi_(0) * component_i.prob(x_(indexList_j[jj], all)) + Pi_(1) *  component_j.prob(x_(indexList_j[jj], all)));
+    logTargetRatio -= component_ij.logProb(x_(indexList_j[jj], all));
   }
+
+
+  // double logTargetRatio = 0;
+  // for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
+  //   logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
+  //   logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+  // }
+  // for (uint32_t jj=0; jj < indexList_j.size(); ++jj)  {
+  //   logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
+  //   logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+  // }
 
   double logPrior = indexList_i.size() * log(indexList_i.size()) + 
                     indexList_j.size() * log(indexList_j.size()) - 
                     indexList_ij.size() * log(indexList_ij.size());
-  logTargetRatio += logPrior;
+  // logTargetRatio += logPrior;
 
+  std::cout << "logPrior: " << logPrior << std::endl;
   return logTargetRatio;
 }
 
@@ -472,6 +491,109 @@ double DPMM<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, co
 
   return div;
 }
+
+
+
+
+template <class dist_t> 
+int DPMM<dist_t>::sampleLabelsCollapsed()
+{
+  if (indexLists_[0].size()==1) {
+    z_[indexLists_[0][0]] =  z_[indexLists_[1][0]];
+    logZ_.push_back(z_);
+    return 1;
+  }
+  else if (indexLists_[1].size()==1){
+    z_[indexLists_[1][0]] =  z_[indexLists_[0][0]];
+    logZ_.push_back(z_);
+    return 1;
+  }
+
+  vector<int> indexList;
+  indexList.reserve(indexLists_[0].size() + indexLists_[1].size() ); // preallocate memory
+  indexList.insert( indexList.end(), indexLists_[0].begin(), indexLists_[0].end() );
+  indexList.insert( indexList.end(), indexLists_[1].begin(), indexLists_[1].end() );
+
+  // int dimPos = x_.cols()/2 -1;
+  int index_i = z_[indexLists_[0][0]];
+  int index_j = z_[indexLists_[1][0]];
+
+
+
+  boost::random::uniform_01<> uni_;
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+
+  // #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
+  for(int i=0; i<indexList.size(); ++i)  {
+    VectorXd x_i;
+    x_i = x_(indexList[i], all); 
+    VectorXd prob(2);
+
+    for (int ii=0; ii < indexList.size(); ++ii)  {
+      if (z_[indexList[ii]] == index_i && ii!=i) 
+        indexList_i.push_back(indexList[ii]);
+      else if (z_[indexList[ii]] == index_j && ii!=i) 
+        indexList_j.push_back(indexList[ii]);
+    }
+
+    prob[0] = log(indexList_i.size()) + H_.logPostPredProb(x_i, x_(indexList_i, all)); 
+    prob[1] = log(indexList_j.size()) + H_.logPostPredProb(x_i, x_(indexList_j, all)); 
+
+    double prob_max = prob.maxCoeff();
+    prob = (prob.array()-(prob_max + log((prob.array() - prob_max).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    for (uint32_t ii = 1; ii < prob.size(); ++ii)
+      prob[ii] = prob[ii-1]+ prob[ii];
+    double uni_draw = uni_(rndGen_);
+    if (uni_draw < prob[0]) 
+      z_[indexList[i]] = index_i;
+    else 
+      z_[indexList[i]] = index_j;
+    
+    indexList_i.clear();
+    indexList_j.clear();
+  }
+
+
+  for (int i=0; i < indexList.size(); ++i)  {
+    if (z_[indexList[i]] == index_i) 
+      indexList_i.push_back(indexList[i]);
+    else if (z_[indexList[i]] == index_j)
+      indexList_j.push_back(indexList[i]);
+  }
+  indexLists_.clear();
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+  logZ_.push_back(z_);
+  return 0;
+}
+
+
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleLabelsCollapsedParallel()
+{
+  #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
+  for(uint32_t ii=0; ii<N_; ++ii)  { 
+    VectorXd prob(K_);
+    for (uint32_t kk=0; kk<K_; ++kk)
+      prob[kk] = log(indexLists_[kk].size()) + parameters_[kk].logPredProb(x_(ii, all)); 
+
+    prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    for (uint32_t kk = 1; kk < prob.size(); ++kk)  
+      prob[kk] = prob[kk-1]+ prob[kk];
+
+    boost::random::uniform_01<> uni_;   
+    double uni_draw = uni_(rndGen_);
+    uint32_t kk = 0;
+    while (prob[kk] < uni_draw) kk++;
+    z_[ii] = kk;
+  }
+}
+
 
 template class DPMM<NIW<double>>;
 
