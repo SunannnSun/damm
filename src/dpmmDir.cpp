@@ -170,7 +170,7 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
 
 
   double logAcceptanceRatio = 0;
-  // logAcceptanceRatio -= dpmm_split.logProposalRatio(indexList_i, indexList_j);
+  logAcceptanceRatio -= dpmm_split.logProposalRatio(indexList_i, indexList_j);
   logAcceptanceRatio += dpmm_split.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
@@ -188,6 +188,7 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
     return 0;
   }
   else
+    std::cout << "Component " << z_split_j <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 1;
 }
 

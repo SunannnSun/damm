@@ -302,29 +302,27 @@ template <class dist_t>
 double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
   double logProposalRatio = 0;
-//  log(Pi_[kk]) + components_[kk].logProb(x_(indexList[ii], all)); 
 
 
-
-  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
-    logProposalRatio += log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all))) -
-    log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_i[ii], all)));
-  }
+  // for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
+  //   logProposalRatio += log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all))) -
+  //   log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_i[ii], all)));
+  // }
 
   // for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
   //   logProposalRatio += log(Pi_(1) * components_[1].prob(x_(indexList_j[ii], all))) -
   //   log(Pi_(0) * components_[0].prob(x_(indexList_j[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_j[ii], all)));
   // }
 
-  // for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
-  //   logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
-  //   log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
-  // }
+  for (int ii=0; ii < indexList_i.size(); ++ii)  {
+    logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
+  }
 
-  // for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
-  //   logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
-  //   log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
-  // }
+  for (int ii=0; ii < indexList_j.size(); ++ii)  {
+    logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
+  }
 
   return logProposalRatio;
 }
@@ -342,39 +340,39 @@ double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexLi
   NIW<double> parameter_i  = H_.posterior(x_(indexList_i, all));
   NIW<double> parameter_j  = H_.posterior(x_(indexList_j, all));
 
-  Normal<double> component_ij = parameter_ij.sampleParameter();
-  Normal<double> component_i  = parameter_i.sampleParameter();
-  Normal<double> component_j  = parameter_j.sampleParameter();
+  // Normal<double> component_ij = parameter_ij.sampleParameter();
+  // Normal<double> component_i  = parameter_i.sampleParameter();
+  // Normal<double> component_j  = parameter_j.sampleParameter();
   
-  double logTargetRatio = 0;
-  for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
-    logTargetRatio += log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all))) -
-    log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all)) + Pi_(1) *  component_j.prob(x_(indexList_i[ii], all)));
-    logTargetRatio -= component_ij.logProb(x_(indexList_i[ii], all));
-  }
-  for (uint32_t jj=0; jj < indexList_j.size(); ++jj)  {
-    logTargetRatio += log(Pi_(1) * component_j.prob(x_(indexList_j[jj], all))) -
-    log(Pi_(0) * component_i.prob(x_(indexList_j[jj], all)) + Pi_(1) *  component_j.prob(x_(indexList_j[jj], all)));
-    logTargetRatio -= component_ij.logProb(x_(indexList_j[jj], all));
-  }
-
-
   // double logTargetRatio = 0;
   // for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
-  //   logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
-  //   logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+  //   logTargetRatio += log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all))) -
+  //   log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all)) + Pi_(1) *  component_j.prob(x_(indexList_i[ii], all)));
+  //   logTargetRatio -= component_ij.logProb(x_(indexList_i[ii], all));
   // }
   // for (uint32_t jj=0; jj < indexList_j.size(); ++jj)  {
-  //   logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
-  //   logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+  //   logTargetRatio += log(Pi_(1) * component_j.prob(x_(indexList_j[jj], all))) -
+  //   log(Pi_(0) * component_i.prob(x_(indexList_j[jj], all)) + Pi_(1) *  component_j.prob(x_(indexList_j[jj], all)));
+  //   logTargetRatio -= component_ij.logProb(x_(indexList_j[jj], all));
   // }
+
+
+  double logTargetRatio = 0;
+  for (int ii=0; ii < indexList_i.size(); ++ii) {
+    logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+  }
+  for (int jj=0; jj < indexList_j.size(); ++jj)  {
+    logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+  }
 
   double logPrior = indexList_i.size() * log(indexList_i.size()) + 
                     indexList_j.size() * log(indexList_j.size()) - 
                     indexList_ij.size() * log(indexList_ij.size());
-  // logTargetRatio += logPrior;
+  logTargetRatio += logPrior;
 
-  std::cout << "logPrior: " << logPrior << std::endl;
+  // std::cout << "logPrior: " << logPrior << std::endl;
   return logTargetRatio;
 }
 

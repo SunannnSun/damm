@@ -162,19 +162,13 @@ int main(int argc, char **argv)
         for (uint32_t t=0; t<T; ++t)    {
             cout<<"------------ t="<<t<<" -------------"<<endl;
             
-            if (t!=0 && t%100==0){
+            if (t!=0 && t%5==0 && t< 190){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmmDir.splitProposal(indexLists[l]);
                 dpmmDir.updateIndexLists();
             }
-            else{
-                dpmmDir.sampleCoefficientsParameters();
-                dpmmDir.sampleLabels();
-                dpmmDir.reorderAssignments();
-                dpmmDir.updateIndexLists();
-            }
-            if (t!=0 && t%51==0 && t>50){ 
+            else if (t!=0 && t%3==0 && t>20 && t<190){ 
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
                 for (int i =0; i < mergeIndexLists.size(); ++i){
@@ -183,9 +177,15 @@ int main(int argc, char **argv)
                 }
                 dpmmDir.updateIndexLists();
             }
+            else{
+                dpmmDir.sampleCoefficientsParameters();
+                dpmmDir.sampleLabels();
+                dpmmDir.reorderAssignments();
+                dpmmDir.updateIndexLists();
+            }
             cout << "Number of components: " << dpmmDir.K_ << endl;
-        }
-        
+        }        
+
         z           = dpmmDir.getLabels();
         logZ        = dpmmDir.logZ_;
         logZ.push_back(z);

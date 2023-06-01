@@ -1,9 +1,11 @@
+from gmr import GMM, plot_error_ellipses
 from util.load_data import *
 from util.process_data import *
 from util.modelRegression import *  
 from util.load_plot_haihui import *
 import matplotlib.animation as animation
 import argparse, subprocess, os, sys, csv, random
+
 
 class dpmm:
     def __init__(self, *args_):
@@ -41,7 +43,7 @@ class dpmm:
         
         if len(args_) == 1:
             Data = args_[0]
-        else:                               # Using Haihui's loading/plotting code(default)
+        else:                              
             pkg_dir = self.filepath + '/data/'
             chosen_dataset = self.dataset_no   
             sub_sample = 1   
@@ -53,14 +55,8 @@ class dpmm:
             vel_samples = 10
             vel_size = 20
 
-            # pkg_dir = filepath + '/data/'
-            # chosen_data_set = dataset_no
-            # sub_sample = 1
-            # nb_trajectories = 7
-            # Data = load_matlab_data(pkg_dir, chosen_data_set, sub_sample, nb_trajectories)
-
         Data = normalize_velocity_vector(Data)                  
-        Data = Data[np.logical_not(np.isnan(Data[:, -1]))]         # get rid of nan points
+        Data = Data[np.logical_not(np.isnan(Data[:, -1]))]        
         self.num, self.dim = Data.shape                                   
 
         with open(self.input_path, mode='w') as data_file:
@@ -92,7 +88,9 @@ class dpmm:
         ###############################################################
         ####################### perform dpmm ##########################
         ###############################################################  
+        Data = self.Data
         filepath =self.filepath
+
         args = ['time ' + filepath + '/main',
                 '-n {}'.format(self.num),
                 '-m {}'.format(self.dim), 
@@ -106,31 +104,54 @@ class dpmm:
         ]
 
         completed_process     = subprocess.run(' '.join(args), shell=True)
-        self.assignment_array = np.genfromtxt(filepath + '/data/output.csv', dtype=int, delimiter=',')
-        # self.reg_assignment_array = regress(self.Data, self.assignment_array)       
+
+        assignment_array = np.genfromtxt(filepath + '/data/output.csv', dtype=int, delimiter=',')
+        unique_elements, counts = np.unique(assignment_array, return_counts=True)
+
+        for element, count in zip(unique_elements, counts):
+            print("Number of", element+1, ":", count)
+        #     if count < 1/10*counts.max():
+        #         indices_to_remove =  np.where(assignment_array==element)[0]
+        #         assignment_array = np.delete(assignment_array, indices_to_remove)
+        #         Data = np.delete(Data, indices_to_remove, axis=0)
+
+        # rearrange_list = []
+        # for idx, entry in enumerate(assignment_array):
+        #     if not rearrange_list:
+        #         rearrange_list.append(entry)
+        #     if entry not in rearrange_list:
+        #         rearrange_list.append(entry)
+        #         assignment_array[idx] = len(rearrange_list) - 1
+        #     else:
+        #         assignment_array[idx] = rearrange_list.index(entry)
+
+        self.assignment_array = assignment_array
+        self.Data = Data
+        self.est_K            = self.assignment_array.max()+1
+        self.reg_assignment_array = regress(self.Data, self.assignment_array)       
         self.logZ             = np.genfromtxt(filepath + '/data/logZ.csv', dtype=int, delimiter=None)
         self.logNum           = np.genfromtxt(filepath + '/data/logNum.csv', dtype=int, delimiter=',')
         self.logLogLik        = np.genfromtxt(filepath + '/data/logLogLik.csv', dtype=float, delimiter=',')
 
-        unique_elements, counts = np.unique(self.assignment_array, return_counts=True)
-        for element, count in zip(unique_elements, counts):
-            print("Number of", element, ":", count)
-        
-        self.plot()
 
+
+        self.extractPara()
+        self.plot()
 
     def plot(self, aniFlag=True):
         ###############################################################
         ####################### plot results ##########################
         ###############################################################
+        est_K = self.est_K
         Data = self.Data
         logZ = self.logZ
         colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
         "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+ 
 
 
         color_mapping = np.take(colors, self.assignment_array)
-        # reg_color_mapping = np.take(colors, self.reg_assignment_array)
+        reg_color_mapping = np.take(colors, self.reg_assignment_array)
         def update(frame):          
             scatter.set_color(np.take(colors, logZ[frame,:]))
             ax.set_title(f'Frame: {frame}')
@@ -141,9 +162,14 @@ class dpmm:
             ax1.scatter(Data[:, 0], Data[:, 1], c=color_mapping)
             ax1.set_aspect('equal')
 
-            # _, ax2 = plt.subplots()
-            # ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping)
-            # ax2.set_aspect('equal')
+            _, ax2 = plt.subplots()
+            ax2.set_aspect('equal')
+            ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping, s=10)
+            gmm = GMM(self.assignment_array.max()+1, self.Priors, self.Mu.T, self.Sigma)
+            plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
+            for num in np.arange(0, est_K):    
+                plt.text(self.Mu[0][num], self.Mu[1][num], str(num+1), fontsize=20)
+
             if aniFlag:
                 fig_ani, ax = plt.subplots()
                 ax.set_aspect('equal')
@@ -156,16 +182,16 @@ class dpmm:
             ax1 = plt.axes(projection='3d')
             ax1.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=color_mapping, s=5)
 
-            # plt.figure()
-            # ax2 = plt.axes(projection='3d')
-            # ax2.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=reg_color_mapping, s=5)
+            plt.figure()
+            ax2 = plt.axes(projection='3d')
+            ax2.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=reg_color_mapping, s=5)
             if aniFlag:
                 fig_ani = plt.figure()
                 ax = plt.axes(projection='3d')
                 scatter = ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='k', s=5)
                 ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=800, repeat=True)
 
-        # ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
+        ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
         
 
         _, axes = plt.subplots(2, 1)
@@ -177,11 +203,12 @@ class dpmm:
 
         plt.show()
 
-    def returnPara(self):
+    def extractPara(self):
         ###############################################################
         ################# return parameters ##########################
         ###############################################################  
         dim = self.dim
+        Data = self.Data
         assignment_array = self.reg_assignment_array
         num_comp = assignment_array.max()+1
         Priors = np.zeros((num_comp, ))
@@ -195,8 +222,13 @@ class dpmm:
             Priors[k] = data_k.shape[0]
         Mu = Mu.T
 
+        self.Priors = Priors
+        self.Mu     = Mu
+        self.Sigma  = Sigma
 
-        return Priors, Mu, Sigma
+
+    def returnPara(self):
+        return self.Priors, self.Mu, self.Sigma
 
 
 
