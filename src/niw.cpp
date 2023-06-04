@@ -40,31 +40,12 @@ NIW<T>::~NIW()
 
 
 
-
-// template<class T>
-// T NIW<T>::logPosteriorProb(const Vector<T,Dynamic> &x_i, const Matrix<T,Dynamic, Dynamic> &x_k)
-// {
-//   NIW<T> posterior = this->posterior(x_k);
-//   return posterior.logProb(x_i);
-// };
-
-
-// template<class T>
-// T NIW<T>::logPosteriorProb(const Matrix<T,Dynamic, Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_j, )
-// {
-//   NIW<T> posterior = this ->posterior(x_k);
-
-//   return posterior.logProb(x_i);
-// };
-
-
 template<class T>
 NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
   getSufficientStatistics(x_k);
   return NIW<T>(
-    Sigma_+Scatter_ + ((kappa_*count_)/(kappa_+count_))
-      *(mean_-mu_)*(mean_-mu_).transpose(), 
+    Sigma_+Scatter_ + ((kappa_*count_)/(kappa_+count_))*(mean_-mu_)*(mean_-mu_).adjoint(), 
     (kappa_*mu_+ count_*mean_)/(kappa_+count_),
     nu_+count_,
     kappa_+count_, rndGen_);
@@ -75,8 +56,7 @@ template<class T>
 void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
 	mean_ = x_k.colwise().mean();
-  Matrix<T,Dynamic, Dynamic> x_k_mean;
-  x_k_mean = x_k.rowwise() - mean_.transpose();
+  MatrixXd x_k_mean = x_k.rowwise() - mean_.transpose();
   Scatter_ = x_k_mean.adjoint() * x_k_mean;
 	count_ = x_k.rows();
 };
@@ -132,47 +112,55 @@ template<class T>
 Normal<T> NIW<T>::sampleParameter()
 {
   Matrix<T,Dynamic,Dynamic> sampledCov(dim_,dim_);
+  Matrix<T,Dynamic,Dynamic> sampledInvCov(dim_,dim_);
   Matrix<T,Dynamic,1> sampledMean(dim_);
 
-  LLT<Matrix<T,Dynamic,Dynamic> > lltObj(Sigma_);
+  MatrixXd inv_scale_matrix = Sigma_.inverse();
+  LLT<Matrix<T,Dynamic,Dynamic> > lltObj(inv_scale_matrix);
   Matrix<T,Dynamic,Dynamic> cholFacotor = lltObj.matrixL();
 
   Matrix<T,Dynamic,Dynamic> matrixA(dim_,dim_);
   matrixA.setZero();
-  boost::random::normal_distribution<> gauss_;
-  for (uint32_t i=0; i<dim_; ++i)  {
-    boost::random::chi_squared_distribution<> chiSq_(nu_-i);
-    matrixA(i,i) = sqrt(chiSq_(rndGen_)); 
-    for (uint32_t j=i+1; j<dim_; ++j)
-      matrixA(j, i) = gauss_(rndGen_);
+  boost::random::normal_distribution<double> gauss_(0.0, 1.0);
+  for (int i=0; i<dim_; ++i){
+      for (int j=i; j<dim_; ++j){
+        if (i==j){
+          boost::random::chi_squared_distribution<> chiSq_(nu_-i);
+          matrixA(i, i) =  sqrt(chiSq_(rndGen_));
+        }
+        else 
+          matrixA(j, i) = gauss_(rndGen_);
+      }
   }
-  sampledCov = matrixA.inverse()*cholFacotor;
-  sampledCov = sampledCov.transpose()*sampledCov;
+  sampledInvCov = cholFacotor * matrixA * matrixA.transpose() * cholFacotor.transpose();
+  sampledCov = sampledInvCov.inverse();
+
+  // LLT<Matrix<T,Dynamic,Dynamic> > lltObj(Sigma_);
+  // Matrix<T,Dynamic,Dynamic> cholFacotor = lltObj.matrixL();
+  // for (uint32_t i=0; i<dim_; ++i)  {
+  //   boost::random::chi_squared_distribution<> chiSq_(nu_-i);
+  //   matrixA(i,i) = sqrt(chiSq_(rndGen_)); 
+  //   for (uint32_t j=i+1; j<dim_; ++j)
+  //     matrixA(j, i) = gauss_(rndGen_);
+  // }
+  // sampledCov = matrixA.inverse()*cholFacotor;
+  // sampledCov = sampledCov.transpose()*sampledCov;
+
+  // lltObj.compute(sampledCov);
+  // cholFacotor = lltObj.matrixL();
 
 
-  lltObj.compute(sampledCov);
-  cholFacotor = lltObj.matrixL();
+  MatrixXd lowerMatrix = (sampledCov/kappa_).llt().matrixL();
 
   for (uint32_t i=0; i<dim_; ++i)
     sampledMean[i] = gauss_(rndGen_);
-  sampledMean = cholFacotor * sampledMean / sqrt(kappa_) + mu_;
+  sampledMean =  lowerMatrix * sampledMean + mu_;
   
   return Normal<T>(sampledMean, sampledCov, rndGen_);
 };
 
 
 
-
-// template<class T>
-// T NIW<T>::logPosteriorProb(const Matrix<T,Dynamic,Dynamic>& x, VectorXu& z, uint32_t k, uint32_t i)
-// {
-//   uint32_t z_i = z[i];
-//   z[i] = k+1; // so that we definitely not use x_i in posterior computation 
-//   // (since the posterior is only computed form x_{z==k})
-//   NIW posterior = this->posterior(x,z,k);
-//   z[i] = z_i; // reset to old value
-//   return posterior.logProb(x.col(i));
-// };
 
 
 

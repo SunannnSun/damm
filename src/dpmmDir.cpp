@@ -29,8 +29,9 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
   }
 
   z_ = z;
-  logZ_.push_back(z_);
   K_ = z_.maxCoeff() + 1; 
+  logZ_.push_back(z_);
+  logNum_.push_back(K_);
   this ->updateIndexLists();
 };
 
@@ -102,14 +103,12 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters()
   components_.clear();
   VectorXd Pi(K_);
 
-  for (uint32_t kk=0; kk<K_; ++kk)
-  {
+  for (uint32_t kk=0; kk<K_; ++kk)  {
     boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
     Pi(kk) = gamma_(rndGen_);
     parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));
     components_.push_back(parameters_[kk].sampleParameter());
   }
-
   Pi_ = Pi / Pi.sum();
 }
 
@@ -130,8 +129,9 @@ void DPMMDIR<dist_t>::sampleLabels()
       logLik_i += Pi_[kk] * exp(logProb);
     }
     logLik += log(logLik_i);
-   
-    prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
+    double max_prob = prob.maxCoeff();
+    prob = (prob.array() - max_prob).exp() / (prob.array() - max_prob).exp().sum();
+    // prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
     for (uint32_t kk = 1; kk < prob.size(); ++kk) 
       prob[kk] = prob[kk-1]+ prob[kk];
@@ -144,6 +144,7 @@ void DPMMDIR<dist_t>::sampleLabels()
     z_[ii] = kk;
   } 
   logLogLik_.push_back(logLik);
+  logZ_.push_back(z_);
 }
 
 
@@ -174,7 +175,6 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   logAcceptanceRatio += dpmm_split.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
-    logZ_.push_back(z_);
     for (int i = 0; i < indexList_i.size(); ++i)
       z_split[indexList_i[i]] = z_split_i;
     for (int i = 0; i < indexList_j.size(); ++i)

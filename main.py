@@ -5,6 +5,10 @@ from util.modelRegression import *
 from util.load_plot_haihui import *
 import matplotlib.animation as animation
 import argparse, subprocess, os, sys, csv, random
+from scipy.stats import multivariate_normal
+
+
+
 
 
 class dpmm:
@@ -66,13 +70,12 @@ class dpmm:
 
         self.Data = Data
 
-
         ###############################################################
         ####################### hyperparameters #######################
         ###############################################################  
         mu_0 = np.zeros((self.dim, ))
         mu_0[-1] = 1                                        
-        sigma_0 = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
+        sigma_0 = 0.01 * np.eye(int(mu_0.shape[0]/2) + 1)    
         sigma_0[-1, -1] = 1                                
         lambda_0 = {
             "nu_0": sigma_0.shape[0] + 3,
@@ -110,7 +113,7 @@ class dpmm:
 
         for element, count in zip(unique_elements, counts):
             print("Number of", element+1, ":", count)
-        #     if count < 1/10*counts.max():
+        #     if count < 1/20*counts.max():
         #         indices_to_remove =  np.where(assignment_array==element)[0]
         #         assignment_array = np.delete(assignment_array, indices_to_remove)
         #         Data = np.delete(Data, indices_to_remove, axis=0)
@@ -166,11 +169,11 @@ class dpmm:
             ax2.set_aspect('equal')
             ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping, s=10)
             gmm = GMM(self.assignment_array.max()+1, self.Priors, self.Mu.T, self.Sigma)
-            plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
-            for num in np.arange(0, est_K):    
-                plt.text(self.Mu[0][num], self.Mu[1][num], str(num+1), fontsize=20)
-
-            if aniFlag:
+            # plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
+            # for num in np.arange(0, est_K):    
+            #     plt.text(self.Mu[0][num], self.Mu[1][num], str(num+1), fontsize=20)
+            print(logZ.shape[0])
+            if aniFlag and logZ.shape[0] > 1:
                 fig_ani, ax = plt.subplots()
                 ax.set_aspect('equal')
                 scatter = ax.scatter(Data[:, 0], Data[:, 1], c='k')
@@ -229,8 +232,28 @@ class dpmm:
 
     def returnPara(self):
         return self.Priors, self.Mu, self.Sigma
+    
 
 
+    def computeBIC(self):
+        Data    = self.Data[:, 0:int(self.Data.shape[1]/2)]
+        Mu      = self.Mu.T
+        Sigma   = self.Sigma
+        Pi      = self.Priors / np.sum(self.Priors)
+        K       = Pi.shape[0]
+        M       = Sigma.shape[0]
+        numPara = K*(1+2*M+(M**2-M)/2)-1
+
+        logLiks = 0
+        for i in range(Data.shape[0]):
+            likelihood = 0
+            for k in range(K):
+                likelihood += Pi[k] * multivariate_normal(mean=Mu[k, :], cov=Sigma[k, :, :], allow_singular=True).pdf(Data[i, :])
+            logLiks += np.log(likelihood)
+        
+        BIC = numPara*np.log(Data.shape[0]) - 2*logLiks
+
+        print(BIC)
 
 if __name__ == "__main__":
     """
@@ -245,10 +268,13 @@ if __name__ == "__main__":
         Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
         DPMM = dpmm(Data)
         DPMM.begin()
+        DPMM.computeBIC()
+
 
     else:
         DPMM = dpmm()
         DPMM.begin()
+        DPMM.computeBIC()
         # print(DPMM.base)
 
     # data_ = loadmat(r"{}".format("data/pnp_done"))

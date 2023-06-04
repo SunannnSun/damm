@@ -146,49 +146,65 @@ int main(int argc, char **argv)
             // if (dpmm.sampleLabelsCollapsed())
             //     break;
             dpmm.sampleCoefficientsParameters();
-            dpmm.sampleLabelsCollapsedParallel();
-            // dpmm.sampleLabels();
+            // dpmm.sampleLabelsCollapsedParallel();
+            dpmm.sampleLabels();
             dpmm.reorderAssignments();
             dpmm.updateIndexLists();
             cout << "Number of components: " << dpmm.K_ << endl;
         }
         logZ        = dpmm.logZ_;
+        logZ.push_back(z);
         z = dpmm.getLabels();
     }
     else if (base==1){
         boost::random::uniform_int_distribution<> uni(0, 3);  
         NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init_cluster, alpha, niwDir, rndGen);
-        for (uint32_t t=0; t<T; ++t)    {
+        for (int t=1; t<T+1; ++t)    {
             cout<<"------------ t="<<t<<" -------------"<<endl;
             
-            if (t!=0 && t%5==0 && t< 190){
-                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                for (int l=0; l<indexLists.size(); ++l) 
-                    dpmmDir.splitProposal(indexLists[l]);
-                dpmmDir.updateIndexLists();
-            }
-            else if (t!=0 && t%3==0 && t>20 && t<190){ 
-                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
-                for (int i =0; i < mergeIndexLists.size(); ++i){
-                    if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
-                        break;
-                }
-                dpmmDir.updateIndexLists();
-            }
-            else{
-                dpmmDir.sampleCoefficientsParameters();
-                dpmmDir.sampleLabels();
-                dpmmDir.reorderAssignments();
-                dpmmDir.updateIndexLists();
-            }
+            vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+            for (int l=0; l<indexLists.size(); ++l) 
+                dpmmDir.splitProposal(indexLists[l]);
+            dpmmDir.updateIndexLists();
+            // if (t%5==0 && t< 190){
+            //     vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+            //     for (int l=0; l<indexLists.size(); ++l) 
+            //         dpmmDir.splitProposal(indexLists[l]);
+            //     dpmmDir.updateIndexLists();
+            // }
+            // else if (t%3==0 && t>20 && t<190){ 
+            //     vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+            //     vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
+            //     for (int i =0; i < mergeIndexLists.size(); ++i){
+            //         if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
+            //             break;
+            //     }
+            //     dpmmDir.updateIndexLists();
+            // }
+            // else{
+            //     dpmmDir.sampleCoefficientsParameters();
+            //     dpmmDir.sampleLabels();
+            //     dpmmDir.reorderAssignments();
+            //     dpmmDir.updateIndexLists();
+            // }
             cout << "Number of components: " << dpmmDir.K_ << endl;
-        }        
+        }
+        
+        // NIW<double> H_NIW = * niwDir.NIW_ptr;  
+        // DPMM<NIW<double>> dpmm(dpmmDir.x_, dpmmDir.z_, dpmmDir.alpha_, H_NIW, dpmmDir.rndGen_);
+        // for (int t=0; t<0; ++t){
+        //     cout<<"------------ t="<<t+T<<" -------------"<<endl;
+        //     dpmm.sampleCoefficientsParameters();
+        //     dpmm.sampleLabels();
+        //     dpmm.reorderAssignments();
+        //     dpmm.updateIndexLists();
+        //     cout << "Number of components: " << dpmmDir.K_ << endl;
+        // }
+        // z           = dpmm.getLabels();     
 
         z           = dpmmDir.getLabels();
         logZ        = dpmmDir.logZ_;
-        logZ.push_back(z);
         logNum      = dpmmDir.logNum_;
         logLogLik   = dpmmDir.logLogLik_;
     }
