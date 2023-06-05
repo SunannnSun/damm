@@ -86,6 +86,8 @@ NIWDIR<T> NIWDIR<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
     (kappa_*muPos_+ count_*meanPos_)/(kappa_+count_),
     SigmaPos_+ScatterPos_ + ((kappa_*count_)/(kappa_+count_))*(meanPos_-muPos_)*(meanPos_-muPos_).transpose(),
     meanDir_,
+    // SigmaDir_,
+
     SigmaDir_+ScatterDir_ + ((kappa_*count_)/(kappa_+count_))*pow(rie_log(meanDir_, muDir_).norm(), 2),
     nu_+count_,
     kappa_+count_,
@@ -143,7 +145,8 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   boost::random::chi_squared_distribution<> chiSq_(nu_);
   T inv_chi_sqrd = 1 / chiSq_(rndGen_);
   covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
-  if (covDir > 0.2) covDir = 0.1;
+  if (covDir > 0.2) 
+    covDir = 0.1;
 
 
   if (dim==2)

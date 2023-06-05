@@ -212,7 +212,7 @@ class dpmm:
                 fig_ani = plt.figure()
                 ax = plt.axes(projection='3d')
                 scatter = ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='k', s=5)
-                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=True)
+                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=False)
 
         ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
         _, axes = plt.subplots(2, 1)

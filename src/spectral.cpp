@@ -23,18 +23,16 @@ vector<int> kmeans(const MatrixXd& Data, int numClusters) {
     std::cout << kmeansInputMat.type() << std::endl;
     
     Mat labels;
-    std::vector<Point2f> centers;
+    // std::vector<Point3f> centers;
 
     kmeans(kmeansInputMat, numClusters, labels,
             TermCriteria(TermCriteria::EPS + TermCriteria::COUNT, 100, 1.0),
-            3, KMEANS_RANDOM_CENTERS,  centers
+            3, KMEANS_RANDOM_CENTERS
          );
 
     // std::cout << labels << std::endl;
-    // std::cout << centers << std::endl;
 
     vector<int> clusterAssignments(numPoints);
-
     const int* data = labels.ptr<int>();
     clusterAssignments.assign(data, data + labels.total());
     for (int i = 0; i < numPoints; ++i) {
