@@ -101,3 +101,7 @@ Also, consider using the --show-libraries and --with-libraries=library-name-list
 The binary library, if not specified, by default will be installed under the directory usr/include/boost_1_81_0/stage/lib. Make sure then use the -L flag to specifiy the library path and use the -l flag to search for the specific library in the path -->
 
 
+```clang++ -O3 -std=c++17 -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.81.0_1/include -I/opt/homebrew/Cellar/opencv/4.7.0_4/include/opencv4/ src/spectral.cpp -o spectral  -L/opt/homebrew/Cellar/boost/1.81.0_1/lib -L/opt/homebrew/Cellar/opencv/4.7.0_4/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui```
+
+
+```clang++ -O3 -fopenmp -std=c++17 -Iinclude -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/Cellar/opencv/4.7.0_4/include/opencv4/ -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.81.0_1/include src/spectral.cpp src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp src/main.cpp -o main -lboost_program_options -L/opt/homebrew/Cellar/boost/1.81.0_1/lib -L/opt/homebrew/Cellar/opencv/4.7.0_4/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui```

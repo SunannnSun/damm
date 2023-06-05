@@ -26,7 +26,7 @@ class dpmm:
 
         parser.add_argument('--input', type=int, default=4, help='Choose Data Input Option: 4')
         parser.add_argument('-d', '--data', type=int, default=10, help='Choose Dataset, default=10')
-        parser.add_argument('-t', '--iteration', type=int, default=100, help='Number of Sampler Iterations; default=50')
+        parser.add_argument('-t', '--iteration', type=int, default=200, help='Number of Sampler Iterations; default=50')
         parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
         parser.add_argument('--init', type=int, default = 15, help='number of initial clusters, 0 is one cluster per data; default=1')
         parser.add_argument('--base', type=int, default = 1, help='clustering option; 0: position; 1: position+directional')

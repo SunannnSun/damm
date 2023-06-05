@@ -12,7 +12,6 @@
 #include "niw.hpp"
 #include "niwDir.hpp"
 
-
 template <class dist_t> 
 DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
@@ -57,10 +56,11 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
   int z_i = z_.maxCoeff() + 1; 
   int z_j = z_[indexList_[0]];
 
+  vector<int> kmeans(const MatrixXd& Data, int numClusters);
 
-  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  vector<int> z_kmeans = kmeans(x_(indexList, all), 2);
   for (int ii = 0; ii<indexList_.size(); ++ii)  {
-    if (uni_01(rndGen_) == 0) {
+    if (z_kmeans[ii] == 0) {
         indexList_i.push_back(indexList_[ii]);
         z_[indexList_[ii]] = z_i;
       }
@@ -69,6 +69,22 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
         z_[indexList_[ii]] = z_j;
       }
   }
+
+  // boost::random::uniform_int_distribution<> uni_01(0, 1);
+  // for (int ii = 0; ii<indexList_.size(); ++ii)  {
+  //   if (uni_01(rndGen_) == 0) {
+  //       indexList_i.push_back(indexList_[ii]);
+  //       z_[indexList_[ii]] = z_i;
+  //     }
+  //   else  {
+  //       indexList_j.push_back(indexList_[ii]);
+  //       z_[indexList_[ii]] = z_j;
+  //     }
+  // }
+
+
+
+
   indexLists_.push_back(indexList_i);
   indexLists_.push_back(indexList_j);
 };
