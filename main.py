@@ -45,7 +45,7 @@ class dpmm:
         self.filepath = os.path.dirname(os.path.realpath(__file__))
         self.input_path = self.filepath + '/data/input.csv'
         self.output_path = self.filepath + '/data/'
-        
+        print(self.input_path)
         if len(args_) == 1:
             Data = args_[0]
         else:                              

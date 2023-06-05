@@ -146,8 +146,8 @@ int main(int argc, char **argv)
             // if (dpmm.sampleLabelsCollapsed())
             //     break;
             dpmm.sampleCoefficientsParameters();
-            // dpmm.sampleLabelsCollapsedParallel();
-            dpmm.sampleLabels();
+            dpmm.sampleLabelsCollapsedParallel();
+            // dpmm.sampleLabels();
             dpmm.reorderAssignments();
             dpmm.updateIndexLists();
             cout << "Number of components: " << dpmm.K_ << endl;
