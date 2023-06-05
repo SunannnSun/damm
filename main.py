@@ -3,6 +3,7 @@ from util.load_data import *
 from util.process_data import *
 from util.modelRegression import *  
 from util.load_plot_haihui import *
+from util.plot_ellipsoid import *
 import matplotlib.animation as animation
 import argparse, subprocess, os, sys, csv, random
 from scipy.stats import multivariate_normal
@@ -174,7 +175,6 @@ class dpmm:
             plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
             for num in np.arange(0, est_K):    
                 plt.text(self.Mu[0][num], self.Mu[1][num], str(num+1), fontsize=20)
-            print(logZ.shape[0])
             if aniFlag and logZ.shape[0] > 1:
                 fig_ani, ax = plt.subplots()
                 ax.set_aspect('equal')
@@ -190,6 +190,24 @@ class dpmm:
             plt.figure()
             ax2 = plt.axes(projection='3d')
             ax2.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=reg_color_mapping, s=5)
+
+            for k in range(self.Mu.T.shape[0]):
+                # find the rotation matrix and radii of the axes
+                _, s, rotation = linalg.svd(self.Sigma[k,:,:])
+                radii = np.sqrt(s) * 2.2 # set the scale factor yourself
+                # calculate cartesian coordinates for the ellipsoid surface
+                u = np.linspace(0.0, 2.0 * np.pi, 60)
+                v = np.linspace(0.0, np.pi, 60)
+                x = radii[0] * np.outer(np.cos(u), np.sin(v))
+                y = radii[1] * np.outer(np.sin(u), np.sin(v))
+                z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
+                for i in range(len(x)):
+                    for j in range(len(x)):
+                        [x[i, j], y[i, j], z[i, j]] = np.dot([x[i, j], y[i, j], z[i, j]], rotation) + self.Mu[:, k].reshape(3)
+                ax2.plot_surface(x, y, z, rstride=3, cstride=3, color=colors[k], linewidth=0.1, alpha=0.3, shade=True) 
+                # ax2.text(Mu_s[0][k], Mu_s[1][k], Mu_s[2][k], str(k + 1), fontsize=20)
+        
+
             if aniFlag:
                 fig_ani = plt.figure()
                 ax = plt.axes(projection='3d')
@@ -197,8 +215,6 @@ class dpmm:
                 ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=True)
 
         ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
-        
-
         _, axes = plt.subplots(2, 1)
         axes[0].plot(np.arange(self.logNum.shape[0]), self.logNum, c='k')
         axes[0].set_title('Number of Components')
