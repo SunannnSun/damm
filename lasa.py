@@ -7,7 +7,7 @@ from main import dpmm
 sub_sample = 4
 #[CShape, GShape, JShape, JShape_2, LShape, NShape, PShape, RShape, Sshape, WShape,  Zshape]
 # [DoubleBendedLine, BendedLine, Sine, Leaf_1, Leaf_2, Snake， Trapezoid, Worm, Multi_Models_1]
-data = lasa.DataSet.JShape_2
+data = lasa.DataSet.PShape
 dt = data.dt
 demos = data.demos # list of 7 Demo objects, each corresponding to a 
 demo_0 = demos[0]
