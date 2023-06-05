@@ -73,7 +73,7 @@ class dpmm:
         ###############################################################
         ####################### hyperparameters #######################
         ###############################################################  
-        mu_0 = np.zeros((self.dim, ))
+        mu_0 = np.zeros((self.dim, )) 
         mu_0[-1] = 1                                        
         sigma_0 = 0.01 * np.eye(int(mu_0.shape[0]/2) + 1)    
         sigma_0[-1, -1] = 1                                
@@ -113,20 +113,20 @@ class dpmm:
 
         for element, count in zip(unique_elements, counts):
             print("Number of", element+1, ":", count)
-        #     if count < 1/20*counts.max():
-        #         indices_to_remove =  np.where(assignment_array==element)[0]
-        #         assignment_array = np.delete(assignment_array, indices_to_remove)
-        #         Data = np.delete(Data, indices_to_remove, axis=0)
+            if count < 1/20*counts.max() or  count < 50:
+                indices_to_remove =  np.where(assignment_array==element)[0]
+                assignment_array = np.delete(assignment_array, indices_to_remove)
+                Data = np.delete(Data, indices_to_remove, axis=0)
 
-        # rearrange_list = []
-        # for idx, entry in enumerate(assignment_array):
-        #     if not rearrange_list:
-        #         rearrange_list.append(entry)
-        #     if entry not in rearrange_list:
-        #         rearrange_list.append(entry)
-        #         assignment_array[idx] = len(rearrange_list) - 1
-        #     else:
-        #         assignment_array[idx] = rearrange_list.index(entry)
+        rearrange_list = []
+        for idx, entry in enumerate(assignment_array):
+            if not rearrange_list:
+                rearrange_list.append(entry)
+            if entry not in rearrange_list:
+                rearrange_list.append(entry)
+                assignment_array[idx] = len(rearrange_list) - 1
+            else:
+                assignment_array[idx] = rearrange_list.index(entry)
 
         self.assignment_array = assignment_array
         self.Data = Data
@@ -148,6 +148,8 @@ class dpmm:
         est_K = self.est_K
         Data = self.Data
         logZ = self.logZ
+
+        # logZ = self.logZ[0:self.logZ.shape[0]-3, :]
         colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
         "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
  
@@ -169,15 +171,15 @@ class dpmm:
             ax2.set_aspect('equal')
             ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping, s=10)
             gmm = GMM(self.assignment_array.max()+1, self.Priors, self.Mu.T, self.Sigma)
-            # plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
-            # for num in np.arange(0, est_K):    
-            #     plt.text(self.Mu[0][num], self.Mu[1][num], str(num+1), fontsize=20)
+            plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
+            for num in np.arange(0, est_K):    
+                plt.text(self.Mu[0][num], self.Mu[1][num], str(num+1), fontsize=20)
             print(logZ.shape[0])
             if aniFlag and logZ.shape[0] > 1:
                 fig_ani, ax = plt.subplots()
                 ax.set_aspect('equal')
                 scatter = ax.scatter(Data[:, 0], Data[:, 1], c='k')
-                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=800, repeat=True)
+                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=False)
 
 
         else:
@@ -192,7 +194,7 @@ class dpmm:
                 fig_ani = plt.figure()
                 ax = plt.axes(projection='3d')
                 scatter = ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='k', s=5)
-                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=800, repeat=True)
+                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=True)
 
         ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
         
@@ -229,7 +231,6 @@ class dpmm:
         self.Mu     = Mu
         self.Sigma  = Sigma
 
-
     def returnPara(self):
         return self.Priors, self.Mu, self.Sigma
     
@@ -252,7 +253,7 @@ class dpmm:
             logLiks += np.log(likelihood)
         
         BIC = numPara*np.log(Data.shape[0]) - 2*logLiks
-
+        print(logLiks)
         print(BIC)
 
 if __name__ == "__main__":

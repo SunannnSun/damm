@@ -229,7 +229,7 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
   }
 
 
-  // logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
+  logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
   logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {

@@ -59,6 +59,8 @@ void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k)
   MatrixXd x_k_mean = x_k.rowwise() - mean_.transpose();
   Scatter_ = x_k_mean.adjoint() * x_k_mean;
 	count_ = x_k.rows();
+  // std::cout << mean_ << std::endl;
+  // std::cout << Scatter_  << std::endl;
 };
 
 
@@ -155,7 +157,10 @@ Normal<T> NIW<T>::sampleParameter()
   for (uint32_t i=0; i<dim_; ++i)
     sampledMean[i] = gauss_(rndGen_);
   sampledMean =  lowerMatrix * sampledMean + mu_;
-  
+
+  // std::cout << sampledMean << std::endl;
+  // std::cout << sampledCov  << std::endl;
+
   return Normal<T>(sampledMean, sampledCov, rndGen_);
 };
 
