@@ -153,13 +153,20 @@ void DPMM<dist_t>::sampleCoefficientsParameters()
 template <class dist_t> 
 void DPMM<dist_t>::sampleLabels()
 {
+  double logLik = 0;
   boost::random::uniform_01<> uni_;   
-  #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
+  #pragma omp parallel for num_threads(8) schedule(dynamic, 300) private(rndGen_)
   for(uint32_t ii=0; ii<N_; ++ii) { 
     VectorXd prob(K_);
-    for (uint32_t kk=0; kk<K_; ++kk) 
+
+    double logLik_i = 0;
+    for (uint32_t kk=0; kk<K_; ++kk){
+      double logProb =  components_[kk].logProb(x_(ii, all));
       prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(ii, all));
-    
+      logLik_i += Pi_[kk] * exp(logProb);
+
+    }
+    logLik += log(logLik_i);
     double max_prob = prob.maxCoeff();
     prob = (prob.array() - max_prob).exp() / (prob.array() - max_prob).exp().sum();
     // prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
@@ -173,6 +180,7 @@ void DPMM<dist_t>::sampleLabels()
       kk++;
     z_[ii] = kk;
   }
+  logLogLik_.push_back(logLik);
   logZ_.push_back(z_);
 }
 
@@ -469,6 +477,7 @@ void DPMM<dist_t>::reorderAssignments()
     }
   }
   K_ = z_.maxCoeff() + 1;
+  logNum_.push_back(K_);
 }
 
 

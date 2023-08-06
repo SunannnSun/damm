@@ -2,7 +2,7 @@
 #include "karcher.hpp"
 #include <cmath>
 #include <limits>
-
+#include <algorithm>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/random/chi_squared_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -145,9 +145,9 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   boost::random::chi_squared_distribution<> chiSq_(nu_);
   T inv_chi_sqrd = 1 / chiSq_(rndGen_);
   covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
-  if (covDir > 0.2) 
-    covDir = 0.1;
-
+  // if (covDir > 0.2) 
+  //   covDir = 0.07;
+  covDir = std::min(covDir, 0.1);  
 
   if (dim==2)
   {

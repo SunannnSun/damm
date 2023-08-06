@@ -33,17 +33,40 @@ def load_dataset_DS(pkg_dir, dataset, sub_sample, nb_trajectories):
 
     final_dir = pkg_dir + dataset_name
 
-    if dataset == 1:
-        print("can not run in original matlab code, so this function we don't currently implement it")
-        return None
+    # if dataset == 1:
+    #     print("can not run in original matlab code, so this function we don't currently implement it")
+    #     return None
 
-    elif dataset <= 5:
+    if dataset <= 5:
         # 2022/09/10 检查出数据load错误
         data_ = loadmat(r"{}".format(final_dir))
         data_ = np.array(data_["data"])
         N = len(data_[0])
         data = data_.reshape((3, 1))
         Data, Data_sh, att, x0_all, dt, data = processDataStructure(data)
+    elif dataset == 89:
+        bot_dir = pkg_dir + "/datasets/3D_Cshape_bottom.mat"
+        data_bot_ = loadmat(r"{}".format(bot_dir))
+        data_bot_ = np.array(data_bot_["data"])
+        N = len(data_bot_)
+        traj = np.random.choice(np.arange(N), nb_trajectories, replace=False)
+        data_bot = data_bot_[traj]
+        for l in np.arange(nb_trajectories):
+            data_bot[l][0] = data_bot[l][0][:, ::sub_sample]
+
+
+        top_dir  = pkg_dir + "/datasets/3D_Cshape_top.mat"
+        data_top_ = loadmat(r"{}".format(top_dir))
+        data_top_ = np.array(data_top_["data"])
+        N = len(data_top_)
+        traj = np.random.choice(np.arange(N), nb_trajectories, replace=False)
+        data_top = data_top_[traj]
+        for l in np.arange(nb_trajectories):
+            data_top[l][0] = data_top[l][0][:, ::sub_sample]
+
+        # print(data_bot[l][0].shape)
+        data =  np.concatenate((data_top, data_bot), axis=0)
+
 
     else:
         data_ = loadmat(r"{}".format(final_dir))

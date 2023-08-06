@@ -4,10 +4,12 @@ from main import dpmm
 
 # https://bitbucket.org/khansari/lasahandwritingdataset/src/master/DataSet/
 
-sub_sample = 4
-#[CShape, GShape, JShape, JShape_2, LShape, NShape, PShape, RShape, Sshape, WShape,  Zshape]
-# [DoubleBendedLine, BendedLine, Sine, Leaf_1, Leaf_2, Snake， Trapezoid, Worm, Multi_Models_1]
-data = lasa.DataSet.NShape
+sub_sample = 3
+#[Angle, BendedLine, CShape, DoubleBendedLine, GShape, heee, JShape, JShape_2, Khamesh, Leaf_1]
+#[Leaf_2, Line, LShape, NShape, PShape, RShape, Saeghe, Sharpc, Sine, Snake]
+# [Spoon, Sshape, Trapezoid, Worm, WShape, Zshape, Multi_Models_1 Multi_Models_2, Multi_Models_3, Multi_Models_4]
+
+data = lasa.DataSet.Multi_Models_3
 dt = data.dt
 demos = data.demos # list of 7 Demo objects, each corresponding to a 
 demo_0 = demos[0]
@@ -19,9 +21,15 @@ for i in np.arange(1, len(demos)):
     vel = demos[i].vel[:, ::sub_sample]
     Data = np.hstack((Data, np.vstack((pos, vel))))
 
+# Data = Data[:, ::2]
+
+
 DPMM = dpmm(Data)
 DPMM.begin()
-DPMM.computeBIC()
+# DPMM.computeBIC()
+DPMM.returnPara(if_save_flag=True)
+print(Data.shape)
+
 # assignArr = DPMM.assignment_array
 # a =  np.where(assignArr==0)[0]
 # # b =  np.where(assignArr==assignArr.max()-3)[0]

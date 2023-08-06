@@ -7,7 +7,17 @@ from util.plot_ellipsoid import *
 import matplotlib.animation as animation
 import argparse, subprocess, os, sys, csv, random
 from scipy.stats import multivariate_normal
+from matplotlib.ticker import MaxNLocator
+import matplotlib as mpl
 
+# mpl.rc('font',family='Times New Roman')
+font = {'family' : 'Times New Roman',
+         'size'   : 10,
+         'serif':  'cmr10'
+         }
+mpl.rc('font', **font)
+
+mpl.rc('text', usetex = True)
 
 
 
@@ -51,7 +61,7 @@ class dpmm:
         else:                              
             pkg_dir = self.filepath + '/data/'
             chosen_dataset = self.dataset_no   
-            sub_sample = 1   
+            sub_sample = 2   
             if chosen_dataset == 10:
                 nb_trajectories = 4
             else:
@@ -76,11 +86,11 @@ class dpmm:
         ###############################################################  
         mu_0 = np.zeros((self.dim, )) 
         mu_0[-1] = 1                                        
-        sigma_0 = 0.01 * np.eye(int(mu_0.shape[0]/2) + 1)    
-        sigma_0[-1, -1] = 1                                
+        sigma_0 = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
+        sigma_0[-1, -1] = 0.1                               
         lambda_0 = {
             "nu_0": sigma_0.shape[0] + 3,
-            "kappa_0": 1,
+            "kappa_0": 2,
             "mu_0": mu_0,
             "sigma_0":  sigma_0
         }
@@ -114,10 +124,14 @@ class dpmm:
 
         for element, count in zip(unique_elements, counts):
             print("Number of", element+1, ":", count)
-            if count < 1/20*counts.max() or  count < 50:
+            if count < 1/20*counts.max() or  count < 60:
                 indices_to_remove =  np.where(assignment_array==element)[0]
                 assignment_array = np.delete(assignment_array, indices_to_remove)
                 Data = np.delete(Data, indices_to_remove, axis=0)
+
+        unique_elements, counts = np.unique(assignment_array, return_counts=True)      
+        for element, count in zip(unique_elements, counts):
+                print("Number of", element+1, ":", count)
 
         rearrange_list = []
         for idx, entry in enumerate(assignment_array):
@@ -132,7 +146,9 @@ class dpmm:
         self.assignment_array = assignment_array
         self.Data = Data
         self.est_K            = self.assignment_array.max()+1
-        self.reg_assignment_array = regress(self.Data, self.assignment_array)       
+        self.reg_assignment_array = regress(self.Data, self.assignment_array)  
+        # self.reg_assignment_array = self.assignment_array     
+     
         self.logZ             = np.genfromtxt(filepath + '/data/logZ.csv', dtype=int, delimiter=None)
         self.logNum           = np.genfromtxt(filepath + '/data/logNum.csv', dtype=int, delimiter=',')
         self.logLogLik        = np.genfromtxt(filepath + '/data/logLogLik.csv', dtype=float, delimiter=',')
@@ -140,7 +156,9 @@ class dpmm:
 
 
         self.extractPara()
-        self.plot()
+        # self.plot(aniFlag=False)
+        self.plot(aniFlag=True)
+
 
     def plot(self, aniFlag=True):
         ###############################################################
@@ -153,8 +171,6 @@ class dpmm:
         # logZ = self.logZ[0:self.logZ.shape[0]-3, :]
         colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
         "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
- 
-
 
         color_mapping = np.take(colors, self.assignment_array)
         reg_color_mapping = np.take(colors, self.reg_assignment_array)
@@ -169,8 +185,12 @@ class dpmm:
             ax1.set_aspect('equal')
 
             _, ax2 = plt.subplots()
-            ax2.set_aspect('equal')
+            ax2.set_box_aspect(1)
             ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping, s=10)
+
+
+            ax2.set_xlabel(r'$\xi_1$', fontsize=16)
+            ax2.set_ylabel(r'$\xi_2$', fontsize=16)
             gmm = GMM(self.assignment_array.max()+1, self.Priors, self.Mu.T, self.Sigma)
             plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
             for num in np.arange(0, est_K):    
@@ -180,7 +200,6 @@ class dpmm:
                 ax.set_aspect('equal')
                 scatter = ax.scatter(Data[:, 0], Data[:, 1], c='k')
                 ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=False)
-
 
         else:
             plt.figure()
@@ -206,7 +225,13 @@ class dpmm:
                         [x[i, j], y[i, j], z[i, j]] = np.dot([x[i, j], y[i, j], z[i, j]], rotation) + self.Mu[:, k].reshape(3)
                 ax2.plot_surface(x, y, z, rstride=3, cstride=3, color=colors[k], linewidth=0.1, alpha=0.3, shade=True) 
                 # ax2.text(Mu_s[0][k], Mu_s[1][k], Mu_s[2][k], str(k + 1), fontsize=20)
-        
+            ax2.set_xlabel(r'$\xi_1$')
+            ax2.set_ylabel(r'$\xi_2$')
+            ax2.set_zlabel(r'$\xi_3$')
+            ax2.xaxis.set_major_locator(MaxNLocator(nbins=6))
+            ax2.yaxis.set_major_locator(MaxNLocator(nbins=6))
+            ax2.zaxis.set_major_locator(MaxNLocator(nbins=6))
+
 
             if aniFlag:
                 fig_ani = plt.figure()
@@ -214,7 +239,9 @@ class dpmm:
                 scatter = ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='k', s=5)
                 ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=False)
 
-        ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
+        ax2.set_title(r'Directionality Aware Mixture Model Clustering Result ($\it{BendedLine}$)')
+
+        # ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
         _, axes = plt.subplots(2, 1)
         axes[0].plot(np.arange(self.logNum.shape[0]), self.logNum, c='k')
         axes[0].set_title('Number of Components')
@@ -247,8 +274,13 @@ class dpmm:
         self.Mu     = Mu
         self.Sigma  = Sigma
 
-    def returnPara(self):
+    def returnPara(self, if_save_flag=False):
+        if if_save_flag:
+            np.save(self.filepath + '/Priors.npy', self.Priors/np.sum(self.Priors))
+            np.save(self.filepath + '/Mu.npy', self.Mu)
+            np.save(self.filepath + '/Sigma.npy', self.Sigma.T)
         return self.Priors, self.Mu, self.Sigma
+    
     
 
 
@@ -279,7 +311,7 @@ if __name__ == "__main__":
     if(len(sys.argv) == 1):
         filepath = os.path.dirname(os.path.realpath(__file__))
         pkg_dir = filepath + '/data/'
-        chosen_dataset = 10
+        chosen_dataset = 1
         sub_sample = 1   
         nb_trajectories = 4   
         Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
@@ -292,7 +324,8 @@ if __name__ == "__main__":
         DPMM = dpmm()
         DPMM.begin()
         DPMM.computeBIC()
-        # print(DPMM.base)
+        DPMM.returnPara(if_save_flag=True)
+        print(DPMM.base)
 
     # data_ = loadmat(r"{}".format("data/pnp_done"))
     # data = np.array(data_["Data"])

@@ -146,15 +146,17 @@ int main(int argc, char **argv)
             // if (dpmm.sampleLabelsCollapsed())
             //     break;
             dpmm.sampleCoefficientsParameters();
-            dpmm.sampleLabelsCollapsedParallel();
-            // dpmm.sampleLabels();
+            // dpmm.sampleLabelsCollapsedParallel();
+            dpmm.sampleLabels();
             dpmm.reorderAssignments();
             dpmm.updateIndexLists();
             cout << "Number of components: " << dpmm.K_ << endl;
         }
-        logZ        = dpmm.logZ_;
-        logZ.push_back(z);
         z = dpmm.getLabels();
+        logZ.push_back(z);
+        logZ        = dpmm.logZ_;
+        logNum      = dpmm.logNum_;
+        logLogLik   = dpmm.logLogLik_;
     }
     else if (base==1){
         boost::random::uniform_int_distribution<> uni(0, 3);  
@@ -169,13 +171,11 @@ int main(int argc, char **argv)
             // dpmmDir.updateIndexLists();
             if (t%30==0 && t> 15 && t<150){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                // dpmmDir.splitProposal(indexLists[0]);
-                // dpmmDir.updateIndexLists();
                 for (int l=0; l<indexLists.size(); ++l) 
                     dpmmDir.splitProposal(indexLists[l]);
                 dpmmDir.updateIndexLists();
             }
-            else if (t%3==0 && t>30 && t<250){ 
+            else if (t%3==0 && t>30 && t<175){ 
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
                 for (int i =0; i < mergeIndexLists.size(); ++i){

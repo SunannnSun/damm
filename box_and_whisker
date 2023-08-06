@@ -1,0 +1,253 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rc('font',family='Times New Roman')
+
+# Sample data
+labels = ['DAMM', 'PC-GMM']
+colors = [(1, 0, 1, 0.4), (0, 1, 0, 0.4)]
+outline_color = ['purple', 'green']
+
+fig, axes = plt.subplots(3,2, figsize=(16, 6))
+
+    #######################################################
+    ####################### RMSE ##########################
+    #######################################################
+
+rmse = [np.array([6.60, 3.02, 5.43, 2.74, 4.13, 4.99, 4.42, 5.13, 3.97, 2.82]),
+        np.array([7.42, 3.13, 5.89, 2.79, 3.99, 6.30, 4.87, 5.27, 4.35, 3.21])]
+
+mean_rmse = [np.mean(group) for group in rmse] 
+std_rmse = [np.std(group) for group in rmse]
+
+# Calculate the upper error values (upper whisker)
+upper_error_values =  std_rmse
+lower_error_values = np.zeros_like(std_rmse)
+
+# # Plot the bars with error bars
+axes[0,1].bar(labels, mean_rmse, edgecolor=outline_color, linewidth=1.15, color=colors)
+axes[0,1].set_xticklabels([])
+axes[0,1].set_ylabel('RMSE', fontname='Times New Roman', fontsize=12)
+axes[0,1].set_ylim(0, 10)
+axes[0,1].set_yticks([0, 5, 10])
+# axes[0,1].set_yticklabels(['2', '4', '6'])
+text_x = -0.0
+text_y = 1.03
+axes[0,1].set_aspect('auto')
+for i in range(len(mean_rmse)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_rmse[i] + mean_rmse[i]  # Top coordinate of the whisker
+    axes[0,1].plot([x, x], [mean_rmse[i], y_top], color=outline_color[i], linewidth=1.15)
+
+for i in range(len(mean_rmse)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_rmse[i] + mean_rmse[i]  # Top coordinate of the whisker
+    axes[0,1].plot([x-0.1, x+0.1], [y_top, y_top], color=outline_color[i], linewidth=1.15)
+
+axes[0,1].grid(True, alpha=0.4)
+
+
+    #######################################################
+    ####################### Edot ##########################
+    #######################################################
+
+edot = [np.array([2.05, 4.49, 3.75, 4.07, 2.51, 3.07, 3.93, 5.71, 3.85, 8.97]),
+        np.array([2.17, 5.68, 3.76, 3.90, 2.50, 7.33, 3.96, 5.41, 4.98, 10.6])]
+
+mean_edot = [np.mean(group) for group in edot] 
+std_edot = [np.std(group) for group in edot]
+
+# Calculate the upper error values (upper whisker)
+upper_error_values =  std_edot
+lower_error_values = np.zeros_like(std_edot)
+
+# # Plot the bars with error bars
+axes[1,1].bar(labels, mean_edot, edgecolor=outline_color, linewidth=1.15, color=colors)
+axes[1,1].set_xticklabels([])
+axes[1,1].set_ylabel(r'$\dot{e}$', fontname='Times New Roman', fontsize=12)
+axes[1,1].set_yticks([0, 5, 10])
+# axes[1,1].set_yticklabels(['2', '4', '6'])
+text_x = -0.0
+text_y = 1.03
+axes[1,1].text(text_x, text_y, r'$\times 10^{-2}$', transform=axes[1,1].transAxes, fontname='Times New Roman')
+axes[1,1].set_aspect('auto')
+for i in range(len(mean_edot)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_edot[i] + mean_edot[i]  # Top coordinate of the whisker
+    axes[1,1].plot([x, x], [mean_edot[i], y_top], color=outline_color[i], linewidth=1.15)
+
+for i in range(len(mean_edot)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_edot[i] + mean_edot[i]  # Top coordinate of the whisker
+    axes[1,1].plot([x-0.1, x+0.1], [y_top, y_top], color=outline_color[i], linewidth=1.15)
+
+
+axes[1,1].grid(True, alpha=0.4)
+
+    #######################################################
+    ####################### DTWD ##########################
+    #######################################################
+
+dtwd = [np.array([1067, 3916, 1036, 6438, 4402, 2617, 860, 1720, 656.7, 2568]),
+        np.array([1136, 4238, 1022, 12776, 4107, 2172, 639, 1764, 668, 2895])]
+
+mean_dtwd = [np.mean(group) for group in dtwd] 
+std_dtwd = [np.std(group) for group in dtwd]
+
+# Calculate the upper error values (upper whisker)
+upper_error_values =  std_dtwd
+lower_error_values = np.zeros_like(std_dtwd)
+
+# # Plot the bars with error bars
+axes[2,1].bar(labels, mean_dtwd, edgecolor=outline_color, linewidth=1.15, color=colors)
+axes[2,1].set_xticklabels(labels, fontname='Times New Roman', fontsize=12)
+axes[2,1].set_ylabel('DTWD', fontname='Times New Roman', fontsize=12)
+axes[2,1].set_ylim([0, 8000])
+axes[2,1].set_yticks([0, 4000, 8000])
+axes[2,1].set_yticklabels(['0', '4', '8'])
+text_x = -0.0
+text_y = 1.03
+axes[2,1].text(text_x, text_y, r'$\times 10^2$', transform=axes[2,1].transAxes, fontname='Times New Roman')
+axes[2,1].set_aspect('auto')
+for i in range(len(mean_dtwd)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_dtwd[i] + mean_dtwd[i]  # Top coordinate of the whisker
+    axes[2,1].plot([x, x], [mean_dtwd[i], y_top], color=outline_color[i], linewidth=1.15)
+
+for i in range(len(mean_dtwd)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_dtwd[i] + mean_dtwd[i]  # Top coordinate of the whisker
+    axes[2,1].plot([x-0.1, x+0.1], [y_top, y_top], color=outline_color[i], linewidth=1.15)
+
+axes[2,1].grid(True, alpha=0.4)
+
+    #######################################################
+    ####################### Time ##########################
+    #######################################################
+
+
+time = [np.array([1.47, 1.54, 1.74, 1.50, 2.10, 1.64, 1.49, 1.37 , 1.54, 1.68]),
+       np.array([71, 78, 66, 87, 62, 74, 56, 71, 68, 59]) ]
+
+
+mean_time = [np.mean(group) for group in time] 
+std_time = [np.std(group) for group in time]
+
+# Calculate the upper error values (upper whisker)
+upper_error_values =  std_time
+lower_error_values = np.zeros_like(std_time)
+
+
+axes[0,0].bar(labels, mean_time, edgecolor=outline_color, linewidth=1.15, color=colors)
+axes[0,0].set_yscale('log')
+
+axes[0,0].set_xticklabels([])
+axes[0,0].set_ylabel('Time (sec)', fontname='Times New Roman', fontsize=12)
+
+axes[0,0].set_yticks([0.1, 10, 100])
+axes[0,0].set_yticklabels(['0.1', '10', '100'])
+# text_x = -0.0
+# text_y = 1.03
+# axes[1,0].text(text_x, text_y, r'$\times 10^4$', transform=axes[1,0].transAxes, fontname='Times New Roman')
+axes[0,0].set_aspect('auto')
+for i in range(len(mean_time)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_time[i] + mean_time[i]  # Top coordinate of the whisker
+    axes[0,0].plot([x, x], [mean_time[i], y_top], color=outline_color[i], linewidth=1.15)
+
+for i in range(len(mean_time)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_time[i] + mean_time[i]  # Top coordinate of the whisker
+    axes[0,0].plot([x-0.1, x+0.1], [y_top, y_top], color=outline_color[i], linewidth=1.15)
+
+
+axes[0,0].grid(True, alpha=0.4)
+
+    #######################################################
+    ####################### BIC ##########################
+    #######################################################
+
+
+bic = [np.array([1.85, 1.79, 1.94, 1.76, 2.02, 1.91, 1.86, 1.84, 1.69, 1.81]),
+        np.array([2.09, 2.04, 2.24, 2.01, 2.24, 2.17, 2.09, 2.13, 1.98, 2.07])]
+
+
+mean_bic = [np.mean(group) for group in bic] 
+std_bic = [np.std(group) for group in bic]
+
+# Calculate the upper error values (upper whisker)
+upper_error_values =  std_bic
+lower_error_values = np.zeros_like(std_bic)
+
+
+axes[1,0].bar(labels, mean_bic, edgecolor=outline_color, linewidth=1.15, color=colors)
+axes[1,0].set_xticklabels([])
+axes[1,0].set_ylabel('BIC', fontname='Times New Roman', fontsize=12)
+axes[1,0].set_ylim(0, 6)
+
+axes[1,0].set_yticks([0, 3, 6])
+axes[1,0].set_yticklabels(['0', '3', '6'])
+text_x = -0.0
+text_y = 1.03
+axes[1,0].text(text_x, text_y, r'$\times 10^4$', transform=axes[1,0].transAxes, fontname='Times New Roman')
+axes[1,0].set_aspect('auto')
+for i in range(len(mean_bic)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_bic[i] + mean_bic[i]  # Top coordinate of the whisker
+    axes[1,0].plot([x, x], [mean_bic[i], y_top], color=outline_color[i], linewidth=1.15)
+
+for i in range(len(mean_bic)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_bic[i] + mean_bic[i]  # Top coordinate of the whisker
+    axes[1,0].plot([x-0.1, x+0.1], [y_top, y_top], color=outline_color[i], linewidth=1.15)
+
+
+axes[1,0].grid(True, alpha=0.4)
+
+
+    #######################################################
+    ####################### AIC ##########################
+    #######################################################
+
+
+aic = [np.array([1.80, 1.70, 1.86, 1.65, 1.98, 1.82, 1.78, 1.81, 1.64, 1.79 ]),
+       
+        np.array([2.07, 2.01, 2.22, 1.97, 2.12, 2.14, 2.07, 2.10, 1.97, 2.05])]
+
+
+mean_aic = [np.mean(group) for group in aic] 
+std_aic = [np.std(group) for group in aic]
+
+# Calculate the upper error values (upper whisker)
+upper_error_values =  std_aic
+lower_error_values = np.zeros_like(std_aic)
+
+
+axes[2,0].bar(labels, mean_aic, edgecolor=outline_color, linewidth=1.15, color=colors)
+axes[2,0].set_xticklabels(labels, fontname='Times New Roman', fontsize=12)
+axes[2,0].set_ylabel('AIC', fontname='Times New Roman', fontsize=12)
+axes[2,0].set_ylim(0, 6)
+
+axes[2,0].set_yticks([0, 3, 6])
+# axes[2,0].set_yticklabels(['0', '2', '4'])
+text_x = -0.0
+text_y = 1.03
+axes[2,0].text(text_x, text_y, r'$\times 10^4$', transform=axes[2,0].transAxes, fontname='Times New Roman')
+axes[2,0].set_aspect('auto')
+for i in range(len(mean_aic)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_aic[i] + mean_bic[i]  # Top coordinate of the whisker
+    axes[2,0].plot([x, x], [mean_aic[i], y_top], color=outline_color[i], linewidth=1.15)
+
+for i in range(len(mean_aic)):
+    x = i  # X coordinate of the whisker
+    y_top = mean_aic[i] + mean_aic[i]  # Top coordinate of the whisker
+    axes[2,0].plot([x-0.1, x+0.1], [y_top, y_top], color=outline_color[i], linewidth=1.15)
+axes[2,0].grid(True, alpha=0.4)
+
+# # Show the plot
+resolution_value = 1200
+plt.savefig("myImage.png", format="png", dpi=resolution_value)
+
+plt.show()
+

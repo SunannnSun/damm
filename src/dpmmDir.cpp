@@ -118,7 +118,7 @@ template <class dist_t>
 void DPMMDIR<dist_t>::sampleLabels()
 {
   double logLik = 0;
-  #pragma omp parallel for num_threads(6) schedule(static) private(rndGen_)
+  #pragma omp parallel for num_threads(8) schedule(dynamic, 300) private(rndGen_)
   for(uint32_t ii=0; ii<N_; ++ii) {
     VectorXd prob(K_);
     double logLik_i = 0;
