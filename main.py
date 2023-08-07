@@ -1,22 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyLasaDataset as lasa
-import argparse, subprocess, os, sys, csv, random
+import argparse, subprocess, os, sys, csv, random, json
 from util import load_tools, plot_tools, data_tools
 
 
-def write_data(data, dir):
+def write_data(data, path):
     N = data.shape[0]
-    with open(dir, mode='w') as data_file:
+    with open(path, mode='w') as data_file:
         data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for n in range(N):
             data_writer.writerow(data[n, :])
 
 
+def write_json(data, path):
+    with open(path, "w") as json_file:
+        json.dump(data, json_file, indent=4)
+
+
 class dpmm:
     def __init__(self, *args_):
-        self.filepath           = os.path.dirname(os.path.realpath(__file__))
-        self.log_path           = os.path.join(self.filepath, "log", "")
+        self.file_path           = os.path.dirname(os.path.realpath(__file__))
+        self.log_path           = os.path.join(self.file_path, "log", "")
 
         ###############################################################
         ################## command-line arguments #####################
@@ -44,7 +49,7 @@ class dpmm:
         if len(args_) == 1:
             Data = args_[0]
         else:                              
-            pkg_dir = os.path.join(self.filepath, "data")
+            pkg_dir = os.path.join(self.file_path, "data")
             Data, _, _, _, _, _ = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
         
         self.Data = data_tools.normalize_vel(Data)              
@@ -70,7 +75,7 @@ class dpmm:
         ###############################################################
         ####################### perform dpmm ##########################
         ###############################################################  
-        args = ['time ' + os.path.join(self.filepath, "main"),
+        args = ['time ' + os.path.join(self.file_path, "main"),
                 '-n {}'.format(self.Data.shape[0]),
                 '-m {}'.format(self.Data.shape[1]), 
                 '-t {}'.format(self.iter),
@@ -99,15 +104,25 @@ class dpmm:
         reg_assignment_array    = data_tools.regress(Data, assignment_array      )  
         Priors, Mu, Sigma       = data_tools.extract_param(Data, assignment_array)
 
-        np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
-        np.save(os.path.join(self.log_path, "Mu.npy"    ), Mu     )
-        np.save(os.path.join(self.log_path, "Sigma.npy" ), Sigma.T)
-
         plot_tools.plot_results(Data, assignment_array    )
         plot_tools.plot_results(Data, reg_assignment_array)
         data_tools.computeBIC(Data, assignment_array      )
         data_tools.computeBIC(Data, reg_assignment_array  )
         # plot_tools.animate_results(Data, logZ             )
+
+        np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
+        np.save(os.path.join(self.log_path, "Mu.npy"    ), Mu     )
+        np.save(os.path.join(self.log_path, "Sigma.npy" ), Sigma.T)
+
+        json_output = {
+            "name": "DAMM result",
+            "K": Priors.shape[0],
+            "M": Mu.shape[1],
+            "Priors": Priors.tolist(),
+            "Mu": Mu.ravel().tolist(),
+            "Sigma": Sigma.ravel().tolist()
+        }
+        write_json(json_output, os.path.join(self.log_path, 'output.json'))
 
         plt.show()
 
