@@ -1,18 +1,26 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 project(DAMM VERSION 1.0)
-
-set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm/bin/clang)
-set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm/bin/clang++)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(APPLE)
+    set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm/bin/clang)
+    set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm/bin/clang++)
+    message("Apple (macOS) detected")
+endif()
+
+if(LINUX) 
+    message("Ubuntu detected")
+endif()
+
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-set(ENV{CXX} "/opt/homebrew/opt/llvm/bin/clang++")
-set(ENV{LDFLAGS} "-L/opt/homebrew/opt/llvm/lib")
-set(ENV{CPPFLAGS} "-I/opt/homebrew/opt/llvm/include")
+# set(ENV{CXX} "/opt/homebrew/opt/llvm/bin/clang++")
+# set(ENV{LDFLAGS} "-L/opt/homebrew/opt/llvm/lib")
+# set(ENV{CPPFLAGS} "-I/opt/homebrew/opt/llvm/include")
 
 find_package(Eigen3 REQUIRED)
 message("Eigen3 Include Directory: ${EIGEN3_INCLUDE_DIRS}")
@@ -23,12 +31,10 @@ message("Boost Include Directory: ${Boost_INCLUDE_DIRS}")
 find_package(OpenCV REQUIRED)
 message("OpenCV Include Directory: ${OpenCV_INCLUDE_DIRS}")
 
-# find_package(OpenMP REQUIRED)
+# find_package(OPENMP REQUIRED)
 # if(OpenMP_CXX_FOUND)
 #     message(STATUS "OpenMP Include Directory: ${OpenMP_CXX_INCLUDE_DIRS}")
 # endif()
-
-
 
 message("Project Root Directory: ${CMAKE_SOURCE_DIR}")
 
