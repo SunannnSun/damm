@@ -1,332 +1,138 @@
-from gmr import GMM, plot_error_ellipses
-from util.load_data import *
-from util.process_data import *
-from util.modelRegression import *  
-from util.load_plot_haihui import *
-from util.plot_ellipsoid import *
-import matplotlib.animation as animation
+import numpy as np
+import matplotlib.pyplot as plt
+import pyLasaDataset as lasa
 import argparse, subprocess, os, sys, csv, random
-from scipy.stats import multivariate_normal
-from matplotlib.ticker import MaxNLocator
-import matplotlib as mpl
-
-# mpl.rc('font',family='Times New Roman')
-font = {'family' : 'Times New Roman',
-         'size'   : 10,
-         'serif':  'cmr10'
-         }
-mpl.rc('font', **font)
-
-mpl.rc('text', usetex = True)
+from util import load_tools, plot_tools, data_tools
 
 
+def write_data(data, dir):
+    N = data.shape[0]
+    with open(dir, mode='w') as data_file:
+        data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        for n in range(N):
+            data_writer.writerow(data[n, :])
 
 
 class dpmm:
     def __init__(self, *args_):
+        self.filepath           = os.path.dirname(os.path.realpath(__file__))
+        self.log_path           = os.path.join(self.filepath, "log", "")
 
-        #     ###############################################################
-        #     ################## command-line arguments #####################
-        #     ############################################################### 
+        ###############################################################
+        ################## command-line arguments #####################
+        ############################################################### 
         parser = argparse.ArgumentParser(
-                        prog = 'Parallel Implemention of Dirichlet Process Mixture Model',
-                        description = 'parallel implementation',
-                        epilog = '2023, Sunan Sun <sunan@seas.upenn.edu>')
+                            prog = 'Directionality-aware Mixture Model',
+                            description = 'Python interface with C++ source code')
 
-
-        parser.add_argument('--input', type=int, default=4, help='Choose Data Input Option: 4')
-        parser.add_argument('-d', '--data', type=int, default=10, help='Choose Dataset, default=10')
-        parser.add_argument('-t', '--iteration', type=int, default=200, help='Number of Sampler Iterations; default=50')
-        parser.add_argument('-a', '--alpha', type=float, default = 1, help='Concentration Factor; default=1')
-        parser.add_argument('--init', type=int, default = 15, help='number of initial clusters, 0 is one cluster per data; default=1')
-        parser.add_argument('--base', type=int, default = 1, help='clustering option; 0: position; 1: position+directional')
+        parser.add_argument('-b', '--base' , type=int, default=1  , help='Clustering option; 0: position; 1: position+directional')
+        parser.add_argument('-d', '--data' , type=int, default=10 , help='Dataset number, default=10')
+        parser.add_argument('-i', '--init' , type=int, default=15 , help='Number of initial clusters, 0 is one cluster per data; default=15')
+        parser.add_argument('-t', '--iter' , type=int, default=200, help='Number of iterations; default=200')
+        parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor; default=1')
 
         args = parser.parse_args()
-        self.dataset_no        = args.data
-        self.iteration         = args.iteration
-        self.alpha             = args.alpha
-        self.init_opt          = args.init
-        self.base              = args.base
-
+        self.base               = args.base
+        self.data               = args.data
+        self.init               = args.init
+        self.iter               = args.iter
+        self.alpha              = args.alpha
 
         ###############################################################
         ######################### load data ###########################
         ###############################################################  
-        self.filepath = os.path.dirname(os.path.realpath(__file__))
-        self.input_path = self.filepath + '/data/input.csv'
-        self.output_path = self.filepath + '/data/'
-        print(self.input_path)
         if len(args_) == 1:
             Data = args_[0]
         else:                              
-            pkg_dir = self.filepath + '/data/'
-            chosen_dataset = self.dataset_no   
-            sub_sample = 2   
-            if chosen_dataset == 10:
-                nb_trajectories = 4
-            else:
-                nb_trajectories = 6
-            Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
-            vel_samples = 10
-            vel_size = 20
-
-        Data = normalize_velocity_vector(Data)                  
-        Data = Data[np.logical_not(np.isnan(Data[:, -1]))]        
-        self.num, self.dim = Data.shape                                   
-
-        with open(self.input_path, mode='w') as data_file:
-            data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            for i in range(self.num):
-                data_writer.writerow(Data[i, :])
-
-        self.Data = Data
+            pkg_dir = os.path.join(self.filepath, "data")
+            Data, _, _, _, _, _ = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
+        
+        self.Data = data_tools.normalize_vel(Data)              
+        write_data(self.Data, os.path.join(self.log_path, "input.csv"))         
 
         ###############################################################
         ####################### hyperparameters #######################
         ###############################################################  
-        mu_0 = np.zeros((self.dim, )) 
-        mu_0[-1] = 1                                        
-        sigma_0 = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
+        mu_0            = np.zeros((self.Data.shape[1], )) 
+        mu_0[-1]        = 1                                        
+        sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
         sigma_0[-1, -1] = 0.1                               
         lambda_0 = {
-            "nu_0": sigma_0.shape[0] + 3,
-            "kappa_0": 2,
-            "mu_0": mu_0,
-            "sigma_0":  sigma_0
+            "nu_0"      : sigma_0.shape[0] + 3,
+            "kappa_0"   : 2,
+            "mu_0"      : mu_0,
+            "sigma_0"   : sigma_0
         }
         self.params = np.r_[np.array([lambda_0['nu_0'], lambda_0['kappa_0']]), lambda_0['mu_0'].ravel(), lambda_0['sigma_0'].ravel()]
-
 
 
     def begin(self):
         ###############################################################
         ####################### perform dpmm ##########################
         ###############################################################  
-        Data = self.Data
-        filepath =self.filepath
-
-        args = ['time ' + filepath + '/main',
-                '-n {}'.format(self.num),
-                '-m {}'.format(self.dim), 
-                '-i {}'.format(self.input_path),
-                '-o {}'.format(self.output_path),       
-                '-t {}'.format(self.iteration),
+        args = ['time ' + os.path.join(self.filepath, "main"),
+                '-n {}'.format(self.Data.shape[0]),
+                '-m {}'.format(self.Data.shape[1]), 
+                '-t {}'.format(self.iter),
                 '-a {}'.format(self.alpha),
-                '--init {}'.format(self.init_opt), 
+                '--init {}'.format(self.init), 
                 '--base {}'.format(self.base),
+                '--log {}'.format(self.log_path),
                 '-p ' + ' '.join([str(p) for p in self.params])
         ]
 
-        completed_process     = subprocess.run(' '.join(args), shell=True)
+        completed_process = subprocess.run(' '.join(args), shell=True)
+    
+        return completed_process.returncode
 
-        assignment_array = np.genfromtxt(filepath + '/data/output.csv', dtype=int, delimiter=',')
-        unique_elements, counts = np.unique(assignment_array, return_counts=True)
-
-        for element, count in zip(unique_elements, counts):
-            print("Number of", element+1, ":", count)
-            if count < 1/20*counts.max() or  count < 60:
-                indices_to_remove =  np.where(assignment_array==element)[0]
-                assignment_array = np.delete(assignment_array, indices_to_remove)
-                Data = np.delete(Data, indices_to_remove, axis=0)
-
-        unique_elements, counts = np.unique(assignment_array, return_counts=True)      
-        for element, count in zip(unique_elements, counts):
-                print("Number of", element+1, ":", count)
-
-        rearrange_list = []
-        for idx, entry in enumerate(assignment_array):
-            if not rearrange_list:
-                rearrange_list.append(entry)
-            if entry not in rearrange_list:
-                rearrange_list.append(entry)
-                assignment_array[idx] = len(rearrange_list) - 1
-            else:
-                assignment_array[idx] = rearrange_list.index(entry)
-
-        self.assignment_array = assignment_array
-        self.Data = Data
-        self.est_K            = self.assignment_array.max()+1
-        self.reg_assignment_array = regress(self.Data, self.assignment_array)  
-        # self.reg_assignment_array = self.assignment_array     
-     
-        self.logZ             = np.genfromtxt(filepath + '/data/logZ.csv', dtype=int, delimiter=None)
-        self.logNum           = np.genfromtxt(filepath + '/data/logNum.csv', dtype=int, delimiter=',')
-        self.logLogLik        = np.genfromtxt(filepath + '/data/logLogLik.csv', dtype=float, delimiter=',')
-
-
-
-        self.extractPara()
-        # self.plot(aniFlag=False)
-        self.plot(aniFlag=True)
-
-
-    def plot(self, aniFlag=True):
-        ###############################################################
-        ####################### plot results ##########################
-        ###############################################################
-        est_K = self.est_K
+        
+        
+    def result(self):
         Data = self.Data
-        logZ = self.logZ
 
-        # logZ = self.logZ[0:self.logZ.shape[0]-3, :]
-        colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
-        "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
+        logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
+        logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
+        logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
+        assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
 
-        color_mapping = np.take(colors, self.assignment_array)
-        reg_color_mapping = np.take(colors, self.reg_assignment_array)
-        def update(frame):          
-            scatter.set_color(np.take(colors, logZ[frame,:]))
-            ax.set_title(f'Frame: {frame}')
+        Data, assignment_array  = data_tools.post_process(Data, assignment_array )
+        reg_assignment_array    = data_tools.regress(Data, assignment_array      )  
+        Priors, Mu, Sigma       = data_tools.extract_param(Data, assignment_array)
 
+        np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
+        np.save(os.path.join(self.log_path, "Mu.npy"    ), Mu     )
+        np.save(os.path.join(self.log_path, "Sigma.npy" ), Sigma.T)
 
-        if self.dim == 4:
-            _, ax1 = plt.subplots()
-            ax1.scatter(Data[:, 0], Data[:, 1], c=color_mapping)
-            ax1.set_aspect('equal')
-
-            _, ax2 = plt.subplots()
-            ax2.set_box_aspect(1)
-            ax2.scatter(Data[:, 0], Data[:, 1], c=reg_color_mapping, s=10)
-
-
-            ax2.set_xlabel(r'$\xi_1$', fontsize=16)
-            ax2.set_ylabel(r'$\xi_2$', fontsize=16)
-            gmm = GMM(self.assignment_array.max()+1, self.Priors, self.Mu.T, self.Sigma)
-            plot_error_ellipses(ax2, gmm, alpha=0.3, colors=colors[0:est_K], factors=np.array([2.2 ]))
-            for num in np.arange(0, est_K):    
-                plt.text(self.Mu[0][num], self.Mu[1][num], str(num+1), fontsize=20)
-            if aniFlag and logZ.shape[0] > 1:
-                fig_ani, ax = plt.subplots()
-                ax.set_aspect('equal')
-                scatter = ax.scatter(Data[:, 0], Data[:, 1], c='k')
-                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=False)
-
-        else:
-            plt.figure()
-            ax1 = plt.axes(projection='3d')
-            ax1.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=color_mapping, s=5)
-
-            plt.figure()
-            ax2 = plt.axes(projection='3d')
-            ax2.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c=reg_color_mapping, s=5)
-
-            for k in range(self.Mu.T.shape[0]):
-                # find the rotation matrix and radii of the axes
-                _, s, rotation = linalg.svd(self.Sigma[k,:,:])
-                radii = np.sqrt(s) * 2.2 # set the scale factor yourself
-                # calculate cartesian coordinates for the ellipsoid surface
-                u = np.linspace(0.0, 2.0 * np.pi, 60)
-                v = np.linspace(0.0, np.pi, 60)
-                x = radii[0] * np.outer(np.cos(u), np.sin(v))
-                y = radii[1] * np.outer(np.sin(u), np.sin(v))
-                z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
-                for i in range(len(x)):
-                    for j in range(len(x)):
-                        [x[i, j], y[i, j], z[i, j]] = np.dot([x[i, j], y[i, j], z[i, j]], rotation) + self.Mu[:, k].reshape(3)
-                ax2.plot_surface(x, y, z, rstride=3, cstride=3, color=colors[k], linewidth=0.1, alpha=0.3, shade=True) 
-                # ax2.text(Mu_s[0][k], Mu_s[1][k], Mu_s[2][k], str(k + 1), fontsize=20)
-            ax2.set_xlabel(r'$\xi_1$')
-            ax2.set_ylabel(r'$\xi_2$')
-            ax2.set_zlabel(r'$\xi_3$')
-            ax2.xaxis.set_major_locator(MaxNLocator(nbins=6))
-            ax2.yaxis.set_major_locator(MaxNLocator(nbins=6))
-            ax2.zaxis.set_major_locator(MaxNLocator(nbins=6))
-
-
-            if aniFlag:
-                fig_ani = plt.figure()
-                ax = plt.axes(projection='3d')
-                scatter = ax.scatter(Data[:, 0], Data[:, 1], Data[:, 2], c='k', s=5)
-                ani = animation.FuncAnimation(fig_ani, update, frames= logZ.shape[0], interval=80, repeat=False)
-
-        ax2.set_title(r'Directionality Aware Mixture Model Clustering Result ($\it{BendedLine}$)')
-
-        # ax2.set_title('Clustering Result: Dataset %i Base %i Init %i Iteration %i' %(self.dataset_no, self.base, self.init_opt, self.iteration))
-        _, axes = plt.subplots(2, 1)
-        axes[0].plot(np.arange(self.logNum.shape[0]), self.logNum, c='k')
-        axes[0].set_title('Number of Components')
-        axes[1].plot(np.arange(self.logLogLik.shape[0]), self.logLogLik, c='k')
-        axes[1].set_title('Log Joint Likelihood')
-
+        plot_tools.plot_results(Data, assignment_array    )
+        plot_tools.plot_results(Data, reg_assignment_array)
+        data_tools.computeBIC(Data, assignment_array      )
+        data_tools.computeBIC(Data, reg_assignment_array  )
+        # plot_tools.animate_results(Data, logZ             )
 
         plt.show()
 
-    def extractPara(self):
-        ###############################################################
-        ################# return parameters ##########################
-        ###############################################################  
-        dim = self.dim
-        Data = self.Data
-        assignment_array = self.reg_assignment_array
-        num_comp = assignment_array.max()+1
-        Priors = np.zeros((num_comp, ))
-        Mu = np.zeros((num_comp, int(dim/2)))
-        Sigma = np.zeros((num_comp, int(dim/2), int(dim/2) ))
-
-        for k in range(num_comp):
-            data_k = Data[assignment_array==k, 0:int(dim/2)]
-            Mu[k, :] = np.mean(data_k, axis=0)
-            Sigma[k, :, :] = np.cov(data_k.T)
-            Priors[k] = data_k.shape[0]
-        Mu = Mu.T
-
-        self.Priors = Priors
-        self.Mu     = Mu
-        self.Sigma  = Sigma
-
-    def returnPara(self, if_save_flag=False):
-        if if_save_flag:
-            np.save(self.filepath + '/Priors.npy', self.Priors/np.sum(self.Priors))
-            np.save(self.filepath + '/Mu.npy', self.Mu)
-            np.save(self.filepath + '/Sigma.npy', self.Sigma.T)
-        return self.Priors, self.Mu, self.Sigma
-    
-    
 
 
-    def computeBIC(self):
-        Data    = self.Data[:, 0:int(self.Data.shape[1]/2)]
-        Mu      = self.Mu.T
-        Sigma   = self.Sigma
-        Pi      = self.Priors / np.sum(self.Priors)
-        K       = Pi.shape[0]
-        M       = Sigma.shape[0]
-        numPara = K*(1+2*M+(M**2-M)/2)-1
+if __name__ == "__main__":        
+    #[Angle, BendedLine, CShape, DoubleBendedLine, GShape, heee, JShape, JShape_2, Khamesh, Leaf_1]
+    #[Leaf_2, Line, LShape, NShape, PShape, RShape, Saeghe, Sharpc, Sine, Snake]
+    #[Spoon, Sshape, Trapezoid, Worm, WShape, Zshape, Multi_Models_1 Multi_Models_2, Multi_Models_3, Multi_Models_4]
 
-        logLiks = 0
-        for i in range(Data.shape[0]):
-            likelihood = 0
-            for k in range(K):
-                likelihood += Pi[k] * multivariate_normal(mean=Mu[k, :], cov=Sigma[k, :, :], allow_singular=True).pdf(Data[i, :])
-            logLiks += np.log(likelihood)
-        
-        BIC = numPara*np.log(Data.shape[0]) - 2*logLiks
-        print(logLiks)
-        print(BIC)
-
-if __name__ == "__main__":
-    """
-    If no arguments are given, we run the dpmm using default settings
-    """
-    if(len(sys.argv) == 1):
-        filepath = os.path.dirname(os.path.realpath(__file__))
-        pkg_dir = filepath + '/data/'
-        chosen_dataset = 1
-        sub_sample = 1   
-        nb_trajectories = 4   
-        Data, Data_sh, att, x0_all, data, dt = load_dataset_DS(pkg_dir, chosen_dataset, sub_sample, nb_trajectories)
-        DPMM = dpmm(Data)
-        DPMM.begin()
-        DPMM.computeBIC()
+    sub_sample = 3
+    data = lasa.DataSet.Angle
+    demos = data.demos 
+    demo_0 = demos[0]
+    pos = demo_0.pos[:, ::sub_sample]
+    vel = demo_0.vel[:, ::sub_sample]
+    Data = np.vstack((pos, vel))
+    for l in np.arange(1, len(demos)):
+        pos = demos[l].pos[:, ::sub_sample]
+        vel = demos[l].vel[:, ::sub_sample]
+        Data = np.hstack((Data, np.vstack((pos, vel))))
 
 
-    else:
-        DPMM = dpmm()
-        DPMM.begin()
-        DPMM.computeBIC()
-        DPMM.returnPara(if_save_flag=True)
-        print(DPMM.base)
+    DPMM = dpmm(Data)      # comment out this line if want to test LASA
+    # DPMM = dpmm()          # comment out this line if want to test dataset in data folder
 
-    # data_ = loadmat(r"{}".format("data/pnp_done"))
-    # data = np.array(data_["Data"])
-    # dpmm(data)
+    if DPMM.begin() == 0:
+        DPMM.result()

@@ -40,13 +40,13 @@ int main(int argc, char **argv)
         ("help"                                 , "produce help message")
         ("number,n"     , po::value<int>()      , "number of data")
         ("dimension,m"  , po::value<int>()      , "dimension of data")
-        ("input,i"      , po::value<string>()   , "path to input dataset .csv file: rows: dimensions; cols: numbers")
         ("output,o"     , po::value<string>()   , "path to output dataset .csv file: rows: dimensions; cols: numbers")
         ("iteration,t"  , po::value<int>()      , "number of iteration")
         ("alpha,a"      , po::value<double>()   , "concentration value")
         ("init"         , po::value<int>()      , "number of initial clusters")
         ("base"         , po::value<int>()      , "Base type: 0 Euclidean, 1 Euclidean + directional")
         ("params,p"     , po::value< vector<double> >()->multitoken(), "hyperparameters")
+        ("log"          , po::value<string>()   , "path to log all the data")
     ;
 
     
@@ -106,8 +106,8 @@ int main(int argc, char **argv)
 
     MatrixXd Data(num, dim);              
     string pathIn ="";
-    if(vm.count("input"))
-        pathIn = vm["input"].as<string>();
+    if(vm.count("log"))
+        pathIn = vm["log"].as<string>() + "input.csv";
     if (!pathIn.compare("")){
         cout<<"please specify an input dataset"<<endl;
         return 1;
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
 
 
     string pathOut;
-    if(vm.count("output")) pathOut = vm["output"].as<string>();
+    if(vm.count("log")) pathOut = vm["log"].as<string>();
 
 
     string pathOut_output = pathOut + "output.csv";
