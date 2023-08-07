@@ -23,7 +23,7 @@ message("Boost Include Directory: ${Boost_INCLUDE_DIRS}")
 find_package(OpenCV REQUIRED)
 message("OpenCV Include Directory: ${OpenCV_INCLUDE_DIRS}")
 
-find_package(OpenMP REQUIRED)
+# find_package(OpenMP REQUIRED)
 # if(OpenMP_CXX_FOUND)
 #     message(STATUS "OpenMP Include Directory: ${OpenMP_CXX_INCLUDE_DIRS}")
 # endif()
@@ -33,6 +33,8 @@ find_package(OpenMP REQUIRED)
 message("Project Root Directory: ${CMAKE_SOURCE_DIR}")
 
 add_executable(main main.cpp niw.cpp niwDir.cpp normal.cpp normalDir.cpp dpmm.cpp dpmmDir.cpp spectral.cpp)
+target_compile_options(main PRIVATE -fopenmp)
+
 set_target_properties(main PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/..)
 
 include_directories(${CMAKE_SOURCE_DIR}/../include)
@@ -43,6 +45,7 @@ target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 target_link_libraries(main PRIVATE Boost::program_options)
 target_link_libraries(main PRIVATE ${OpenCV_LIBS})
+target_link_libraries(main PRIVATE /opt/homebrew/Cellar/libomp/16.0.6/lib/libomp.dylib)
 
 
 
