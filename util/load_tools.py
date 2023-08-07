@@ -69,21 +69,32 @@ def load_dataset_DS(pkg_dir, dataset, sub_sample, nb_trajectories):
 
 
 def processDataStructure(data):
-    N = int(len(data))
-    M = int(len(data[0][0]) / 2)
-    att_ = data[0][0][0:M, -1].reshape(M, 1)
-    for n in np.arange(1, N):
-        att = data[n][0][0:M, -1].reshape(M, 1)
-        att_ = np.concatenate((att_, att), axis=1)
+    L = data.shape[0]
+    M = int(data[0, 0].shape[0]/2)
+    att_ = data[0, 0][0:M, -1].reshape(M, 1)
 
+    for l in np.arange(1, L):
+        att = data[l, 0][0:M, -1].reshape(M, 1)
+        att_ = np.concatenate((att_, att), axis=1)
     att = np.mean(att_, axis=1, keepdims=True)
-    shifts = att_ - np.repeat(att, N, axis=1)
+
+
+    # N = int(len(data))
+    # M = int(len(data[0][0]) / 2)
+    # att_ = data[0][0][0:M, -1].reshape(M, 1)
+    # for n in np.arange(1, N):
+    #     att = data[n][0][0:M, -1].reshape(M, 1)
+    #     att_ = np.concatenate((att_, att), axis=1)
+
+    # att = np.mean(att_, axis=1, keepdims=True)
+    
+    shifts = att_ - np.repeat(att, L, axis=1)
     Data = np.array([])
     x0_all = np.array([])
     Data_sh = np.array([])
-    for l in np.arange(N):
+    for l in range(L):
         # Gather Data
-        data_ = data[l][0].copy()
+        data_ = data[l, 0].copy()
         shifts_ = np.repeat(shifts[:, l].reshape(len(shifts), 1), len(data_[0]), axis=1)
         data_[0:M, :] = data_[0:M, :] - shifts_
         data_[M:, -1] = 0

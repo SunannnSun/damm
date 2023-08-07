@@ -48,9 +48,10 @@ class dpmm:
         ###############################################################  
         if len(args_) == 1:
             Data = args_[0]
+            Data, Data_sh, att, x0_all, dt, data = load_tools.processDataStructure(Data)
         else:                              
             pkg_dir = os.path.join(self.file_path, "data")
-            Data, _, _, _, _, _ = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
+            Data, Data_sh, att, x0_all, dt, data = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
         
         self.Data = data_tools.normalize_vel(Data)              
         write_data(self.Data, os.path.join(self.log_path, "input.csv"))         
@@ -134,17 +135,16 @@ if __name__ == "__main__":
     #[Spoon, Sshape, Trapezoid, Worm, WShape, Zshape, Multi_Models_1 Multi_Models_2, Multi_Models_3, Multi_Models_4]
 
     sub_sample = 3
-    data = lasa.DataSet.Angle
+    data = lasa.DataSet.BendedLine
     demos = data.demos 
-    demo_0 = demos[0]
-    pos = demo_0.pos[:, ::sub_sample]
-    vel = demo_0.vel[:, ::sub_sample]
-    Data = np.vstack((pos, vel))
-    for l in np.arange(1, len(demos)):
+
+    L = len(demos)
+    Data = np.empty((L, 1), dtype=object)
+    for l in range(L):
         pos = demos[l].pos[:, ::sub_sample]
         vel = demos[l].vel[:, ::sub_sample]
-        Data = np.hstack((Data, np.vstack((pos, vel))))
-
+        Data[l, 0] = np.vstack((pos, vel))
+    
 
     DPMM = dpmm(Data)      # comment out this line if want to test LASA
     # DPMM = dpmm()          # comment out this line if want to test dataset in data folder
