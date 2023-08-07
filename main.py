@@ -48,13 +48,13 @@ class dpmm:
         ###############################################################  
         if len(args_) == 1:
             Data = args_[0]
-            Data, Data_sh, att, x0_all, dt, data = load_tools.processDataStructure(Data)
+            Data, Data_sh, self.att, x0_all, self.dt, data = load_tools.processDataStructure(Data)
         else:                              
             pkg_dir = os.path.join(self.file_path, "data")
-            Data, Data_sh, att, x0_all, dt, data = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
-        
+            Data, Data_sh, self.att, x0_all, self.dt, data = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
         self.Data = data_tools.normalize_vel(Data)              
         write_data(self.Data, os.path.join(self.log_path, "input.csv"))         
+
 
         ###############################################################
         ####################### hyperparameters #######################
@@ -121,7 +121,9 @@ class dpmm:
             "M": Mu.shape[1],
             "Priors": Priors.tolist(),
             "Mu": Mu.ravel().tolist(),
-            "Sigma": Sigma.ravel().tolist()
+            "Sigma": Sigma.ravel().tolist(),
+            "attractor": self.att.ravel().tolist(),
+            "dt": self.dt
         }
         write_json(json_output, os.path.join(self.log_path, 'output.json'))
 
@@ -146,8 +148,8 @@ if __name__ == "__main__":
         Data[l, 0] = np.vstack((pos, vel))
     
 
-    DPMM = dpmm(Data)      # comment out this line if want to test LASA
-    # DPMM = dpmm()          # comment out this line if want to test dataset in data folder
+    # DPMM = dpmm(Data)      # comment out this line if want to test LASA
+    DPMM = dpmm()          # comment out this line if want to test dataset in data folder
 
     if DPMM.begin() == 0:
         DPMM.result()

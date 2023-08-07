@@ -63,7 +63,7 @@ def load_dataset_DS(pkg_dir, dataset, sub_sample, nb_trajectories):
                 data[l][0] = data[l][0][:, ::sub_sample]
         Data, Data_sh, att, x0_all, dt, data = processDataStructure(data)
 
-    return Data, Data_sh, att, x0_all, data, dt
+    return Data, Data_sh, att, x0_all, dt, data
 
 
 
