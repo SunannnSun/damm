@@ -101,14 +101,17 @@ class dpmm:
         logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
         assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
 
-        Data, assignment_array  = data_tools.post_process(Data, assignment_array )
-        reg_assignment_array    = data_tools.regress(Data, assignment_array      )  
-        Priors, Mu, Sigma       = data_tools.extract_param(Data, assignment_array)
+        _, _, param_dict        = data_tools.post_process(Data, assignment_array )
+        reg_assignment_array    = data_tools.regress(Data, param_dict)  
+        reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
+
+        Priors = reg_param_dict["Priors"]
+        Mu     = reg_param_dict["Mu"]
+        Sigma  = reg_param_dict["Sigma"]
 
         plot_tools.plot_results(Data, assignment_array    )
         plot_tools.plot_results(Data, reg_assignment_array)
-        data_tools.computeBIC(Data, assignment_array      )
-        data_tools.computeBIC(Data, reg_assignment_array  )
+        data_tools.computeBIC(Data, reg_param_dict)
         # plot_tools.animate_results(Data, logZ             )
 
         np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
@@ -137,7 +140,7 @@ if __name__ == "__main__":
     #[Spoon, Sshape, Trapezoid, Worm, WShape, Zshape, Multi_Models_1 Multi_Models_2, Multi_Models_3, Multi_Models_4]
 
     sub_sample = 3
-    data = lasa.DataSet.BendedLine
+    data = lasa.DataSet.Snake
     demos = data.demos 
 
     L = len(demos)
@@ -148,8 +151,8 @@ if __name__ == "__main__":
         Data[l, 0] = np.vstack((pos, vel))
     
 
-    # DPMM = dpmm(Data)      # comment out this line if want to test LASA
-    DPMM = dpmm()          # comment out this line if want to test dataset in data folder
+    DPMM = dpmm(Data)      # comment out this line if want to test LASA
+    # DPMM = dpmm()          # comment out this line if want to test dataset in data folder
 
     if DPMM.begin() == 0:
         DPMM.result()

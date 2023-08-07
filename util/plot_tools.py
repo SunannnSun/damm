@@ -25,7 +25,11 @@ colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
 def plot_results(data, assignment_array):
     color_mapping = np.take(colors, assignment_array)
 
-    Priors, Mu, Sigma = data_tools.extract_param(data, assignment_array)
+    param_dict = data_tools.extract_param(data, assignment_array)
+    Priors = param_dict["Priors"]
+    Mu     = param_dict["Mu"]
+    Sigma  = param_dict["Sigma"]
+    
     K = assignment_array.max()+1
     M = int(data.shape[1]/2)
 

@@ -17,9 +17,11 @@ def extract_param(data, assignment_array):
         assignment_array: (N,  ) assignment array contains the label of each data points
         
     Returns:
-        Priors          : (K,  ) array contains the normalized number of points in each component, where K is the estimated number of components
-        Mu              : (K, M) array contains the POSITIONAL average of each component
-        Signma          : (K, M, M) contains the POSITIONAL covariance of each component
+        {
+            Priors          : (K,  ) array contains the normalized number of points in each component, where K is the estimated number of components
+            Mu              : (K, M) array contains the POSITIONAL average of each component
+            Signma          : (K, M, M) contains the POSITIONAL covariance of each component
+        }
     """
     N = data.shape[0]
     M = int(data.shape[1] / 2)
@@ -34,27 +36,34 @@ def extract_param(data, assignment_array):
         Priors[k]       = data_k.shape[0]/N
         Mu[k, :]        = np.mean(data_k, axis=0)
         Sigma[k, :, :]  = np.cov(data_k.T)
+    
+    param_dict ={
+        "Priors": Priors,
+        "Mu" : Mu,
+        "Sigma": Sigma
+    }
 
-    return Priors, Mu, Sigma
+    return param_dict
 
 
 
-def computeBIC(data, assignment_array):
+def computeBIC(data, param_dict):
     """
     Compute the BIC metric given the clustering results
     
     Parameters:
         data            : (N, 2M) data array contains both position and velocity vectors
-        assignment_array: (N,  ) assignment array contains the label of each data points
         
     Returns:
         BIC             : scalar value measuring the model complexity
         log_liks        : the log likelihood of data given the model
     """
 
-    Priors, Mu, Sigma = extract_param(data, assignment_array)
+    Priors = param_dict["Priors"]
+    Mu     = param_dict["Mu"]
+    Sigma  = param_dict["Sigma"]
 
-    K = assignment_array.max()+1
+    K = Priors.shape[0]
     N = data.shape[0]
     M = int(data.shape[1]/2)
 
@@ -73,8 +82,6 @@ def computeBIC(data, assignment_array):
     print("The log likelihood of the model is ", log_liks)
 
     return BIC, log_liks
-
-
 
 
 
@@ -127,16 +134,19 @@ def post_process(data, assignment_array):
     for element, count in zip(unique_elements, counts):
             print("Number of", element+1, ":", count)
 
-    return data, assignment_array
+    return data, assignment_array, extract_param(data, assignment_array)
 
 
 
-def regress(data, assignment_array):
+def regress(data, param_dict):
+    Priors = param_dict["Priors"]
+    Mu     = param_dict["Mu"]
+    Sigma  = param_dict["Sigma"]
+
     N = data.shape[0]
     M = int(data.shape[1]/2)
-    K = assignment_array.max()+1
+    K = Priors.shape[0]
     gauss_list = []
-    Priors, Mu, Sigma = extract_param(data, assignment_array)
 
     for k in range(K):
         gauss_list.append(multivariate_normal(mean=Mu[k, :], cov=Sigma[k, :, :], allow_singular=True))

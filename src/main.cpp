@@ -27,8 +27,6 @@ int main(int argc, char **argv)
     /*---------------------------------------------------*/
 
     // std::srand(seed);
-    // if(vm.count("seed"))
-    // seed = static_cast<uint64_t>(vm["seed"].as<int>());
     uint64_t seed = time(0);
     // uint64_t seed = 1671503159;
     boost::mt19937 rndGen(seed);
@@ -40,11 +38,10 @@ int main(int argc, char **argv)
         ("help"                                 , "produce help message")
         ("number,n"     , po::value<int>()      , "number of data")
         ("dimension,m"  , po::value<int>()      , "dimension of data")
-        ("output,o"     , po::value<string>()   , "path to output dataset .csv file: rows: dimensions; cols: numbers")
         ("iteration,t"  , po::value<int>()      , "number of iteration")
-        ("alpha,a"      , po::value<double>()   , "concentration value")
         ("init"         , po::value<int>()      , "number of initial clusters")
         ("base"         , po::value<int>()      , "Base type: 0 Euclidean, 1 Euclidean + directional")
+        ("alpha,a"      , po::value<double>()   , "concentration value")
         ("params,p"     , po::value< vector<double> >()->multitoken(), "hyperparameters")
         ("log"          , po::value<string>()   , "path to log all the data")
     ;
@@ -96,23 +93,19 @@ int main(int argc, char **argv)
         vector<double> params = vm["params"].as< vector<double> >();
         nu = params[0];
         kappa = params[1];
-        for(uint8_t i=0; i<mu.rows(); ++i)
+        for(int i=0; i<mu.rows(); ++i)
             mu(i) = params[2+i];
-        for(uint8_t i=0; i<Sigma.rows(); ++i)
-            for(uint8_t j=0; j<Sigma.cols(); ++j)
+        for(int i=0; i<Sigma.rows(); ++i)
+            for(int j=0; j<Sigma.cols(); ++j)
                 Sigma(i,j) = params[2+mu.rows()+i*Sigma.cols()+j];
     }
 
 
-    MatrixXd Data(num, dim);              
-    string pathIn ="";
-    if(vm.count("log"))
-        pathIn = vm["log"].as<string>() + "input.csv";
-    if (!pathIn.compare("")){
-        cout<<"please specify an input dataset"<<endl;
-        return 1;
-    }
-    ifstream  fin(pathIn);
+    string logPath = "";
+    if(vm.count("log")) logPath = vm["log"].as<string>();
+
+    string logPath_input = logPath + "input.csv";
+    ifstream  fin(logPath_input);
     string line;
     vector<vector<string> > parsedCsv;
     while(getline(fin,line)){
@@ -124,8 +117,10 @@ int main(int argc, char **argv)
         parsedCsv.push_back(parsedRow);
     }
     fin.close();
-    for (uint32_t i=0; i<num; ++i)
-        for (uint32_t j=0; j<dim; ++j)
+
+    MatrixXd Data(num, dim);              
+    for (int i=0; i<num; ++i)
+        for (int j=0; j<dim; ++j)
             Data(i, j) = stod(parsedCsv[i][j]);
 
     
@@ -141,7 +136,7 @@ int main(int argc, char **argv)
     if (base==0)  {
         NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
         DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
-        for (uint32_t t=0; t<T; ++t){
+        for (int t=0; t<T; ++t){
             cout<<"------------ t="<<t<<" -------------"<<endl;
             // if (dpmm.sampleLabelsCollapsed())
             //     break;
@@ -218,34 +213,27 @@ int main(int argc, char **argv)
     /*---------------------------------------------------*/
 
 
-    string pathOut;
-    if(vm.count("log")) pathOut = vm["log"].as<string>();
 
-
-    string pathOut_output = pathOut + "output.csv";
-    ofstream fout(pathOut_output.data(),ofstream::out);
-    for (uint16_t i=0; i < z.size(); ++i)
+    string logPath_output = logPath + "output.csv";
+    ofstream fout(logPath_output.data(),ofstream::out);
+    for (int i=0; i < z.size(); ++i)
         fout << z[i] << endl;
     fout.close();
 
-    string pathOut_logNum = pathOut + "logNum.csv";
-    ofstream fout_logNum(pathOut_logNum.data(),ofstream::out);
-    for (uint16_t i=0; i < logNum.size(); ++i)
+    string logPath_logNum = logPath + "logNum.csv";
+    ofstream fout_logNum(logPath_logNum.data(),ofstream::out);
+    for (int i=0; i < logNum.size(); ++i)
         fout_logNum << logNum[i] << endl;
     fout_logNum.close();
 
-    string pathOut_logLogLik = pathOut + "logLogLik.csv";
-    ofstream fout_logLogLik(pathOut_logLogLik.data(),ofstream::out);
-    for (uint16_t i=0; i < logLogLik.size(); ++i)
+    string logPath_logLogLik = logPath + "logLogLik.csv";
+    ofstream fout_logLogLik(logPath_logLogLik.data(),ofstream::out);
+    for (int i=0; i < logLogLik.size(); ++i)
         fout_logLogLik << logLogLik[i] << endl;
     fout_logLogLik.close();
 
 
-
-    // Populate the vector with Eigen::VectorXd elements
-    // ... (add your data)
-
-    ofstream outputFile(pathOut + "logZ.csv");
+    ofstream outputFile(logPath + "logZ.csv");
     if (outputFile.is_open()) {
         for (const auto& vector : logZ) {
             outputFile << vector.transpose() << "\n";
