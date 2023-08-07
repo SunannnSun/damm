@@ -1,6 +1,6 @@
-# Dirichlet Process Mixture Model (Parallel Implementation)
+# Directionality-aware Mixture Model(Parallel Implementation)
 
-This module consists of the parallel implementation of Dirichlet process Mixture model(DPMM) that has been optimized for real-time learning performance. Given a set of demonstration trajectories, this module performs unsupervised learning of Gaussian mixture models that best describe the structure of provided data. In addition to the general clustering purposes, this module serves as an intermediate step in the pipeline of learning a Dynamical system-based motion policies from data, and the learned model will proceed to be optimized in the linear parameter varying(LPV) learning of a dynamical system.
+This module consists of the parallel implementation of Directionality-aware Mixture Model(DAMM) that has been optimized for real-time learning performance. Given a set of demonstration trajectories, this module performs unsupervised learning of Gaussian mixture models that best describe the structure of provided data. In addition to the general clustering purposes, this module serves as an intermediate step in the pipeline of learning a Dynamical system-based motion policies from data, and the learned model will proceed to be optimized in the linear parameter varying(LPV) learning of a dynamical system.
 
 --- 
 
@@ -22,6 +22,23 @@ As opposed to using CMake in previous iteration, Linux implementation will solel
 ---
 
 ### Installation
+
+Create a python virtual environment and install the dependencies.
+
+```
+virtualenv -p /path/to/python3.8 env3.8
+source env3.8/bin/activate
+pip install -r requirements.txt
+```
+
+Make sure to replace `/path/to/python3.8` with the correct path to the Python 3.8 executable on your system. You can use the which command on Unix-like systems or the where command on Windows to find the path to the Python interpreter. For example:
+
+On Unix-like systems (Linux, macOS):
+
+```
+which python3.8
+```
+
 To install Eigen and Boost libraries, please download both packages directly from their websites and extract the downloaded zip files under the system include path: `/usr/include/`
 
 OpenMP usually comes with the GCC compiler starting from its version 4.2.0. Check the GCC version of the computer:
@@ -104,4 +121,7 @@ The binary library, if not specified, by default will be installed under the dir
 ```clang++ -O3 -std=c++17 -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.81.0_1/include -I/opt/homebrew/Cellar/opencv/4.7.0_4/include/opencv4/ src/spectral.cpp -o spectral  -L/opt/homebrew/Cellar/boost/1.81.0_1/lib -L/opt/homebrew/Cellar/opencv/4.7.0_4/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui```
 
 
-```clang++ -O3 -fopenmp -std=c++17 -Iinclude -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/Cellar/opencv/4.7.0_4/include/opencv4/ -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.81.0_1/include src/spectral.cpp src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp src/main.cpp -o main -lboost_program_options -L/opt/homebrew/Cellar/boost/1.81.0_1/lib -L/opt/homebrew/Cellar/opencv/4.7.0_4/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui```
+```clang++ -O3 -fopenmp -std=c++17 -Iinclude -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/Cellar/opencv/4.8.0_1/include/opencv4/ -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.82.0_1/include src/spectral.cpp src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp src/main.cpp -o main -lboost_program_options -L/opt/homebrew/Cellar/boost/1.82.0_1/lib -L/opt/homebrew/Cellar/opencv/4.8.0_1/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui```
+
+
+```clang++  -fopenmp  -I/opt/homebrew/opt/libomp/include    ```

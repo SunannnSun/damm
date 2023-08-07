@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.signal import savgol_filter
 from scipy.stats import multivariate_normal
 
 """

@@ -1,1 +1,5 @@
-gmr
+gmr==1.6.2
+numpy==1.21.5
+scipy==1.7.3
+matplotlib==3.5.2
+pyLasaDataset==0.1.1
