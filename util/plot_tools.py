@@ -107,11 +107,3 @@ def plot_logs(logNum, logLogLik):
     axes[0].set_title('Number of Components')
     axes[1].plot(np.arange(logLogLik.shape[0]), logLogLik, c='k')
     axes[1].set_title('Log Joint Likelihood')   
-
-
-
-
-
-
-
-

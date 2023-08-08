@@ -18,7 +18,7 @@ def write_json(data, path):
         json.dump(data, json_file, indent=4)
 
 
-class dpmm:
+class damm:
     def __init__(self, *args_):
         self.file_path           = os.path.dirname(os.path.realpath(__file__))
         self.log_path           = os.path.join(self.file_path, "log", "")
@@ -74,7 +74,7 @@ class dpmm:
 
     def begin(self):
         ###############################################################
-        ####################### perform dpmm ##########################
+        ####################### perform damm ##########################
         ###############################################################  
         args = ['time ' + os.path.join(self.file_path, "main"),
                 '-n {}'.format(self.Data.shape[0]),
@@ -92,8 +92,7 @@ class dpmm:
         return completed_process.returncode
 
         
-        
-    def result(self):
+    def result(self, if_plot=True):
         Data = self.Data
 
         logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
@@ -109,10 +108,11 @@ class dpmm:
         Mu     = reg_param_dict["Mu"]
         Sigma  = reg_param_dict["Sigma"]
 
-        plot_tools.plot_results(Data, assignment_array    )
-        plot_tools.plot_results(Data, reg_assignment_array)
-        data_tools.computeBIC(Data, reg_param_dict)
-        # plot_tools.animate_results(Data, logZ             )
+        if if_plot:
+            plot_tools.plot_results(Data, assignment_array    )
+            plot_tools.plot_results(Data, reg_assignment_array)
+            data_tools.computeBIC(Data, reg_param_dict)
+            # plot_tools.animate_results(Data, logZ             )
 
         np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
         np.save(os.path.join(self.log_path, "Mu.npy"    ), Mu     )
@@ -151,8 +151,8 @@ if __name__ == "__main__":
         Data[l, 0] = np.vstack((pos, vel))
     
 
-    DPMM = dpmm(Data)      # comment out this line if want to test LASA
-    # DPMM = dpmm()          # comment out this line if want to test dataset in data folder
+    DAMM = damm(Data)      # comment out this line if want to test LASA
+    # DAMM = damm()          # comment out this line if want to test dataset in data folder
 
-    if DPMM.begin() == 0:
-        DPMM.result()
+    if DAMM.begin() == 0:
+        DAMM.result(if_plot=True)

@@ -39,89 +39,15 @@ On Unix-like systems (Linux, macOS):
 which python3.8
 ```
 
-To install Eigen and Boost libraries, please download both packages directly from their websites and extract the downloaded zip files under the system include path: `/usr/include/`
+Compile the source code:
 
-OpenMP usually comes with the GCC compiler starting from its version 4.2.0. Check the GCC version of the computer:
+```
+mkdir build
+cd build
+cmake ../src
+make
+cd ..
+```
 
-```gcc --version```
-
-If the system doesn’t have the GCC compiler, please install using the following command
-
-
-```sudo apt install gcc```
-
----
-
-### Compilation
-
-Eigen library is made of standalone header files, and hence no additional linking and compilation is needed other than including its path. On the other hand, while most of the Boost functionalities are entirely defined in header files, certain packages require build. We need to first build a binary library from boost before compiling the main source code:
-
-First located the boost library in system path:
-
-```cd /usr/include/boost_1.81_0```
-
-Run the built-in build tools in boost:
-
-```./bootstrap.sh  --with-libraries=program_options```
-
-and then,
-
-```sudo ./b2 install ```
-
-<!-- The built shared library is a dynamic library. Hence, we need to add the environmental variables that allow the source code to locate the library at run time:
-
-```LD_LIBRARY_PATH=/usr/include/boost_1_81_0/stage/lib```
-
-```export $LD_LIBRARY_PATH``` -->
-
-Now we can go back to the root directory of dpmm and compile the source code using the following command,
-
-```cd dpmm```
-
-```g++ -O1 -fopenmp -Iinclude -I/usr/include/eigen-3.4.0 -I/usr/include/boost_1_81_0 src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp  src/main.cpp -o main -lboost_program_options```
-
-Alternatively, if run on M1, use the following commands,
-
-This command runs the default g++ compiler that comes with Xcode; however, it is not compatible with fopenmp flag to enable parallel sampling
-
-```g++ -O3 -std=c++17 -Iinclude -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.80.0/include/boost src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp src/main.cpp -o main -lboost_program_options -L/opt/homebrew/Cellar/boost/1.80.0/lib```
-
-To enable parallel sampling, first install LLVM from brew,
-
-```brew install llvm libomp```
-
-Then you need to have llvm first in your PATH, run:
-
-```echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc```
-
-Now we can add ```-fopenmp``` flag to enable parallel computation:
-
-```clang++ -O3 -fopenmp -std=c++17 -Iinclude -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.81.0_1/include src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp src/main.cpp -o main -lboost_program_options -L/opt/homebrew/Cellar/boost/1.81.0_1/lib```
-
-
-And execute the code 
 
 ```python main.py  [-d DATA] [-t ITERATION] [-a ALPHA] [--init INIT]```
-
-<!-- 
-GCC can search for package under system directory, but both packages have unconventional names with version information, we need to specify the include path for GCC to search using the -I flag 
-
-Eigen library is completely header-based; hence no separate compilation is needed and can be directly referenced and used once the include path is specified.
-
-On the other hand, boost library; while most of its functionalities are defined in header files, some packages do require separate compilation and linking; e.g., boost::program_options.
-
-Use the built-in build system from the boost:
-./bootstrap.sh --help
-Also, consider using the --show-libraries and --with-libraries=library-name-list options to limit the long wait you'll experience if you build everything. 
-./b2 install 
-
-The binary library, if not specified, by default will be installed under the directory usr/include/boost_1_81_0/stage/lib. Make sure then use the -L flag to specifiy the library path and use the -l flag to search for the specific library in the path -->
-
-
-```clang++ -O3 -std=c++17 -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.81.0_1/include -I/opt/homebrew/Cellar/opencv/4.7.0_4/include/opencv4/ src/spectral.cpp -o spectral  -L/opt/homebrew/Cellar/boost/1.81.0_1/lib -L/opt/homebrew/Cellar/opencv/4.7.0_4/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui```
-
-
-```clang++ -O3 -fopenmp -std=c++17 -Iinclude -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/Cellar/opencv/4.8.0_1/include/opencv4/ -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -I/opt/homebrew/Cellar/boost/1.82.0_1/include src/spectral.cpp src/niwDir.cpp src/niw.cpp src/normal.cpp src/normalDir.cpp src/dpmm.cpp src/dpmmDir.cpp src/main.cpp -o main -lboost_program_options -L/opt/homebrew/Cellar/boost/1.82.0_1/lib -L/opt/homebrew/Cellar/opencv/4.8.0_1/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui```
-
-
-```clang++  -fopenmp  -I/opt/homebrew/opt/libomp/include    ```
