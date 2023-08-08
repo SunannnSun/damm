@@ -60,7 +60,7 @@ class damm:
         ###############################################################  
         if len(args_) == 1:
             Data = args_[0]
-            Data, Data_sh, self.att, x0_all, self.dt, data = load_tools.processDataStructure(Data)
+            
         else:                              
             pkg_dir = os.path.join(self.file_path, "data")
             Data, Data_sh, self.att, x0_all, self.dt, data = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
@@ -137,10 +137,8 @@ class damm:
             "Priors": Priors.tolist(),
             "Mu": Mu.ravel().tolist(),
             "Sigma": Sigma.ravel().tolist(),
-            "attractor": self.att.ravel().tolist(),
-            "dt": self.dt
         }
-        write_json(json_output, os.path.join(self.log_path, 'output.json'))
+        write_json(json_output, os.path.join(os.path.dirname(self.file_path), 'output.json'))
 
         plt.show()
 
