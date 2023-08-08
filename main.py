@@ -18,6 +18,18 @@ def write_json(data, path):
         json.dump(data, json_file, indent=4)
 
 
+def read_json(path):
+    with open(path) as json_file:
+        dict = json.load(json_file)
+    # K= dict['K']
+    # M = dict['M']
+    # Priors  = np.array(dict['Priors'])
+    # Mu      = np.array(dict['Mu']).reshape(K, -1)
+    # Sigma   = np.array(dict['Sigma']).reshape(K, M, M)
+    # att = np.array(dict['attractor'])
+    return dict
+
+
 class damm:
     def __init__(self, *args_):
         self.file_path           = os.path.dirname(os.path.realpath(__file__))
@@ -156,3 +168,5 @@ if __name__ == "__main__":
 
     if DAMM.begin() == 0:
         DAMM.result(if_plot=True)
+
+
