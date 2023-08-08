@@ -163,8 +163,8 @@ if __name__ == "__main__":
         Data[l, 0] = np.vstack((pos, vel))
     
 
-    DAMM = damm(Data)      # comment out this line if want to test LASA
-    # DAMM = damm()          # comment out this line if want to test dataset in data folder
+    # DAMM = damm(Data)      # comment out this line if want to test LASA
+    DAMM = damm()          # comment out this line if want to test dataset in data folder
 
     if DAMM.begin() == 0:
         DAMM.result(if_plot=True)
