@@ -63,7 +63,7 @@ class damm:
             
         else:                              
             pkg_dir = os.path.join(self.file_path, "data")
-            Data, Data_sh, self.att, x0_all, self.dt, data = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
+            Data, Data_sh, self.att, x0_all, self.dt, data, _ = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
         self.Data = data_tools.normalize_vel(Data)              
         write_data(self.Data, os.path.join(self.log_path, "input.csv"))         
 
