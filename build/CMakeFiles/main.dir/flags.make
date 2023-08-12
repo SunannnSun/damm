@@ -4,7 +4,7 @@
 # compile CXX with /opt/homebrew/opt/llvm/bin/clang++
 CXX_DEFINES = -DBOOST_PROGRAM_OPTIONS_DYN_LINK -DBOOST_PROGRAM_OPTIONS_NO_LIB
 
-CXX_INCLUDES = -I/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include -I/opt/homebrew/Cellar/libomp/16.0.6/include -I/opt/homebrew/include/eigen3 -isystem /opt/homebrew/include -isystem /opt/homebrew/Cellar/opencv/4.8.0_1/include/opencv4
+CXX_INCLUDES = -I/Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include -I/opt/homebrew/Cellar/libomp/16.0.6/include -I/opt/homebrew/include/eigen3 -isystem /opt/homebrew/include -isystem /opt/homebrew/Cellar/opencv/4.8.0_1/include/opencv4
 
 CXX_FLAGSarm64 =  -O3 -std=c++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk -fopenmp
 

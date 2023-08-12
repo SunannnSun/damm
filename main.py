@@ -60,10 +60,10 @@ class damm:
         ###############################################################  
         if len(args_) == 1:
             Data = args_[0]
-            
+            # Data, Data_sh, self.att, x0_all, self.dt, data, _ = load_tools.processDataStructure(Data)
         else:                              
             pkg_dir = os.path.join(self.file_path, "data")
-            Data, Data_sh, self.att, x0_all, self.dt, data, _ = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=2, nb_trajectories=6)
+            Data, Data_sh, self.att, x0_all, self.dt, data, _ = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=1, nb_trajectories=6)
         self.Data = data_tools.normalize_vel(Data)              
         write_data(self.Data, os.path.join(self.log_path, "input.csv"))         
 
@@ -77,7 +77,7 @@ class damm:
         sigma_0[-1, -1] = 0.1                               
         lambda_0 = {
             "nu_0"      : sigma_0.shape[0] + 3,
-            "kappa_0"   : 2,
+            "kappa_0"   : 0.1,
             "mu_0"      : mu_0,
             "sigma_0"   : sigma_0
         }
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     #[Spoon, Sshape, Trapezoid, Worm, WShape, Zshape, Multi_Models_1 Multi_Models_2, Multi_Models_3, Multi_Models_4]
 
     sub_sample = 3
-    data = lasa.DataSet.Snake
+    data = lasa.DataSet.LShape
     demos = data.demos 
 
     L = len(demos)

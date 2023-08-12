@@ -8,14 +8,14 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/dpmm.cpp" "CMakeFiles/main.dir/dpmm.cpp.o" "gcc" "CMakeFiles/main.dir/dpmm.cpp.o.d"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/dpmmDir.cpp" "CMakeFiles/main.dir/dpmmDir.cpp.o" "gcc" "CMakeFiles/main.dir/dpmmDir.cpp.o.d"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/main.cpp" "CMakeFiles/main.dir/main.cpp.o" "gcc" "CMakeFiles/main.dir/main.cpp.o.d"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/niw.cpp" "CMakeFiles/main.dir/niw.cpp.o" "gcc" "CMakeFiles/main.dir/niw.cpp.o.d"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/niwDir.cpp" "CMakeFiles/main.dir/niwDir.cpp.o" "gcc" "CMakeFiles/main.dir/niwDir.cpp.o.d"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normal.cpp" "CMakeFiles/main.dir/normal.cpp.o" "gcc" "CMakeFiles/main.dir/normal.cpp.o.d"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normalDir.cpp" "CMakeFiles/main.dir/normalDir.cpp.o" "gcc" "CMakeFiles/main.dir/normalDir.cpp.o.d"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/spectral.cpp" "CMakeFiles/main.dir/spectral.cpp.o" "gcc" "CMakeFiles/main.dir/spectral.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/dpmm.cpp" "CMakeFiles/main.dir/dpmm.cpp.o" "gcc" "CMakeFiles/main.dir/dpmm.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/dpmmDir.cpp" "CMakeFiles/main.dir/dpmmDir.cpp.o" "gcc" "CMakeFiles/main.dir/dpmmDir.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/main.cpp" "CMakeFiles/main.dir/main.cpp.o" "gcc" "CMakeFiles/main.dir/main.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/niw.cpp" "CMakeFiles/main.dir/niw.cpp.o" "gcc" "CMakeFiles/main.dir/niw.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/niwDir.cpp" "CMakeFiles/main.dir/niwDir.cpp.o" "gcc" "CMakeFiles/main.dir/niwDir.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/normal.cpp" "CMakeFiles/main.dir/normal.cpp.o" "gcc" "CMakeFiles/main.dir/normal.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/normalDir.cpp" "CMakeFiles/main.dir/normalDir.cpp.o" "gcc" "CMakeFiles/main.dir/normalDir.cpp.o.d"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/src/spectral.cpp" "CMakeFiles/main.dir/spectral.cpp.o" "gcc" "CMakeFiles/main.dir/spectral.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

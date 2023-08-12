@@ -57,10 +57,10 @@ RM = /opt/homebrew/Cellar/cmake/3.27.1/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src
+CMAKE_SOURCE_DIR = /Users/sunansun/Developer/DAMM-LPVDS/damm/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/sunansun/Developer/DAMM-LPVDS/DAMM/build
+CMAKE_BINARY_DIR = /Users/sunansun/Developer/DAMM-LPVDS/damm/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/sunansun/Developer/DAMM-LPVDS/DAMM/build/CMakeFiles /Users/sunansun/Developer/DAMM-LPVDS/DAMM/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/sunansun/Developer/DAMM-LPVDS/damm/build/CMakeFiles /Users/sunansun/Developer/DAMM-LPVDS/damm/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/sunansun/Developer/DAMM-LPVDS/DAMM/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/sunansun/Developer/DAMM-LPVDS/damm/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target

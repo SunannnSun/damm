@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/main"
-  "/Users/sunansun/Developer/DAMM-LPVDS/DAMM/main.pdb"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/main"
+  "/Users/sunansun/Developer/DAMM-LPVDS/damm/main.pdb"
   "CMakeFiles/main.dir/dpmm.cpp.o"
   "CMakeFiles/main.dir/dpmm.cpp.o.d"
   "CMakeFiles/main.dir/dpmmDir.cpp.o"

@@ -10,8 +10,8 @@ from . import data_tools
 
 
 font = {'family' : 'Times New Roman',
-         'size'   : 10,
-         'serif':  'cmr10'
+         'size'   : 13
+
          }
 mpl.rc('font', **font)
 mpl.rc('text', usetex = True)
@@ -42,7 +42,7 @@ def plot_results(data, assignment_array):
         for k in range(K):    
             plt.text(Mu[k, 0], Mu[k, 1], str(k+1), fontsize=20)
 
-        ax.set_aspect('equal')
+        # ax.set_aspect('equal')
         ax.set_xlabel(r'$\xi_1$', fontsize=16)
         ax.set_ylabel(r'$\xi_2$', fontsize=16)
     
@@ -73,7 +73,12 @@ def plot_results(data, assignment_array):
         ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
         ax.zaxis.set_major_locator(MaxNLocator(nbins=6))
 
-    ax.set_title(r'Directionality-aware Mixture Model Clustering Result')
+    # ax.set_title('Vanilla GMM (position only)', fontsize = 24)
+    ax.set_title('Vanilla GMM (position+velocity)',  fontsize = 24)
+    ax.set_title('DAMM',  fontsize = 24)
+
+    # ax.set_title(r'Directionality-aware Mixture Model Clustering Result')
+    # ax.set_title(r'Gaussian Mixture Model Clustering Result')
 
 
 
