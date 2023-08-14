@@ -88,7 +88,9 @@ int main(int argc, char **argv)
   
     double nu, kappa;
     VectorXd mu(dim);
-    MatrixXd Sigma(dim/2+1, dim/2+1);  
+    // MatrixXd Sigma(dim/2+1, dim/2+1);  
+    MatrixXd Sigma(dim, dim);  
+
     if(vm.count("params")){
         vector<double> params = vm["params"].as< vector<double> >();
         nu = params[0];

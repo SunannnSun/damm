@@ -74,8 +74,10 @@ def plot_results(data, assignment_array):
         ax.zaxis.set_major_locator(MaxNLocator(nbins=6))
 
     # ax.set_title('Vanilla GMM (position only)', fontsize = 24)
-    ax.set_title('Vanilla GMM (position+velocity)',  fontsize = 24)
-    ax.set_title('DAMM',  fontsize = 24)
+    # ax.set_title('Vanilla GMM (position+velocity)',  fontsize = 24)
+    # ax.set_title('DAMM',  fontsize = 24)
+    # ax.set_title('Vanilla GMM (position only)',  fontsize = 24)
+    ax.set_title('PC-GMM',  fontsize = 24)
 
     # ax.set_title(r'Directionality-aware Mixture Model Clustering Result')
     # ax.set_title(r'Gaussian Mixture Model Clustering Result')

@@ -1,5 +1,5 @@
 CMakeFiles/main.dir/main.cpp.o: \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/main.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/main.cpp \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/iostream \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/__assert \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/__config \
@@ -1586,9 +1586,9 @@ CMakeFiles/main.dir/main.cpp.o: \
   /opt/homebrew/include/boost/program_options/detail/convert.hpp \
   /opt/homebrew/include/boost/program_options/variables_map.hpp \
   /opt/homebrew/include/boost/program_options/version.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/niw.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normal.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/niwDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normalDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/dpmm.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/dpmmDir.hpp
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/niw.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normal.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/niwDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normalDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/dpmm.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/dpmmDir.hpp

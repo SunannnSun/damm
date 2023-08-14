@@ -14,22 +14,22 @@ NIW<T>::NIW(const MatrixXd &Sigma,
   const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen)
 : nu_(nu), kappa_(kappa), rndGen_(rndGen) 
 {
-  if (mu.rows()==4 ||  mu.rows()==6){
-    dim_ = mu.rows()/2;
-    muPos_ = mu(seq(0, dim_-1), all);
-    muDir_ = mu(seq(dim_, last), all);
-    SigmaPos_ = Sigma(seq(0, dim_-1), seq(0, dim_-1));
-    SigmaDir_ = Sigma(last, last);
+  // if (mu.rows()==4 ||  mu.rows()==6){
+  //   dim_ = mu.rows()/2;
+  //   muPos_ = mu(seq(0, dim_-1), all);
+  //   muDir_ = mu(seq(dim_, last), all);
+  //   SigmaPos_ = Sigma(seq(0, dim_-1), seq(0, dim_-1));
+  //   SigmaDir_ = Sigma(last, last);
 
-    Sigma_ = SigmaPos_;
-    mu_    = muPos_;
-    NIWDIR_ptr = std::make_shared<NIWDIR<T>>(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
-  }
-  else {
+  //   Sigma_ = SigmaPos_;
+  //   mu_    = muPos_;
+  //   NIWDIR_ptr = std::make_shared<NIWDIR<T>>(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
+  // }
+  // else {
     dim_ = mu.rows();
     Sigma_ = Sigma;
     mu_    = mu;
-  }
+  // }
 };
 
 

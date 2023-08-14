@@ -18,7 +18,8 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
 {
   // Store both the full Data and only Pos Data
   x_full_ = x;
-  x_      = x_full_(all, seq(0, x_full_.cols()/2-1));
+  // x_      = x_full_(all, seq(0, x_full_.cols()/2-1));
+  x_ = x_full_;
 
   VectorXi z(x_.rows());
 

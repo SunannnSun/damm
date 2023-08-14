@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pyLasaDataset as lasa
 import argparse, subprocess, os, sys, csv, random, json
 from util import load_tools, plot_tools, data_tools
+from scipy.io import loadmat
 
 
 def write_data(data, path):
@@ -73,7 +74,8 @@ class damm:
         ###############################################################  
         mu_0            = np.zeros((self.Data.shape[1], )) 
         mu_0[-1]        = 1                                        
-        sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
+        # sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
+        sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]))  
         sigma_0[-1, -1] = 0.1                               
         lambda_0 = {
             "nu_0"      : sigma_0.shape[0] + 3,
@@ -106,15 +108,20 @@ class damm:
         
     def result(self, if_plot=True):
         Data = self.Data
+        assignment_array = np.array(loadmat(os.path.join(os.path.dirname(os.path.realpath(__file__)), 's.mat'))['est_labels'][0] -1)
+        Data =  np.array(loadmat(os.path.join(os.path.dirname(os.path.realpath(__file__)), 's-data.mat'))['Data']).T
+
 
         logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
         logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
         logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
-        assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
+        # assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
 
         _, _, param_dict        = data_tools.post_process(Data, assignment_array )
-        reg_assignment_array    = data_tools.regress(Data, param_dict)  
-        reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
+        # reg_assignment_array    = data_tools.regress(Data, param_dict)  
+        # reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
+
+        reg_param_dict = param_dict
 
         Priors = reg_param_dict["Priors"]
         Mu     = reg_param_dict["Mu"]
@@ -122,7 +129,7 @@ class damm:
 
         if if_plot:
             plot_tools.plot_results(Data, assignment_array    )
-            plot_tools.plot_results(Data, reg_assignment_array)
+            # plot_tools.plot_results(Data, reg_assignment_array)
             data_tools.computeBIC(Data, reg_param_dict)
             # plot_tools.animate_results(Data, logZ             )
 
@@ -151,6 +158,7 @@ if __name__ == "__main__":
 
     sub_sample = 3
     data = lasa.DataSet.LShape
+
     demos = data.demos 
 
     L = len(demos)
@@ -161,8 +169,8 @@ if __name__ == "__main__":
         Data[l, 0] = np.vstack((pos, vel))
     
 
-    # DAMM = damm(Data)      # comment out this line if want to test LASA
-    DAMM = damm()          # comment out this line if want to test dataset in data folder
+    DAMM = damm(Data)      # comment out this line if want to test LASA
+    # DAMM = damm()          # comment out this line if want to test dataset in data folder
 
     if DAMM.begin() == 0:
         DAMM.result(if_plot=True)
