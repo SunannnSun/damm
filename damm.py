@@ -4,7 +4,7 @@ import argparse, subprocess, os, sys, csv, json
 from damm.util import plot_tools, data_tools
 
 
-def write_data(data, path):
+def write_csv(data, path):
     N = data.shape[0]
     with open(path, mode='w') as data_file:
         data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -26,7 +26,8 @@ def read_json(path):
 class damm:
     def __init__(self, *args_):
         self.file_path           = os.path.dirname(os.path.realpath(__file__))
-        self.log_path           = os.path.join(self.file_path, "log", "")
+        self.dir_path            = os.path.dirname(self.file_path)
+        self.log_path            = os.path.join(self.file_path, "log", "")
 
         ###############################################################
         ################## command-line arguments #####################
@@ -56,7 +57,7 @@ class damm:
         
         Data = args_[0]
         self.Data = data_tools.normalize_vel(Data)              
-        write_data(self.Data, os.path.join(self.log_path, "input.csv"))         
+        write_csv(self.Data, os.path.join(self.log_path, "input.csv"))         
 
 
         ###############################################################
