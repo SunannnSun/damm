@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse, subprocess, os, sys, csv, random, json
-from damm.util import load_tools, plot_tools, data_tools
-from scipy.io import loadmat
+import argparse, subprocess, os, sys, csv, json
+from damm.util import plot_tools, data_tools
 
 
 def write_data(data, path):
@@ -52,12 +51,10 @@ class damm:
         ###############################################################
         ######################### load data ###########################
         ###############################################################  
-        if len(args_) == 1:
-            Data = args_[0]
-            # Data, Data_sh, self.att, x0_all, self.dt, data, _ = load_tools.processDataStructure(Data)
-        else:                              
-            pkg_dir = os.path.join(self.file_path, "data")
-            Data, Data_sh, self.att, x0_all, self.dt, data, _ = load_tools.load_dataset_DS(pkg_dir, dataset=self.data, sub_sample=1, nb_trajectories=6)
+        if len(args_) != 1:
+            raise Exception("Please provide input data to initialize a damm_class")
+        
+        Data = args_[0]
         self.Data = data_tools.normalize_vel(Data)              
         write_data(self.Data, os.path.join(self.log_path, "input.csv"))         
 
@@ -101,20 +98,16 @@ class damm:
         
     def result(self, if_plot=True):
         Data = self.Data
-        assignment_array = np.array(loadmat(os.path.join(os.path.dirname(os.path.realpath(__file__)), 's.mat'))['est_labels'][0] -1)
-        Data =  np.array(loadmat(os.path.join(os.path.dirname(os.path.realpath(__file__)), 's-data.mat'))['Data']).T
-
 
         logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
         logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
         logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
-        # assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
+        assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
 
         _, _, param_dict        = data_tools.post_process(Data, assignment_array )
-        # reg_assignment_array    = data_tools.regress(Data, param_dict)  
-        # reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
+        reg_assignment_array    = data_tools.regress(Data, param_dict)  
+        reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
 
-        reg_param_dict = param_dict
 
         Priors = reg_param_dict["Priors"]
         Mu     = reg_param_dict["Mu"]
@@ -141,34 +134,4 @@ class damm:
         write_json(json_output, os.path.join(os.path.dirname(self.file_path), 'output.json'))
 
         plt.show()
-
-
-
-if __name__ == "__main__":        
-    # Three different types of data input
-
-
-    #[Angle, BendedLine, CShape, DoubleBendedLine, GShape, heee, JShape, JShape_2, Khamesh, Leaf_1]
-    #[Leaf_2, Line, LShape, NShape, PShape, RShape, Saeghe, Sharpc, Sine, Snake]
-    #[Spoon, Sshape, Trapezoid, Worm, WShape, Zshape, Multi_Models_1 Multi_Models_2, Multi_Models_3, Multi_Models_4]
-
-    sub_sample = 3
-    data = lasa.DataSet.LShape
-
-    demos = data.demos 
-
-    L = len(demos)
-    Data = np.empty((L, 1), dtype=object)
-    for l in range(L):
-        pos = demos[l].pos[:, ::sub_sample]
-        vel = demos[l].vel[:, ::sub_sample]
-        Data[l, 0] = np.vstack((pos, vel))
-    
-
-    DAMM = damm(Data)      # comment out this line if want to test LASA
-    # DAMM = damm()          # comment out this line if want to test dataset in data folder
-
-    if DAMM.begin() == 0:
-        DAMM.result(if_plot=True)
-
 
