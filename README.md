@@ -7,6 +7,10 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 ### Update
 
 8/15 Rebuttal Submission
+- Started a new branch named module intended to design the damm as a module-only package and can only be imported and used in damm-lpv-ds environment where loading tools are located
+- if i can circumvent using a csv writer and directly pass the input DATA to c++
+- need to include a full covariance passed to c++ to allow for clustering in full dimension
+- need to check the effects of kappa on clustering results
 
 ---
 
