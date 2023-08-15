@@ -6,11 +6,7 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 
 ### Update
 
-3/29: log in the value of joint log likelihood in each iteration; can potentially increase computational load; visualize for convergence analysis
-
-
-As opposed to using CMake in previous iteration, Linux implementation will solely use terminal commands to compile, execute and debug in Vsode IDE due to the module's low complexity.
-
+8/15 Rebuttal Submission
 
 ---
 
@@ -48,6 +44,20 @@ cmake ../src
 make
 cd ..
 ```
+
+### Instruction
+
+
+Input:
+
+1. Franka Emika Demonstration
+
+1. LASA-Handwriting Dataset
+2. PC-GMM Benchmark Dataset
+<!-- 3. Franka Emika Demonstration -->
+
+
+
 
 
 ```python main.py  [-d DATA] [-t ITERATION] [-a ALPHA] [--init INIT]```

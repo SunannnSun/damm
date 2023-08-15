@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pyLasaDataset as lasa
 import argparse, subprocess, os, sys, csv, random, json
-from util import load_tools, plot_tools, data_tools
+from damm.util import load_tools, plot_tools, data_tools
 from scipy.io import loadmat
 
 
@@ -22,12 +21,6 @@ def write_json(data, path):
 def read_json(path):
     with open(path) as json_file:
         dict = json.load(json_file)
-    # K= dict['K']
-    # M = dict['M']
-    # Priors  = np.array(dict['Priors'])
-    # Mu      = np.array(dict['Mu']).reshape(K, -1)
-    # Sigma   = np.array(dict['Sigma']).reshape(K, M, M)
-    # att = np.array(dict['attractor'])
     return dict
 
 
@@ -152,6 +145,9 @@ class damm:
 
 
 if __name__ == "__main__":        
+    # Three different types of data input
+
+
     #[Angle, BendedLine, CShape, DoubleBendedLine, GShape, heee, JShape, JShape_2, Khamesh, Leaf_1]
     #[Leaf_2, Line, LShape, NShape, PShape, RShape, Saeghe, Sharpc, Sine, Snake]
     #[Spoon, Sshape, Trapezoid, Worm, WShape, Zshape, Multi_Models_1 Multi_Models_2, Multi_Models_3, Multi_Models_4]
