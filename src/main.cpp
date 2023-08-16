@@ -38,6 +38,7 @@ int main(int argc, char **argv)
         ("log"          , po::value<string>()->required()   , "path to log all the data")
     ;
 
+
     po::variables_map vm;
     try {
         po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -54,11 +55,11 @@ int main(int argc, char **argv)
     } 
 
 
-    int T = vm["iter"].as<int>();
+    int base = vm["base"].as<int>();
+    int init = vm["init"].as<int>();
+    int iter = vm["iter"].as<int>();
     double alpha = vm["alpha"].as<double>();
-    int init_cluster = vm["init"].as<int>();
-    int base  = (vm["base"].as<int>());
-    string logPath  = vm["log"].as<string>();
+    string logPath = vm["log"].as<string>();
 
 
     /*---------------------------------------------------*/
@@ -99,8 +100,8 @@ int main(int argc, char **argv)
 
     if (base==0)  {
         NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
-        DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
-        for (int t=0; t<T; ++t){
+        DPMM<NIW<double>> dpmm(Data, init, alpha, niw, rndGen);
+        for (int t=0; t<iter; ++t){
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
             // if (dpmm.sampleLabelsCollapsed())
             //     break;
@@ -120,8 +121,8 @@ int main(int argc, char **argv)
     else if (base==1){
         boost::random::uniform_int_distribution<> uni(0, 3);  
         NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
-        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init_cluster, alpha, niwDir, rndGen);
-        for (int t=1; t<T+1; ++t)    {
+        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen);
+        for (int t=1; t<iter+1; ++t)    {
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
             
             // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
