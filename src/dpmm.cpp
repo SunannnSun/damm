@@ -13,13 +13,24 @@
 #include "niwDir.hpp"
 
 template <class dist_t> 
-DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen)
+DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen, int base)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
-  // Store both the full Data and only Pos Data
-  x_full_ = x;
-  // x_      = x_full_(all, seq(0, x_full_.cols()/2-1));
-  x_ = x_full_;
+  if (base == 1) {
+    dim_ = x.cols()/2;
+    x_ = x(all, seq(0, dim_-1));
+  }
+  else if (base == 2){
+    dim_ = x.cols();
+    x_ = x; 
+  }
+  
+  
+  // // x_ = x(all, seq(0, x_full_.cols()/2-1))
+  // // Store both the full Data and only Pos Data
+  // x_full_ = x;
+  // // x_      = x_full_(all, seq(0, x_full_.cols()/2-1));
+  // x_ = x_full_;
 
   VectorXi z(x_.rows());
 

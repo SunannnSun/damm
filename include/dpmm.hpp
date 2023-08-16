@@ -14,6 +14,8 @@ class DPMM {
     /*---------------------------------------------------*/
     //-------------Constructor & Desctructor--------------
     /*---------------------------------------------------*/
+    DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen, int base);
+  
     DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen);
     DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
     DPMM(const MatrixXd& x, const VectorXi& z, const double alpha, const dist_t& H, boost::mt19937 &rndGen);
@@ -85,6 +87,7 @@ class DPMM {
     boost::mt19937 rndGen_;
 
     //class initializer(dependent on data)
+    uint32_t dim_;
     MatrixXd x_;
     MatrixXd x_full_;
     Eigen::Matrix<std::int32_t, Eigen::Dynamic, 1> z_;

@@ -1,6 +1,6 @@
 CMakeFiles/main.dir/niwDir.cpp.o: \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/niwDir.cpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/niwDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/niwDir.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/niwDir.hpp \
   /opt/homebrew/include/eigen3/Eigen/Dense \
   /opt/homebrew/include/eigen3/Eigen/Core \
   /opt/homebrew/include/eigen3/Eigen/src/Core/util/DisableStupidWarnings.h \
@@ -1065,10 +1065,10 @@ CMakeFiles/main.dir/niwDir.cpp.o: \
   /opt/homebrew/include/boost/random/detail/generator_bits.hpp \
   /opt/homebrew/include/boost/random/detail/generator_seed_seq.hpp \
   /opt/homebrew/include/boost/random/detail/polynomial.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normalDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/niw.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normal.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/karcher.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normalDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/niw.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normal.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/karcher.hpp \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/iostream \
   /opt/homebrew/include/boost/math/special_functions/gamma.hpp \
   /opt/homebrew/include/boost/math/tools/series.hpp \

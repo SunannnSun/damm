@@ -7,11 +7,12 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 ### Update
 
 8/16
-- return c++ outputs(assignment, etc) as memory binary file to improve efficiency
-- parse parameters for option 1, 2, 3
+- ~~return c++ outputs(assignment, etc) as memory binary file to improve efficiency~~
+- parse parameters for option 0, ~~1, 2~~
 - need to check the effects of kappa on clustering results
 - verify split/merge proposal
 - makse sure the plot description fit the selected option
+- collapsed sample? (already implemented)
 
 8/15 Rebuttal Submission
 - ~~Started a new branch named module intended to design the damm as a module-only package and can only be imported and used in damm-lpv-ds environment where loading tools are located~~

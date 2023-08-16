@@ -43,7 +43,8 @@ int main(int argc, char **argv)
     try {
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
-    } catch (const po::error& e) {
+    } 
+    catch (const po::error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
@@ -76,17 +77,17 @@ int main(int argc, char **argv)
         }
     }
 
-    double sigma_dir_0, nu, kappa;
-    std::cin >> sigma_dir_0 >> nu >> kappa; 
+    double sigma_dir_0, nu_0, kappa_0;
+    std::cin >> sigma_dir_0 >> nu_0 >> kappa_0; 
 
-    Eigen::VectorXd mu(dim);
+    Eigen::VectorXd mu_0(dim);
     for(int i=0; i < dim; ++i)
-        std::cin >> mu(i);
+        std::cin >> mu_0(i);
         
-    Eigen::MatrixXd Sigma(dim, dim);  
+    Eigen::MatrixXd sigma_0(dim, dim);  
     for (int i = 0; i < dim; ++i) {
         for (int j = 0; j < dim; ++j) {
-            std::cin >> Sigma(i,j);
+            std::cin >> sigma_0(i,j);
         }
     }
 
@@ -100,28 +101,8 @@ int main(int argc, char **argv)
     // vector<double> logLogLik;
 
     if (base==0)  {
-        NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
-        DPMM<NIW<double>> dpmm(Data, init, alpha, niw, rndGen);
-        for (int t=0; t<iter; ++t){
-            std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
-            // if (dpmm.sampleLabelsCollapsed())
-            //     break;
-            dpmm.sampleCoefficientsParameters();
-            // dpmm.sampleLabelsCollapsedParallel();
-            dpmm.sampleLabels();
-            dpmm.reorderAssignments();
-            dpmm.updateIndexLists();
-            std::cout << "Number of components: " << dpmm.K_ << std::endl;
-        }
-        z = dpmm.getLabels();
-        // logZ.push_back(z);
-        // logZ        = dpmm.logZ_;
-        // logNum      = dpmm.logNum_;
-        // logLogLik   = dpmm.logLogLik_;
-    }
-    else if (base==1){
         boost::random::uniform_int_distribution<> uni(0, 3);  
-        NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
+        NIWDIR<double> niwDir(sigma_0, mu_0, nu_0, kappa_0, rndGen);
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen);
         for (int t=1; t<iter+1; ++t)    {
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
@@ -153,23 +134,24 @@ int main(int argc, char **argv)
             }
             std::cout << "Number of components: " << dpmmDir.K_ << endl;
         }
-        
-        // NIW<double> H_NIW = * niwDir.NIW_ptr;  
-        // DPMM<NIW<double>> dpmm(dpmmDir.x_, dpmmDir.z_, dpmmDir.alpha_, H_NIW, dpmmDir.rndGen_);
-        // for (int t=0; t<0; ++t){
-        //     std::cout<<"------------ t="<<t+T<<" -------------"<<endl;
-        //     dpmm.sampleCoefficientsParameters();
-        //     dpmm.sampleLabels();
-        //     dpmm.reorderAssignments();
-        //     dpmm.updateIndexLists();
-        //     std::cout << "Number of components: " << dpmmDir.K_ << endl;
-        // }
-        // z           = dpmm.getLabels();     
+    }
 
-        // z           = dpmmDir.getLabels();
-        // logZ        = dpmmDir.logZ_;
-        // logNum      = dpmmDir.logNum_;
-        // logLogLik   = dpmmDir.logLogLik_;
+    else {
+        NIW<double> niw(sigma_0, mu_0, nu_0, kappa_0, rndGen, base);
+        DPMM<NIW<double>> dpmm(Data, init, alpha, niw, rndGen, base);
+        for (int t=0; t<iter; ++t){
+            std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
+            dpmm.sampleCoefficientsParameters();
+            dpmm.sampleLabels();
+            dpmm.reorderAssignments();
+            dpmm.updateIndexLists();
+            std::cout << "Number of components: " << dpmm.K_ << std::endl;
+        }
+        z = dpmm.getLabels();
+        // logZ.push_back(z);
+        // logZ        = dpmm.logZ_;
+        // logNum      = dpmm.logNum_;
+        // logLogLik   = dpmm.logLogLik_;
     }
 
 

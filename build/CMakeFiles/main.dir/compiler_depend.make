@@ -5440,12 +5440,11 @@ CMakeFiles/main.dir/niwDir.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/src/
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_time.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wchar.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wctype.h \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/karcher.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niw.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niwDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normal.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normalDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/niwDir.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/karcher.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/niw.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/niwDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/normal.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/normalDir.hpp \
   /opt/homebrew/Cellar/libomp/16.0.6/include/omp.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/__stddef_max_align_t.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/arm_bf16.h \
@@ -10285,15 +10284,15 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/spectral.cpp:
 
+/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/karcher.hpp:
+
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normalDir.cpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normal.cpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normal.cpp:
 
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niwDir.hpp:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/karcher.hpp:
+/Users/sunansun/Developer/DAMM-LPVDS/damm/include/karcher.hpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/niwDir.cpp:
 
@@ -10612,8 +10611,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /opt/homebrew/include/boost/predef/os/macos.h:
 
 /opt/homebrew/include/boost/program_options/options_description.hpp:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niw.hpp:
 
 /opt/homebrew/include/boost/type_traits/has_right_shift.hpp:
 
@@ -13576,8 +13573,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /opt/homebrew/include/boost/range/detail/extract_optional_type.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/sys/_types/_ino64_t.h:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/niwDir.cpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/sys/_types/_intptr_t.h:
 

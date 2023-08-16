@@ -10,10 +10,23 @@
 
 
 template<class T>
-NIW<T>::NIW(const MatrixXd &Sigma, 
-  const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen)
+NIW<T>::NIW(const MatrixXd &sigma, 
+  const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen, int base)
 : nu_(nu), kappa_(kappa), rndGen_(rndGen) 
 {
+  if (base == 1){
+    dim_ = mu.rows()/2;
+    mu_  = mu(seq(0, dim_-1), all);
+    sigma_ = sigma(seq(0, dim_-1), seq(0, dim_-1));
+  }
+
+  else if (base == 2){
+    dim_ = mu.rows();
+    mu_  = mu;
+    sigma_ = sigma;
+  }
+
+  
   // if (mu.rows()==4 ||  mu.rows()==6){
   //   dim_ = mu.rows()/2;
   //   muPos_ = mu(seq(0, dim_-1), all);
@@ -25,12 +38,15 @@ NIW<T>::NIW(const MatrixXd &Sigma,
   //   mu_    = muPos_;
   //   NIWDIR_ptr = std::make_shared<NIWDIR<T>>(muPos_, SigmaPos_, muDir_, SigmaDir_, nu_, kappa_, 0, rndGen_);
   // }
-  // else {
-    dim_ = mu.rows();
-    Sigma_ = Sigma;
-    mu_    = mu;
-  // }
 };
+
+
+template<class T>
+NIW<T>::NIW(const MatrixXd &sigma, 
+  const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen)
+:sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.rows()), rndGen_(rndGen) 
+{};
+
 
 
 
@@ -45,7 +61,7 @@ NIW<T> NIW<T>::posterior(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
   getSufficientStatistics(x_k);
   return NIW<T>(
-    Sigma_+Scatter_ + ((kappa_*count_)/(kappa_+count_))*(mean_-mu_)*(mean_-mu_).adjoint(), 
+    sigma_+scatter_ + ((kappa_*count_)/(kappa_+count_))*(mean_-mu_)*(mean_-mu_).adjoint(), 
     (kappa_*mu_+ count_*mean_)/(kappa_+count_),
     nu_+count_,
     kappa_+count_, rndGen_);
@@ -57,10 +73,8 @@ void NIW<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k)
 {
 	mean_ = x_k.colwise().mean();
   MatrixXd x_k_mean = x_k.rowwise() - mean_.transpose();
-  Scatter_ = x_k_mean.adjoint() * x_k_mean;
+  scatter_ = x_k_mean.adjoint() * x_k_mean;
 	count_ = x_k.rows();
-  // std::cout << mean_ << std::endl;
-  // std::cout << Scatter_  << std::endl;
 };
 
 
@@ -71,7 +85,7 @@ T NIW<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
   // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
   T doF = nu_ - dim_ + 1.;
-  Matrix<T,Dynamic,Dynamic> scaledSigma = Sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1.));   
+  Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim_+1.));   
   LLT<Matrix<T,Dynamic,Dynamic>> lltObj(scaledSigma);
   
   T logPredProb = boost::math::lgamma(0.5*(doF + dim_));
@@ -117,7 +131,7 @@ Normal<T> NIW<T>::sampleParameter()
   Matrix<T,Dynamic,Dynamic> sampledInvCov(dim_,dim_);
   Matrix<T,Dynamic,1> sampledMean(dim_);
 
-  MatrixXd inv_scale_matrix = Sigma_.inverse();
+  MatrixXd inv_scale_matrix = sigma_.inverse();
   LLT<Matrix<T,Dynamic,Dynamic> > lltObj(inv_scale_matrix);
   Matrix<T,Dynamic,Dynamic> cholFacotor = lltObj.matrixL();
 

@@ -17,6 +17,7 @@ template<typename T>
 class NIW
 {
     public:
+        NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen, int base);
         NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
         ~NIW();
 
@@ -36,7 +37,7 @@ class NIW
 
 
         // Hyperparameters
-        Matrix<T,Dynamic,Dynamic> Sigma_;
+        Matrix<T,Dynamic,Dynamic> sigma_;
         Matrix<T,Dynamic,1> mu_;
         T nu_,kappa_;
         uint32_t dim_;
@@ -48,7 +49,7 @@ class NIW
 
         
         // Sufficient statistics
-        Matrix<T,Dynamic,Dynamic> Scatter_;
+        Matrix<T,Dynamic,Dynamic> scatter_;
         Matrix<T,Dynamic,1> mean_;
         uint16_t count_;
 };
