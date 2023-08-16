@@ -34,17 +34,15 @@ class damm:
         ############################################################### 
         parser = argparse.ArgumentParser(
                             prog = 'Directionality-aware Mixture Model',
-                            description = 'Python interface with C++ source code')
+                            description = 'C++ Implementaion with Python Interface')
 
-        parser.add_argument('-b', '--base' , type=int, default=1  , help='Clustering option; 0: position; 1: position+directional')
-        parser.add_argument('-d', '--data' , type=int, default=10 , help='Dataset number, default=10')
+        parser.add_argument('-b', '--base' , type=int, default=0  , help='0:damm; 1:position; 2:position+directional')
         parser.add_argument('-i', '--init' , type=int, default=15 , help='Number of initial clusters, 0 is one cluster per data; default=15')
         parser.add_argument('-t', '--iter' , type=int, default=200, help='Number of iterations; default=200')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor; default=1')
 
         args = parser.parse_args()
         self.base               = args.base
-        self.data               = args.data
         self.init               = args.init
         self.iter               = args.iter
         self.alpha              = args.alpha
@@ -54,19 +52,23 @@ class damm:
         ###############################################################  
         if len(args_) != 1:
             raise Exception("Please provide input data to initialize a damm_class")
-        
         Data = args_[0]
-        self.Data = data_tools.normalize_vel(Data)              
-        write_csv(self.Data, os.path.join(self.log_path, "input.csv"))         
+        self.Data = data_tools.normalize_vel(Data)
+        self.num, self.dim = self.Data.shape             
 
 
         ###############################################################
         ####################### hyperparameters #######################
         ###############################################################  
+        mu_0            = np.zeros((self.dim, )) 
+        sigma_0 = 0.1 * np.eye(self.dim)
+        nu_0 = sigma_0.shape[0] + 3
+
         mu_0            = np.zeros((self.Data.shape[1], )) 
         mu_0[-1]        = 1                                        
         # sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
-        sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]))  
+        sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]))
+
         sigma_0[-1, -1] = 0.1                               
         lambda_0 = {
             "nu_0"      : sigma_0.shape[0] + 3,
@@ -81,18 +83,17 @@ class damm:
         ###############################################################
         ####################### perform damm ##########################
         ###############################################################  
-        args = ['time ' + os.path.join(self.file_path, "main"),
-                '-n {}'.format(self.Data.shape[0]),
-                '-m {}'.format(self.Data.shape[1]), 
-                '-t {}'.format(self.iter),
-                '-a {}'.format(self.alpha),
-                '--init {}'.format(self.init), 
-                '--base {}'.format(self.base),
-                '--log {}'.format(self.log_path),
-                '-p ' + ' '.join([str(p) for p in self.params])
+        command_line_args = ['time ' + os.path.join(self.file_path, "main"),
+                            '-t {}'.format(self.iter),
+                            '-a {}'.format(self.alpha),
+                            '--init {}'.format(self.init), 
+                            '--base {}'.format(self.base),
+                            '--log {}'.format(self.log_path),
+                            '-p ' + ' '.join([str(p) for p in self.params])
         ]
+        input_data  = f"{self.Data.shape[0]} {self.Data.shape[1]}\n{' '.join(map(str, self.Data.flatten()))}"
 
-        completed_process = subprocess.run(' '.join(args), shell=True)
+        completed_process = subprocess.run(' '.join(command_line_args), input=input_data, text=True, shell=True)
     
         return completed_process.returncode
 
@@ -100,9 +101,9 @@ class damm:
     def result(self, if_plot=True):
         Data = self.Data
 
-        logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
-        logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
-        logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
+        # logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
+        # logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
+        # logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
         assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
 
         _, _, param_dict        = data_tools.post_process(Data, assignment_array )

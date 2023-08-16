@@ -21,6 +21,20 @@ using namespace Eigen;
 
 int main(int argc, char **argv)
 {   
+    int num, dim;
+
+    std::cin >> num >> dim;
+
+    Eigen::MatrixXd Data(num, dim);
+    std::cout << num << dim << std::endl;
+
+    for (int i = 0; i < num; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            std::cin >> Data(i, j);
+        }
+    }
+
+
 
     /*---------------------------------------------------*/
     //------------------Arguments Parsing-----------------
@@ -36,8 +50,6 @@ int main(int argc, char **argv)
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help"                                 , "produce help message")
-        ("number,n"     , po::value<int>()      , "number of data")
-        ("dimension,m"  , po::value<int>()      , "dimension of data")
         ("iteration,t"  , po::value<int>()      , "number of iteration")
         ("init"         , po::value<int>()      , "number of initial clusters")
         ("base"         , po::value<int>()      , "Base type: 0 Euclidean, 1 Euclidean + directional")
@@ -72,16 +84,6 @@ int main(int argc, char **argv)
     assert(init_cluster != 0);
 
 
-    int num = 0;
-    if (vm.count("number")) num = vm["number"].as<int>();
-    assert(num != 0);
-
-
-    int dim = 0;
-    if (vm.count("number")) dim = vm["dimension"].as<int>();
-    assert(dim != 0);
-
-
     int base = 0;
     if(vm.count("base")) base = static_cast<uint64_t>(vm["base"].as<int>());
 
@@ -106,24 +108,24 @@ int main(int argc, char **argv)
     string logPath = "";
     if(vm.count("log")) logPath = vm["log"].as<string>();
 
-    string logPath_input = logPath + "input.csv";
-    ifstream  fin(logPath_input);
-    string line;
-    vector<vector<string> > parsedCsv;
-    while(getline(fin,line)){
-        stringstream lineStream(line);
-        string cell;
-        vector<string> parsedRow;
-        while(getline(lineStream,cell,','))  
-            parsedRow.push_back(cell);
-        parsedCsv.push_back(parsedRow);
-    }
-    fin.close();
+    // string logPath_input = logPath + "input.csv";
+    // ifstream  fin(logPath_input);
+    // string line;
+    // vector<vector<string> > parsedCsv;
+    // while(getline(fin,line)){
+    //     stringstream lineStream(line);
+    //     string cell;
+    //     vector<string> parsedRow;
+    //     while(getline(lineStream,cell,','))  
+    //         parsedRow.push_back(cell);
+    //     parsedCsv.push_back(parsedRow);
+    // }
+    // fin.close();
 
-    MatrixXd Data(num, dim);              
-    for (int i=0; i<num; ++i)
-        for (int j=0; j<dim; ++j)
-            Data(i, j) = stod(parsedCsv[i][j]);
+    // MatrixXd Data(num, dim);              
+    // for (int i=0; i<num; ++i)
+    //     for (int j=0; j<dim; ++j)
+    //         Data(i, j) = stod(parsedCsv[i][j]);
 
     
     /*---------------------------------------------------*/
