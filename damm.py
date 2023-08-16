@@ -4,14 +4,6 @@ import argparse, subprocess, os, sys, csv, json
 from damm.util import plot_tools, data_tools
 
 
-def write_csv(data, path):
-    N = data.shape[0]
-    with open(path, mode='w') as data_file:
-        data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        for n in range(N):
-            data_writer.writerow(data[n, :])
-
-
 def write_json(data, path):
     with open(path, "w") as json_file:
         json.dump(data, json_file, indent=4)
@@ -61,22 +53,12 @@ class damm:
         ####################### hyperparameters #######################
         ###############################################################  
         mu_0            = np.zeros((self.dim, )) 
-        sigma_0 = 0.1 * np.eye(self.dim)
-        nu_0 = sigma_0.shape[0] + 3
+        sigma_0         = 0.1 * np.eye(self.dim)
+        nu_0            = self.dim + 3
+        kappa_0         = 0.1
+        sigma_dir_0     = 1
 
-        mu_0            = np.zeros((self.Data.shape[1], )) 
-        mu_0[-1]        = 1                                        
-        # sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]/2) + 1)    
-        sigma_0         = 0.1 * np.eye(int(mu_0.shape[0]))
-
-        sigma_0[-1, -1] = 0.1                               
-        lambda_0 = {
-            "nu_0"      : sigma_0.shape[0] + 3,
-            "kappa_0"   : 0.1,
-            "mu_0"      : mu_0,
-            "sigma_0"   : sigma_0
-        }
-        self.params = np.r_[np.array([lambda_0['nu_0'], lambda_0['kappa_0']]), lambda_0['mu_0'].ravel(), lambda_0['sigma_0'].ravel()]
+        self.param = ' '.join(map(str, np.r_[sigma_dir_0, nu_0, kappa_0, mu_0.ravel(), sigma_0.ravel()]))
 
 
     def begin(self):
@@ -84,14 +66,13 @@ class damm:
         ####################### perform damm ##########################
         ###############################################################  
         command_line_args = ['time ' + os.path.join(self.file_path, "main"),
-                            '-t {}'.format(self.iter),
-                            '-a {}'.format(self.alpha),
-                            '--init {}'.format(self.init), 
                             '--base {}'.format(self.base),
-                            '--log {}'.format(self.log_path),
-                            '-p ' + ' '.join([str(p) for p in self.params])
+                            '--init {}'.format(self.init),
+                            '--iter {}'.format(self.iter),
+                            '--alpha {}'.format(self.alpha),
+                            '--log {}'.format(self.log_path)
         ]
-        input_data  = f"{self.Data.shape[0]} {self.Data.shape[1]}\n{' '.join(map(str, self.Data.flatten()))}"
+        input_data  = f"{self.num}\n{self.dim}\n{' '.join(map(str, self.Data.flatten()))}\n{self.param}"
 
         completed_process = subprocess.run(' '.join(command_line_args), input=input_data, text=True, shell=True)
     

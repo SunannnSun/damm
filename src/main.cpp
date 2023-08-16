@@ -13,29 +13,11 @@
 #include "dpmmDir.hpp"
 
 
-
 namespace po = boost::program_options;
-using namespace std;
-using namespace Eigen;
 
 
 int main(int argc, char **argv)
 {   
-    int num, dim;
-
-    std::cin >> num >> dim;
-
-    Eigen::MatrixXd Data(num, dim);
-    std::cout << num << dim << std::endl;
-
-    for (int i = 0; i < num; ++i) {
-        for (int j = 0; j < dim; ++j) {
-            std::cin >> Data(i, j);
-        }
-    }
-
-
-
     /*---------------------------------------------------*/
     //------------------Arguments Parsing-----------------
     /*---------------------------------------------------*/
@@ -46,88 +28,66 @@ int main(int argc, char **argv)
     boost::mt19937 rndGen(seed);
     
 
-    cout << "Hello Parallel World" << endl;
+    std::cout << "Hello Parallel World" << std::endl;
     po::options_description desc("Allowed options");
     desc.add_options()
-        ("help"                                 , "produce help message")
-        ("iteration,t"  , po::value<int>()      , "number of iteration")
-        ("init"         , po::value<int>()      , "number of initial clusters")
-        ("base"         , po::value<int>()      , "Base type: 0 Euclidean, 1 Euclidean + directional")
-        ("alpha,a"      , po::value<double>()   , "concentration value")
-        ("params,p"     , po::value< vector<double> >()->multitoken(), "hyperparameters")
-        ("log"          , po::value<string>()   , "path to log all the data")
+        ("base"         , po::value<int>()->required()      , "Base type: 0 damm, 1 pos, 2 pos+dir")
+        ("init"         , po::value<int>()->required()      , "number of initial clusters")
+        ("iter"         , po::value<int>()->required()      , "number of iteration")
+        ("alpha"        , po::value<double>()->required()   , "concentration value")
+        ("log"          , po::value<string>()->required()   , "path to log all the data")
     ;
 
-    
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);   
+    try {
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+    } catch (const po::error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
 
 
     if (vm.count("help")) {
-        cout << desc << "\n";
+        std::cout << desc << "\n";
         return 1;
     } 
 
 
-    int T = 0;
-    if (vm.count("iteration")) T = vm["iteration"].as<int>();
+    int T = vm["iter"].as<int>();
+    double alpha = vm["alpha"].as<double>();
+    int init_cluster = vm["init"].as<int>();
+    int base  = (vm["base"].as<int>());
+    string logPath  = vm["log"].as<string>();
 
 
-    double alpha = 0;
-    if(vm.count("alpha")) alpha = vm["alpha"].as<double>();
-    assert(alpha != 0);
+    /*---------------------------------------------------*/
+    //------------------Standard Input -------------------
+    /*---------------------------------------------------*/
+    int num, dim;
+    std::cin >> num >> dim;
 
-    
-    int init_cluster = 0;
-    if (vm.count("init")) init_cluster = vm["init"].as<int>();
-    assert(init_cluster != 0);
-
-
-    int base = 0;
-    if(vm.count("base")) base = static_cast<uint64_t>(vm["base"].as<int>());
-
-  
-    double nu, kappa;
-    VectorXd mu(dim);
-    // MatrixXd Sigma(dim/2+1, dim/2+1);  
-    MatrixXd Sigma(dim, dim);  
-
-    if(vm.count("params")){
-        vector<double> params = vm["params"].as< vector<double> >();
-        nu = params[0];
-        kappa = params[1];
-        for(int i=0; i<mu.rows(); ++i)
-            mu(i) = params[2+i];
-        for(int i=0; i<Sigma.rows(); ++i)
-            for(int j=0; j<Sigma.cols(); ++j)
-                Sigma(i,j) = params[2+mu.rows()+i*Sigma.cols()+j];
+    Eigen::MatrixXd Data(num, dim);
+    for (int i = 0; i < num; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            std::cin >> Data(i, j);
+        }
     }
 
+    double sigma_dir_0, nu, kappa;
+    std::cin >> sigma_dir_0 >> nu >> kappa; 
 
-    string logPath = "";
-    if(vm.count("log")) logPath = vm["log"].as<string>();
+    Eigen::VectorXd mu(dim);
+    for(int i=0; i < dim; ++i)
+        std::cin >> mu(i);
+        
+    Eigen::MatrixXd Sigma(dim, dim);  
+    for (int i = 0; i < dim; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            std::cin >> Sigma(i,j);
+        }
+    }
 
-    // string logPath_input = logPath + "input.csv";
-    // ifstream  fin(logPath_input);
-    // string line;
-    // vector<vector<string> > parsedCsv;
-    // while(getline(fin,line)){
-    //     stringstream lineStream(line);
-    //     string cell;
-    //     vector<string> parsedRow;
-    //     while(getline(lineStream,cell,','))  
-    //         parsedRow.push_back(cell);
-    //     parsedCsv.push_back(parsedRow);
-    // }
-    // fin.close();
-
-    // MatrixXd Data(num, dim);              
-    // for (int i=0; i<num; ++i)
-    //     for (int j=0; j<dim; ++j)
-    //         Data(i, j) = stod(parsedCsv[i][j]);
-
-    
     /*---------------------------------------------------*/
     //----------------------Sampler----------------------
     /*---------------------------------------------------*/
@@ -141,7 +101,7 @@ int main(int argc, char **argv)
         NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
         DPMM<NIW<double>> dpmm(Data, init_cluster, alpha, niw, rndGen);
         for (int t=0; t<T; ++t){
-            cout<<"------------ t="<<t<<" -------------"<<endl;
+            std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
             // if (dpmm.sampleLabelsCollapsed())
             //     break;
             dpmm.sampleCoefficientsParameters();
@@ -149,7 +109,7 @@ int main(int argc, char **argv)
             dpmm.sampleLabels();
             dpmm.reorderAssignments();
             dpmm.updateIndexLists();
-            cout << "Number of components: " << dpmm.K_ << endl;
+            std::cout << "Number of components: " << dpmm.K_ << std::endl;
         }
         z = dpmm.getLabels();
         logZ.push_back(z);
@@ -162,7 +122,7 @@ int main(int argc, char **argv)
         NIWDIR<double> niwDir(Sigma, mu, nu, kappa, rndGen);
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init_cluster, alpha, niwDir, rndGen);
         for (int t=1; t<T+1; ++t)    {
-            cout<<"------------ t="<<t<<" -------------"<<endl;
+            std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
             
             // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
             // for (int l=0; l<indexLists.size(); ++l) 
@@ -189,18 +149,18 @@ int main(int argc, char **argv)
                 dpmmDir.reorderAssignments();
                 dpmmDir.updateIndexLists();
             }
-            cout << "Number of components: " << dpmmDir.K_ << endl;
+            std::cout << "Number of components: " << dpmmDir.K_ << endl;
         }
         
         // NIW<double> H_NIW = * niwDir.NIW_ptr;  
         // DPMM<NIW<double>> dpmm(dpmmDir.x_, dpmmDir.z_, dpmmDir.alpha_, H_NIW, dpmmDir.rndGen_);
         // for (int t=0; t<0; ++t){
-        //     cout<<"------------ t="<<t+T<<" -------------"<<endl;
+        //     std::cout<<"------------ t="<<t+T<<" -------------"<<endl;
         //     dpmm.sampleCoefficientsParameters();
         //     dpmm.sampleLabels();
         //     dpmm.reorderAssignments();
         //     dpmm.updateIndexLists();
-        //     cout << "Number of components: " << dpmmDir.K_ << endl;
+        //     std::cout << "Number of components: " << dpmmDir.K_ << endl;
         // }
         // z           = dpmm.getLabels();     
 
