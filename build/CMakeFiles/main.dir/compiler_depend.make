@@ -1245,13 +1245,12 @@ CMakeFiles/main.dir/dpmmDir.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/src
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_time.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wchar.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wctype.h \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/dpmm.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/dpmmDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niw.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niwDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normal.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normalDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/dpmmDir.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/dpmm.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/dpmmDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/niw.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/niwDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/normal.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/normalDir.hpp \
   /opt/homebrew/Cellar/libomp/16.0.6/include/omp.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/__stddef_max_align_t.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/arm_bf16.h \
@@ -10292,6 +10291,8 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normal.cpp:
 
+/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niwDir.hpp:
+
 /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/karcher.hpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/niwDir.cpp:
@@ -10416,15 +10417,11 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/float.h:
 
+/opt/homebrew/include/boost/container_hash/is_contiguous_range.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/float.h:
+
 /opt/homebrew/opt/llvm/include/c++/v1/set:
-
-/opt/homebrew/opt/llvm/include/c++/v1/map:
-
-/opt/homebrew/opt/llvm/include/c++/v1/iomanip:
-
-/opt/homebrew/include/eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceGpu.h:
-
-/opt/homebrew/opt/llvm/include/c++/v1/fstream:
 
 /opt/homebrew/opt/llvm/include/c++/v1/__filesystem/u8path.h:
 
@@ -10455,6 +10452,10 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_time.h:
 
 /opt/homebrew/include/boost/utility/binary.hpp:
+
+/opt/homebrew/include/boost/mpl/aux_/integral_wrapper.hpp:
+
+/opt/homebrew/opt/llvm/include/c++/v1/typeindex:
 
 /opt/homebrew/include/boost/utility/base_from_member.hpp:
 
@@ -10612,9 +10613,9 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/include/boost/program_options/options_description.hpp:
 
-/opt/homebrew/include/boost/type_traits/has_right_shift.hpp:
-
 /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niw.hpp:
+
+/opt/homebrew/include/boost/type_traits/has_right_shift.hpp:
 
 /opt/homebrew/include/boost/type_traits/is_base_and_derived.hpp:
 
@@ -10954,10 +10955,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/include/boost/mpl/aux_/is_msvc_eti_arg.hpp:
 
-/opt/homebrew/opt/llvm/include/c++/v1/typeindex:
-
-/opt/homebrew/include/boost/mpl/aux_/integral_wrapper.hpp:
-
 /opt/homebrew/include/boost/mpl/aux_/config/nttp.hpp:
 
 /opt/homebrew/include/boost/mpl/aux_/has_tag.hpp:
@@ -11056,6 +11053,10 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/include/boost/lexical_cast/detail/converter_numeric.hpp:
 
+/opt/homebrew/include/eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceGpu.h:
+
+/opt/homebrew/opt/llvm/include/c++/v1/fstream:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/AvailabilityVersions.h:
 
 /opt/homebrew/include/boost/lexical_cast/detail/converter_lexical.hpp:
@@ -11144,10 +11145,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/include/boost/iterator/iterator_adaptor.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/float.h:
-
-/opt/homebrew/include/boost/container_hash/is_contiguous_range.hpp:
-
 /opt/homebrew/include/boost/random/uniform_int_distribution.hpp:
 
 /opt/homebrew/include/boost/preprocessor/repetition/enum_binary_params.hpp:
@@ -11187,18 +11184,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /opt/homebrew/include/boost/preprocessor/list/detail/limits/fold_right_256.hpp:
 
 /opt/homebrew/include/boost/array.hpp:
-
-/opt/homebrew/opt/llvm/include/c++/v1/__memory/allocate_at_least.h:
-
-/opt/homebrew/include/eigen3/Eigen/src/Core/StlIterators.h:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normalDir.hpp:
-
-/opt/homebrew/include/boost/config/detail/suffix.hpp:
-
-/opt/homebrew/include/boost/type_traits/is_base_of.hpp:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/dpmmDir.hpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/dpmmDir.cpp:
 
@@ -11578,6 +11563,8 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/opt/llvm/include/c++/v1/__type_traits/is_compound.h:
 
+/opt/homebrew/opt/llvm/include/c++/v1/iomanip:
+
 /opt/homebrew/opt/llvm/include/c++/v1/__bit_reference:
 
 /opt/homebrew/include/boost/type_traits/decay.hpp:
@@ -11856,8 +11843,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/opt/llvm/include/c++/v1/__iterator/distance.h:
 
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/dpmmDir.cpp:
-
 /opt/homebrew/include/eigen3/unsupported/Eigen/CXX11/src/Tensor/TensorForcedEval.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/sys/_types/_fd_zero.h:
@@ -11926,9 +11911,9 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/opt/llvm/include/c++/v1/__functional/pointer_to_binary_function.h:
 
-/Users/sunansun/Developer/DAMM-LPVDS/damm/src/niw.cpp:
-
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/errno.h:
+
+/Users/sunansun/Developer/DAMM-LPVDS/damm/src/niw.cpp:
 
 /opt/homebrew/include/boost/mp11/detail/mp_rename.hpp:
 
@@ -12123,8 +12108,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /opt/homebrew/opt/llvm/include/c++/v1/__algorithm/unique.h:
 
 /opt/homebrew/include/boost/mpl/aux_/config/preprocessor.hpp:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/dpmm.hpp:
 
 /opt/homebrew/opt/llvm/include/c++/v1/__chrono/high_resolution_clock.h:
 
@@ -12370,6 +12353,8 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/opt/llvm/include/c++/v1/__algorithm/ranges_is_partitioned.h:
 
+/opt/homebrew/opt/llvm/include/c++/v1/map:
+
 /opt/homebrew/include/eigen3/Eigen/src/LU/FullPivLU.h:
 
 /opt/homebrew/opt/llvm/include/c++/v1/__algorithm/ranges_is_heap_until.h:
@@ -12417,6 +12402,10 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /opt/homebrew/opt/llvm/include/c++/v1/chrono:
 
 /opt/homebrew/opt/llvm/include/c++/v1/__algorithm/ranges_equal_range.h:
+
+/opt/homebrew/include/boost/config/detail/suffix.hpp:
+
+/opt/homebrew/include/boost/type_traits/is_base_of.hpp:
 
 /opt/homebrew/opt/llvm/include/c++/v1/__chrono/convert_to_tm.h:
 
@@ -12874,8 +12863,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/include/eigen3/Eigen/src/Core/PartialReduxEvaluator.h:
 
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/niwDir.hpp:
-
 /opt/homebrew/include/eigen3/unsupported/Eigen/src/SpecialFunctions/BesselFunctionsBFloat16.h:
 
 /opt/homebrew/include/boost/type_traits/intrinsics.hpp:
@@ -13275,6 +13262,12 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /opt/homebrew/include/boost/mp11/detail/mp_with_index.hpp:
 
 /opt/homebrew/include/boost/config/user.hpp:
+
+/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normalDir.hpp:
+
+/opt/homebrew/opt/llvm/include/c++/v1/__memory/allocate_at_least.h:
+
+/opt/homebrew/include/eigen3/Eigen/src/Core/StlIterators.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/sys/_endian.h:
 

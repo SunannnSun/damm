@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse, subprocess, os, sys, csv, json
+import argparse, subprocess, os, sys, json
 from damm.util import plot_tools, data_tools
 
 
@@ -28,7 +28,7 @@ class damm:
                             prog = 'Directionality-aware Mixture Model',
                             description = 'C++ Implementaion with Python Interface')
 
-        parser.add_argument('-b', '--base' , type=int, default=0  , help='0:damm; 1:position; 2:position+directional')
+        parser.add_argument('-b', '--base' , type=int, default=0  , help='0 damm; 1 position; 2 position+directional')
         parser.add_argument('-i', '--init' , type=int, default=15 , help='Number of initial clusters, 0 is one cluster per data; default=15')
         parser.add_argument('-t', '--iter' , type=int, default=200, help='Number of iterations; default=200')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor; default=1')
@@ -80,31 +80,47 @@ class damm:
 
         
     def result(self, if_plot=True):
-        Data = self.Data
+        # Data = self.Data
 
         # logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
         # logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
         # logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
-        assignment_array = np.genfromtxt(os.path.join(self.log_path, "output.csv"   ), dtype=int,   delimiter=','  )
+        try:
+            with open(os.path.join(self.log_path, "assignment.bin"), "rb") as file:
+                assignment_bin = file.read()
+                assignment_arr = np.frombuffer(assignment_bin, dtype=np.int32).copy().reshape(self.num, )
+                if assignment_arr.min() != 0:
+                    raise ValueError("Invalid assignment array")
+                if not all(isinstance(value, np.int32) for value in assignment_arr):
+                    raise ValueError("Invalid assignment array")
+                self.assignment_arr = assignment_arr
+        except FileNotFoundError:
+            print("Error: assignment.bin not found.")
+            sys.exit()
+        except Exception as e:
+            print("Error:", e)
+            sys.exit()
 
-        _, _, param_dict        = data_tools.post_process(Data, assignment_array )
-        reg_assignment_array    = data_tools.regress(Data, param_dict)  
-        reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
+            
+                
+        # _, _, param_dict        = data_tools.post_process(Data, assignment_arr )
+        # reg_assignment_array    = data_tools.regress(Data, param_dict)  
+        # reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
 
-
+        reg_param_dict          = data_tools.extract_param(self.Data, self.assignment_arr)
         Priors = reg_param_dict["Priors"]
         Mu     = reg_param_dict["Mu"]
         Sigma  = reg_param_dict["Sigma"]
 
         if if_plot:
-            plot_tools.plot_results(Data, assignment_array    )
+            plot_tools.plot_results(self.Data, self.assignment_arr)
             # plot_tools.plot_results(Data, reg_assignment_array)
-            data_tools.computeBIC(Data, reg_param_dict)
+            # data_tools.computeBIC(Data, reg_param_dict)
             # plot_tools.animate_results(Data, logZ             )
 
-        np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
-        np.save(os.path.join(self.log_path, "Mu.npy"    ), Mu     )
-        np.save(os.path.join(self.log_path, "Sigma.npy" ), Sigma.T)
+        # np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
+        # np.save(os.path.join(self.log_path, "Mu.npy"    ), Mu     )
+        # np.save(os.path.join(self.log_path, "Sigma.npy" ), Sigma.T)
 
         json_output = {
             "name": "DAMM result",

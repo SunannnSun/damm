@@ -7,6 +7,7 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 ### Update
 
 8/16
+- return c++ outputs(assignment, etc) as memory binary file to improve efficiency
 - parse parameters for option 1, 2, 3
 - need to check the effects of kappa on clustering results
 - verify split/merge proposal

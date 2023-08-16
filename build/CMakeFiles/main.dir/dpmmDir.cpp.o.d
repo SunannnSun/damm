@@ -1,5 +1,5 @@
 CMakeFiles/main.dir/dpmmDir.cpp.o: \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/dpmmDir.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/dpmmDir.cpp \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/iostream \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/__assert \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/__config \
@@ -862,7 +862,7 @@ CMakeFiles/main.dir/dpmmDir.cpp.o: \
   /opt/homebrew/include/boost/core/bit.hpp \
   /opt/homebrew/include/boost/core/enable_if.hpp \
   /opt/homebrew/include/boost/random/variate_generator.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/dpmm.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/dpmm.hpp \
   /opt/homebrew/include/boost/random/mersenne_twister.hpp \
   /opt/homebrew/include/boost/random/detail/seed.hpp \
   /opt/homebrew/include/boost/utility/enable_if.hpp \
@@ -1074,8 +1074,8 @@ CMakeFiles/main.dir/dpmmDir.cpp.o: \
   /opt/homebrew/include/eigen3/Eigen/src/Eigenvalues/GeneralizedEigenSolver.h \
   /opt/homebrew/include/eigen3/Eigen/src/Eigenvalues/./RealQZ.h \
   /opt/homebrew/include/eigen3/Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normal.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/dpmmDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normalDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/niw.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/niwDir.hpp
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normal.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/dpmmDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normalDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/niw.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/niwDir.hpp

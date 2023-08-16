@@ -59,12 +59,13 @@ int main(int argc, char **argv)
     int init = vm["init"].as<int>();
     int iter = vm["iter"].as<int>();
     double alpha = vm["alpha"].as<double>();
-    string logPath = vm["log"].as<string>();
+    std::filesystem::path logPath = vm["log"].as<string>();
 
 
     /*---------------------------------------------------*/
     //------------------Standard Input -------------------
     /*---------------------------------------------------*/
+
     int num, dim;
     std::cin >> num >> dim;
 
@@ -92,11 +93,11 @@ int main(int argc, char **argv)
     /*---------------------------------------------------*/
     //----------------------Sampler----------------------
     /*---------------------------------------------------*/
+    Eigen::Matrix<std::int32_t, Eigen::Dynamic, 1> z;
 
-    VectorXi z;
-    vector<VectorXi> logZ;
-    vector<int> logNum;
-    vector<double> logLogLik;
+    // vector<VectorXi> logZ;
+    // vector<int> logNum;
+    // vector<double> logLogLik;
 
     if (base==0)  {
         NIW<double> niw(Sigma, mu, nu, kappa, rndGen);
@@ -113,10 +114,10 @@ int main(int argc, char **argv)
             std::cout << "Number of components: " << dpmm.K_ << std::endl;
         }
         z = dpmm.getLabels();
-        logZ.push_back(z);
-        logZ        = dpmm.logZ_;
-        logNum      = dpmm.logNum_;
-        logLogLik   = dpmm.logLogLik_;
+        // logZ.push_back(z);
+        // logZ        = dpmm.logZ_;
+        // logNum      = dpmm.logNum_;
+        // logLogLik   = dpmm.logLogLik_;
     }
     else if (base==1){
         boost::random::uniform_int_distribution<> uni(0, 3);  
@@ -165,10 +166,10 @@ int main(int argc, char **argv)
         // }
         // z           = dpmm.getLabels();     
 
-        z           = dpmmDir.getLabels();
-        logZ        = dpmmDir.logZ_;
-        logNum      = dpmmDir.logNum_;
-        logLogLik   = dpmmDir.logLogLik_;
+        // z           = dpmmDir.getLabels();
+        // logZ        = dpmmDir.logZ_;
+        // logNum      = dpmmDir.logNum_;
+        // logLogLik   = dpmmDir.logLogLik_;
     }
 
 
@@ -178,36 +179,34 @@ int main(int argc, char **argv)
     /*---------------------------------------------------*/
 
 
-
-    string logPath_output = logPath + "output.csv";
-    ofstream fout(logPath_output.data(),ofstream::out);
-    for (int i=0; i < z.size(); ++i)
-        fout << z[i] << endl;
-    fout.close();
-
-    string logPath_logNum = logPath + "logNum.csv";
-    ofstream fout_logNum(logPath_logNum.data(),ofstream::out);
-    for (int i=0; i < logNum.size(); ++i)
-        fout_logNum << logNum[i] << endl;
-    fout_logNum.close();
-
-    string logPath_logLogLik = logPath + "logLogLik.csv";
-    ofstream fout_logLogLik(logPath_logLogLik.data(),ofstream::out);
-    for (int i=0; i < logLogLik.size(); ++i)
-        fout_logLogLik << logLogLik[i] << endl;
-    fout_logLogLik.close();
+    std::ofstream outputFile(logPath / "assignment.bin", std::ios::binary);
+    outputFile.write(reinterpret_cast<const char*>(z.data()), z.size() * sizeof(std::int32_t));
+    outputFile.close();
 
 
-    ofstream outputFile(logPath + "logZ.csv");
-    if (outputFile.is_open()) {
-        for (const auto& vector : logZ) {
-            outputFile << vector.transpose() << "\n";
-        }
-        outputFile.close();
-        std::cout << "Data exported successfully.\n";
-    } else {
-        std::cout << "Failed to open the file.\n";
-    }
+    // string logPath_logNum = logPath + "logNum.csv";
+    // ofstream fout_logNum(logPath_logNum.data(),ofstream::out);
+    // for (int i=0; i < logNum.size(); ++i)
+    //     fout_logNum << logNum[i] << endl;
+    // fout_logNum.close();
+
+    // string logPath_logLogLik = logPath + "logLogLik.csv";
+    // ofstream fout_logLogLik(logPath_logLogLik.data(),ofstream::out);
+    // for (int i=0; i < logLogLik.size(); ++i)
+    //     fout_logLogLik << logLogLik[i] << endl;
+    // fout_logLogLik.close();
+
+
+    // ofstream outputFile(logPath + "logZ.csv");
+    // if (outputFile.is_open()) {
+    //     for (const auto& vector : logZ) {
+    //         outputFile << vector.transpose() << "\n";
+    //     }
+    //     outputFile.close();
+    //     std::cout << "Data exported successfully.\n";
+    // } else {
+    //     std::cout << "Failed to open the file.\n";
+    // }
 
         
     return 0;
