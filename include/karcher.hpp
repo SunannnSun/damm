@@ -24,7 +24,6 @@ double unsigned_angle(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynamic, 1>&y
   double angle = std::acos(std::min(std::max(cosAngle, -1.0), 1.0));
 
   if (std::isnan(angle)) {
-      // std::cout << x << std::endl << y  << std::endl << angle << std::endl;
       throw std::runtime_error("NaN angle value");
   }
 
@@ -44,8 +43,8 @@ Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynami
    * @param v is the point y mapped to tangent space defined by x as the point of tangency; i.e. log_x(y)
    * 
    * @note v gives the corrdinates starting at point x
-   * when x and y are in opposite direction, log map returns zero; hence we manually add perturbation
-   * 
+   * when x and y are in opposite direction (rarely happens), log map returns zero; hence we manually add perturbation
+   * when x and y are equal (tanDir.norm()=0), return tanDir = (0, 0, 0)
    */
 
   double angle;
@@ -56,13 +55,12 @@ Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynami
       exit(0);
   }
   
-  if (angle == M_PI)
-    angle = M_PI-0.0001;
   VectorXd tanDir = y - x.dot(y) * x;
-
   if (tanDir.norm() == 0)
     return tanDir;
 
+  if (angle == M_PI)
+    angle = M_PI-0.0001;
   VectorXd v = angle * tanDir / tanDir.norm();
 
   return v;
@@ -89,28 +87,24 @@ Matrix<T,Dynamic, 1> rie_exp(const Matrix<T,Dynamic, 1>&x, Matrix<T,Dynamic, 1>&
 
 
 template<typename T>
-Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& x_k)
+Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& xDir_k)
 {
   /**
-   * This function maps a point y to the tangent space defined by x
-   *
-   * @param xTan is the point of tangency that is initalized randomly, updated, and eventually converged to Karcher mean
-   * @param xDir is the directional part of x_k
-   * @param sumDir is the summation of the logrithmic map of all x_k w.r.t. xTan
+   * This function computes the Fréchet mean in unit sphere
+   * @param xDir_k denotes all the directional vectors belong to k_th group
+   * @param xTan is the point of tangency that is randomly initalized, updated, and eventually converged to the mean
+   * @param xDir is the directional part of xDir_k
+   * @param sumDir is the summation of the logrithmic map of all xDir_k w.r.t. xTan
    * @param meanDir is the point that awaits be mapped back to sphere as the new xTan
    * 
    */
 
-
-  // std::cout << "HIIIIIIIIIIIIIIIIIIII" << x_k.rows() << std::endl;
-
-  int dim = x_k.cols()/2;
-  int num = x_k.rows();
+  int dim = xDir_k.cols();
+  int num = xDir_k.rows();
 
   float tolerance = 0.01;
 
-  // T angle;
-  Matrix<T, Dynamic, 1> xTan = x_k(0, seq(dim, last)).transpose();
+  Matrix<T, Dynamic, 1> xTan = xDir_k(0, all).transpose();
   Matrix<T, Dynamic, 1> xDir(dim);
   Matrix<T, Dynamic, 1> sumDir(dim);
   Matrix<T, Dynamic, 1> meanDir(dim);
@@ -118,51 +112,40 @@ Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& x_k)
 
   while (1)  { 
     sumDir.setZero();
-    // std::cout <<sumDir << std::endl;
 
     for (int i=0; i<num; ++i){
-      xDir = x_k(i, seq(dim, last)).transpose();
-      // std::cout <<sumDir << std::endl;
-      // std::cout << rie_log(xTan, xDir) << "sumDIR" << std::endl;
-
+      xDir = xDir_k(i, all).transpose();
       sumDir = sumDir + rie_log(xTan, xDir);
-      // std::cout <<sumDir << std::endl;
-
-      // std::cout << sumDir + rie_log(xTan, xDir) << "sumDIR" << std::endl;
     }
 
-
     meanDir = sumDir / num;
-
     if (meanDir.norm() < tolerance)
       return xTan;
 
-
     xTan = rie_exp(xTan, meanDir);
-
   }
 };
 
 
 
 template<typename T>
-T karcherScatter(const Matrix<T,Dynamic, Dynamic>& x_k)
+T karcherScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k)
 {
-  return karcherScatter(x_k, karcherMean(x_k));
+  return karcherScatter(xDir_k, karcherMean(xDir_k));
 }
 
 
 template<typename T>
-T karcherScatter(const Matrix<T,Dynamic, Dynamic>& x_k, Matrix<T, Dynamic, 1> mean)
+T karcherScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k, Matrix<T, Dynamic, 1> mean)
 {
-  int dim = x_k.cols()/2;
-  int num = x_k.rows();
+  int dim = xDir_k.cols();
+  int num = xDir_k.rows();
   T scatter = 0;
-  Matrix<T, Dynamic, 1> x_i_dir(dim);
+  Matrix<T, Dynamic, 1> xDir_i(dim);
 
   for (int i = 0; i < num; ++i) {
-    x_i_dir = x_k(i, seq(dim, last)).transpose();
-    scatter = scatter + pow(rie_log(mean, x_i_dir).norm(), 2); //squared
+    xDir_i = xDir_k(i, all).transpose();
+    scatter = scatter + pow(rie_log(mean, xDir_i).norm(), 2); 
   }
   return scatter;
 }

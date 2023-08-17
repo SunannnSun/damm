@@ -24,14 +24,13 @@ const Matrix<T,Dynamic,1> &meanDir, T covDir, boost::mt19937 &rndGen)
 template<class T>
 T NormalDir<T>::logProb(const Matrix<T,Dynamic,1> &x_i)
 { 
-  Matrix<T,Dynamic,1> xDir(dim_);
-  xDir = x_i(seq(dim_, last));
+  Matrix<T,Dynamic,1> xDir_i = x_i(seq(dim_, last));
   Matrix<T,Dynamic,1> xHat(dim_+1);
-  xHat.setZero();
   xHat(seq(0, dim_-1)) = x_i(seq(0, dim_-1));
-  // xHat(dim_) = (rie_log(meanDir_, xDir)).norm();
+  xHat(dim_) = (rie_log(meanDir_, xDir_i)).norm();
+  
   // xHat(dim_) = unsigned_angle(xDir, meanDir_);
-  xHat(dim_) = 0;
+  // xHat(dim_) = 0;
 
   
 

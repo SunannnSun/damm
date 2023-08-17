@@ -5,6 +5,11 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 --- 
 
 ### Update
+8/17
+- check computation of the empirical scatter
+- line 68 in niwDir.cpp: NOTE ON Posterior SIGMA DIRRECTION
+- line 127 in niwDir.cpp, ficed covDir or drawn from posterior
+
 
 8/16
 - ~~return c++ outputs(assignment, etc) as memory binary file to improve efficiency~~

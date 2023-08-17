@@ -40,15 +40,18 @@ NIWDIR<T>::~NIWDIR()
 template<typename T>
 void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
-  meanPos_ = x_k(all, (seq(0, dim_-1))).colwise().mean().transpose();  
+  const MatrixXd xPos_k = x_k(all, seq(0, dim_-1));
+  const MatrixXd xDir_k = x_k(all, seq(dim_, last));
 
-  meanDir_ = karcherMean(x_k);
-
+  meanPos_ = xPos_k.colwise().mean().transpose();  
   Matrix<T,Dynamic, Dynamic> x_k_mean; 
-  x_k_mean = x_k.rowwise() - x_k.colwise().mean(); 
-  scatterPos_ = (x_k_mean.adjoint() * x_k_mean)(seq(0, dim_-1), seq(0, dim_-1)); 
-  // scatterDir_ = karcherScatter(x_k, meanDir_); 
-  scatterDir_ = 0; 
+  x_k_mean = xPos_k.rowwise() - meanPos_.transpose(); 
+  scatterPos_ = (x_k_mean.adjoint() * x_k_mean); 
+
+
+  meanDir_ = karcherMean(xDir_k);
+  scatterDir_ = karcherScatter(xDir_k, meanDir_); 
+
   count_ = x_k.rows();
 };
 
@@ -120,7 +123,8 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
   // if (covDir > 0.2) 
   //   covDir = 0.07;
-  covDir = std::min(covDir, 0.1);  
+  // covDir = std::min(covDir, 0.1);  
+  covDir = 0.5;
 
   // if (dim==2)
   // {
