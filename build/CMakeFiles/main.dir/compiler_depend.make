@@ -8027,9 +8027,8 @@ CMakeFiles/main.dir/normalDir.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/s
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_time.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wchar.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wctype.h \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/karcher.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normalDir.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normalDir.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/karcher.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/normalDir.hpp \
   /opt/homebrew/Cellar/libomp/16.0.6/include/omp.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/__stddef_max_align_t.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/arm_bf16.h \
@@ -10283,8 +10282,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/spectral.cpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/spectral.cpp:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/karcher.hpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normalDir.cpp:
 
@@ -13260,8 +13257,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /opt/homebrew/include/boost/config/user.hpp:
 
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normalDir.hpp:
-
 /opt/homebrew/opt/llvm/include/c++/v1/__memory/allocate_at_least.h:
 
 /opt/homebrew/include/eigen3/Eigen/src/Core/StlIterators.h:
@@ -13795,8 +13790,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /opt/homebrew/opt/llvm/include/c++/v1/__type_traits/is_trivially_constructible.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/arm/endian.h:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normalDir.cpp:
 
 /opt/homebrew/opt/llvm/include/c++/v1/__concepts/constructible.h:
 

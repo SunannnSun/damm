@@ -94,16 +94,21 @@ def normalize_vel(data):
     Returns:
         norm_data       : (N, 2M) data array contains both position and normalized velocity (i.e., directions)
     """
+    
+    data = data.T
+    M = int(data.shape[1]/2)
 
-    M = int(data.shape[0]/2)
-    vel_data = data[M:, :]
-    vel_norm = np.linalg.norm(vel_data, axis=0)
-    normalized_vel_data = np.divide(vel_data, vel_norm)
+    vel_data = data[:, M:]
+    vel_norm = np.linalg.norm(vel_data, axis=1)
 
-    norm_data = np.hstack((data[0:M, :].T, normalized_vel_data.T))
+    vel_data = vel_data[vel_norm!=0]
+    pos_data = data[vel_norm!=0, 0:M]
+    vel_norm = vel_norm[vel_norm!=0].reshape(-1, 1)
 
-    norm_data = norm_data[np.logical_not(np.isnan(norm_data[:, -1]))]        
+    normalized_vel_data = vel_data / vel_norm
+    norm_data = np.hstack((pos_data, normalized_vel_data))
 
+   
     return norm_data
 
 

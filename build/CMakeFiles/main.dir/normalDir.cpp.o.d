@@ -1,6 +1,6 @@
 CMakeFiles/main.dir/normalDir.cpp.o: \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normalDir.cpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normalDir.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normalDir.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normalDir.hpp \
   /opt/homebrew/include/eigen3/Eigen/Dense \
   /opt/homebrew/include/eigen3/Eigen/Core \
   /opt/homebrew/include/eigen3/Eigen/src/Core/util/DisableStupidWarnings.h \
@@ -1065,5 +1065,5 @@ CMakeFiles/main.dir/normalDir.cpp.o: \
   /opt/homebrew/include/boost/random/detail/generator_bits.hpp \
   /opt/homebrew/include/boost/random/detail/generator_seed_seq.hpp \
   /opt/homebrew/include/boost/random/detail/polynomial.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/karcher.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/karcher.hpp \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/iostream

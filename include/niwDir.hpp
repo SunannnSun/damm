@@ -15,10 +15,10 @@ template<typename T>
 class NIWDIR
 {
     public:
-        NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa,
+        NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, T sigmaDir,
         boost::mt19937 &rndGen);
-        NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynamic>& SigmaPos, 
-        const Matrix<T,Dynamic,1>& muDir, T SigmaDir, T nu, T kappa, T count, boost::mt19937 &rndGen);        
+        NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, 
+        const Matrix<T,Dynamic,1>& muDir, T count, boost::mt19937 &rndGen);        
         ~NIWDIR();
 
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
@@ -36,19 +36,24 @@ class NIWDIR
 
 
         // Hyperparameters remain fixed once initialized
+        Matrix<T,Dynamic,Dynamic> sigma_;
+        Matrix<T,Dynamic,1> mu_;
+
         Matrix<T,Dynamic,Dynamic> SigmaPos_;
         T SigmaDir_;
-        Matrix<T,Dynamic,Dynamic> Sigma_;
-        Matrix<T,Dynamic,1> muPos_;
+        // Matrix<T,Dynamic,1> muPos_;
         Matrix<T,Dynamic,1> muDir_;
-        Matrix<T,Dynamic,1> mu_;
+
+        T sigmaDir_;
+        Matrix<T,Dynamic,Dynamic> sigmaPos_;
+        Matrix<T,Dynamic,1> muPos_;
         T nu_,kappa_;
         uint32_t dim_;
 
 
         // Sufficient statistics changes everytime when posterior method is called
-        Matrix<T,Dynamic,Dynamic> ScatterPos_;
-        T ScatterDir_;
+        Matrix<T,Dynamic,Dynamic> scatterPos_;
+        T scatterDir_;
         Matrix<T,Dynamic,1> meanPos_;
         Matrix<T,Dynamic,1> meanDir_;
         uint16_t count_;

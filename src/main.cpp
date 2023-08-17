@@ -77,8 +77,8 @@ int main(int argc, char **argv)
         }
     }
 
-    double sigma_dir_0, nu_0, kappa_0;
-    std::cin >> sigma_dir_0 >> nu_0 >> kappa_0; 
+    double sigmaDir_0, nu_0, kappa_0;
+    std::cin >> sigmaDir_0 >> nu_0 >> kappa_0; 
 
     Eigen::VectorXd mu_0(dim);
     for(int i=0; i < dim; ++i)
@@ -102,38 +102,47 @@ int main(int argc, char **argv)
 
     if (base==0)  {
         boost::random::uniform_int_distribution<> uni(0, 3);  
-        NIWDIR<double> niwDir(sigma_0, mu_0, nu_0, kappa_0, rndGen);
+        NIWDIR<double> niwDir(sigma_0, mu_0, nu_0, kappa_0, sigmaDir_0, rndGen);
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen);
         for (int t=1; t<iter+1; ++t)    {
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
-            
-            // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-            // for (int l=0; l<indexLists.size(); ++l) 
-            //     dpmmDir.splitProposal(indexLists[l]);
-            // dpmmDir.updateIndexLists();
-            if (t%30==0 && t> 15 && t<150){
-                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                for (int l=0; l<indexLists.size(); ++l) 
-                    dpmmDir.splitProposal(indexLists[l]);
-                dpmmDir.updateIndexLists();
-            }
-            else if (t%3==0 && t>30 && t<175){ 
-                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
-                for (int i =0; i < mergeIndexLists.size(); ++i){
-                    if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
-                        break;
-                }
-                dpmmDir.updateIndexLists();
-            }
-            else{
-                dpmmDir.sampleCoefficientsParameters();
-                dpmmDir.sampleLabels();
-                dpmmDir.reorderAssignments();
-                dpmmDir.updateIndexLists();
-            }
             std::cout << "Number of components: " << dpmmDir.K_ << endl;
+            
+            dpmmDir.sampleCoefficientsParameters();
+            dpmmDir.sampleLabels();
+            dpmmDir.reorderAssignments();
+            dpmmDir.updateIndexLists();
+
+            
+        //     // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+        //     // for (int l=0; l<indexLists.size(); ++l) 
+        //     //     dpmmDir.splitProposal(indexLists[l]);
+        //     // dpmmDir.updateIndexLists();
+        //     if (t%30==0 && t> 15 && t<150){
+        //         vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+        //         for (int l=0; l<indexLists.size(); ++l) 
+        //             dpmmDir.splitProposal(indexLists[l]);
+        //         dpmmDir.updateIndexLists();
+        //     }
+        //     else if (t%3==0 && t>30 && t<175){ 
+        //         vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+        //         vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
+        //         for (int i =0; i < mergeIndexLists.size(); ++i){
+        //             if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
+        //                 break;
+        //         }
+        //         dpmmDir.updateIndexLists();
+        //     }
+        //     else{
+            // dpmmDir.sampleCoefficientsParameters();
+            // dpmmDir.sampleLabels();
+            // dpmmDir.reorderAssignments();
+            // dpmmDir.updateIndexLists();
+        //     }
+            // std::cout << "Number of components: " << dpmmDir.K_ << endl;
         }
+        z = dpmmDir.getLabels();
+
     }
 
     else {

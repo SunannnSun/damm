@@ -14,14 +14,22 @@
 
 template <class dist_t> 
 DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows())
+: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
+  dim_   = x.cols()/2;
+  x_     = x;
+  xPos_  = x_(all, seq(0, dim_-1));
+  xDir_  = x_(all, seq(dim_, last));
+
+
   VectorXi z(x.rows());
 
-  if (init_cluster == 1) z.setZero();
+  if (init_cluster == 1) 
+    z.setZero();
   else if (init_cluster > 1)  {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
-    for (int ii=0; ii<N_; ++ii) z[ii] = uni_(rndGen_); 
+    for (int ii=0; ii<N_; ++ii) 
+      z[ii] = uni_(rndGen_); 
   }
   else  { 
     cout<< "Number of initial clusters not supported yet" << endl;

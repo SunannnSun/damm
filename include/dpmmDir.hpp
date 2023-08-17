@@ -58,7 +58,11 @@ class DPMMDIR
     boost::mt19937 rndGen_;
 
     //class initializer(dependent on data)
+    int dim_;
     MatrixXd x_;
+    MatrixXd xPos_;
+    MatrixXd xDir_;
+
     VectorXi z_;  //membership vector
     VectorXd Pi_; //coefficient vector
     VectorXi index_; //index vector

@@ -23,9 +23,10 @@ class NormalDir
         // parameters
         Matrix<T,Dynamic,1> meanPos_;
         Matrix<T,Dynamic,1> meanDir_;
-        Matrix<T,Dynamic,1> mean_;
         Matrix<T,Dynamic,Dynamic> covPos_;
         T covDir_;
-        Matrix<T,Dynamic,Dynamic> cov_;
+
+        Matrix<T,Dynamic,1> meanHat_;
+        Matrix<T,Dynamic,Dynamic> covHat_;
         uint32_t dim_;
 };

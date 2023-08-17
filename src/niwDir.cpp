@@ -10,47 +10,24 @@
 
 template<typename T>
 NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, 
-  const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, boost::mt19937 &rndGen):
-  Sigma_(sigma), mu_(mu), nu_(nu), kappa_(kappa), dim_(mu.size()), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
+  const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, T sigmaDir, boost::mt19937 &rndGen):
+  nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
 {
-  if (mu.rows()==4){
-    muPos_ = mu_(seq(0, 1));
-    SigmaPos_ = Sigma_(seq(0, 1), seq(0, 1));
-    muDir_ = mu_(seq(2, 3));
-    SigmaDir_ = Sigma_(2, 2);
-  }
-  else if (mu.rows()==6){
-    muPos_ = mu_(seq(0, 2));
-    SigmaPos_ = Sigma_(seq(0, 2), seq(0, 2));
-    muDir_ = mu_(seq(3, 5));
-    SigmaDir_ = Sigma_(3, 3);
-  }
-  NIW_ptr = std::make_shared<NIW<T>>(SigmaPos_, muPos_, nu_, kappa_, rndGen_);
+  dim_ = mu.rows()/2;
+  muPos_  = mu(seq(0, dim_-1), all);
+  sigmaPos_ = sigma(seq(0, dim_-1), seq(0, dim_-1));
+
+
+  // NIW_ptr = std::make_shared<NIW<T>>(sigmaPos_, muPos_, nu_, kappa_, rndGen_);
 };
 
 
 
 template<typename T>
-NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,1>& muPos, const Matrix<T,Dynamic,Dynamic>& SigmaPos,  
-  const Matrix<T,Dynamic,1>& muDir, T SigmaDir,
-  T nu, T kappa, T count, boost::mt19937 &rndGen):
-  SigmaPos_(SigmaPos), SigmaDir_(SigmaDir), muPos_(muPos), muDir_(muDir), nu_(nu), kappa_(kappa), count_(count), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
-{
-  if (SigmaPos.cols()==2) {
-    Sigma_.setZero(3, 3);
-    Sigma_(seq(0,1), seq(0,1)) = SigmaPos_;
-    Sigma_(2, 2) = SigmaDir_;
-    mu_.setZero(3);
-    mu_(seq(0,1)) = muPos_;
-  }
-  else if (SigmaPos.cols()==3) {
-    Sigma_.setZero(4, 4);
-    Sigma_(seq(0,2), seq(0,2)) = SigmaPos_;
-    Sigma_(3, 3) = SigmaDir_;
-    mu_.setZero(4);
-    mu_(seq(0,2)) = muPos_;
-  }
-};
+NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, const Matrix<T,Dynamic,1>& muDir, 
+  T count, boost::mt19937 &rndGen):
+  sigmaPos_(sigmaPos), muPos_(muPos), nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), muDir_(muDir), count_(count), dim_(muPos_.rows()), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
+{};
 
 
 
@@ -63,17 +40,15 @@ NIWDIR<T>::~NIWDIR()
 template<typename T>
 void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
-  int pos_dim;
-  if (x_k.cols()==4) pos_dim=1;
-  else if (x_k.cols()==6) pos_dim=2;
+  meanPos_ = x_k(all, (seq(0, dim_-1))).colwise().mean().transpose();  
 
   meanDir_ = karcherMean(x_k);
-  meanPos_ = x_k(all, (seq(0, pos_dim))).colwise().mean().transpose();  
 
   Matrix<T,Dynamic, Dynamic> x_k_mean; 
   x_k_mean = x_k.rowwise() - x_k.colwise().mean(); 
-  ScatterPos_ = (x_k_mean.adjoint() * x_k_mean)(seq(0, pos_dim), seq(0, pos_dim)); 
-  ScatterDir_ = karcherScatter(x_k, meanDir_); 
+  scatterPos_ = (x_k_mean.adjoint() * x_k_mean)(seq(0, dim_-1), seq(0, dim_-1)); 
+  // scatterDir_ = karcherScatter(x_k, meanDir_); 
+  scatterDir_ = 0; 
   count_ = x_k.rows();
 };
 
@@ -83,14 +58,15 @@ NIWDIR<T> NIWDIR<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
   getSufficientStatistics(x_k);
   return NIWDIR<T>(
+    sigmaPos_+scatterPos_ + ((kappa_*count_)/(kappa_+count_))*(meanPos_-muPos_)*(meanPos_-muPos_).transpose(),
     (kappa_*muPos_+ count_*meanPos_)/(kappa_+count_),
-    SigmaPos_+ScatterPos_ + ((kappa_*count_)/(kappa_+count_))*(meanPos_-muPos_)*(meanPos_-muPos_).transpose(),
-    meanDir_,
-    // SigmaDir_,
-
-    SigmaDir_+ScatterDir_ + ((kappa_*count_)/(kappa_+count_))*pow(rie_log(meanDir_, muDir_).norm(), 2),
     nu_+count_,
     kappa_+count_,
+    // NOTE ON Posterior SIGMA DIRRECTION
+    // sigmaDir_+scatterDir_ + ((kappa_*count_)/(kappa_+count_))*pow(rie_log(meanDir_, muDir_).norm(), 2),
+    sigmaDir_+scatterDir_ ,
+    meanDir_,
+
     count_, 
     rndGen_);
 };
@@ -107,26 +83,22 @@ NormalDir<T> NIWDIR<T>::samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic
 template<class T>
 NormalDir<T> NIWDIR<T>::sampleParameter()
 {
-
-  int dim = SigmaPos_.cols();
-
-
-  Matrix<T,Dynamic,1> meanPos(dim);
-  Matrix<T,Dynamic,Dynamic> covPos(dim, dim);
-  Matrix<T,Dynamic,1> meanDir(dim);
+  Matrix<T,Dynamic,1> meanPos(dim_);
+  Matrix<T,Dynamic,Dynamic> covPos(dim_, dim_);
+  Matrix<T,Dynamic,1> meanDir(dim_);
   T covDir;
 
 
-  LLT<Matrix<T,Dynamic,Dynamic> > lltObj(SigmaPos_);
+  LLT<Matrix<T,Dynamic,Dynamic> > lltObj(sigmaPos_);
   Matrix<T,Dynamic,Dynamic> cholFacotor = lltObj.matrixL();
 
-  Matrix<T,Dynamic,Dynamic> matrixA(dim, dim);
+  Matrix<T,Dynamic,Dynamic> matrixA(dim_, dim_);
   matrixA.setZero();
   boost::random::normal_distribution<> gauss_;
-  for (uint32_t i=0; i<dim; ++i)  {
+  for (uint32_t i=0; i<dim_; ++i)  {
     boost::random::chi_squared_distribution<> chiSq_(nu_-i);
     matrixA(i,i) = sqrt(chiSq_(rndGen_)); 
-    for (uint32_t j=i+1; j<dim; ++j)
+    for (uint32_t j=i+1; j<dim_; ++j)
       matrixA(j, i) = gauss_(rndGen_);
   }
   covPos = matrixA.inverse()*cholFacotor;
@@ -136,12 +108,13 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   lltObj.compute(covPos);
   cholFacotor = lltObj.matrixL();
 
-  for (uint32_t i=0; i<dim; ++i)
+  for (uint32_t i=0; i<dim_; ++i)
     meanPos[i] = gauss_(rndGen_);
   meanPos = cholFacotor * meanPos / sqrt(kappa_) + muPos_;
 
 
   // covDir = SigmaDir_;
+  // EVERYTHING BELOW NEEDS TO BE RECTIFIED
   boost::random::chi_squared_distribution<> chiSq_(nu_);
   T inv_chi_sqrd = 1 / chiSq_(rndGen_);
   covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
@@ -149,15 +122,17 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   //   covDir = 0.07;
   covDir = std::min(covDir, 0.1);  
 
-  if (dim==2)
-  {
-    boost::random::normal_distribution<> normal_(0, covDir/kappa_);
-    T angDiff = normal_(rndGen_);
-    Matrix<T,Dynamic,Dynamic> rotationMatrix(2, 2); // change the rotation matrix dimension later on to accomodate for 3D data
-    rotationMatrix << cos(angDiff), -sin(angDiff), sin(angDiff), cos(angDiff);
-    meanDir = (muDir_.transpose() * rotationMatrix).transpose();
-  }
-  else meanDir = muDir_;
+  // if (dim==2)
+  // {
+  //   boost::random::normal_distribution<> normal_(0, covDir/kappa_);
+  //   T angDiff = normal_(rndGen_);
+  //   Matrix<T,Dynamic,Dynamic> rotationMatrix(2, 2); // change the rotation matrix dimension later on to accomodate for 3D data
+  //   rotationMatrix << cos(angDiff), -sin(angDiff), sin(angDiff), cos(angDiff);
+  //   meanDir = (muDir_.transpose() * rotationMatrix).transpose();
+  // }
+  // else 
+  
+  meanDir = muDir_;
 
   // std::cout << meanDir << std::endl;
 
@@ -172,7 +147,7 @@ T NIWDIR<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
   // Multivariate student-t distribution
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
   // https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf pg.21
-  int dim = SigmaPos_.cols() + 1;
+  int dim = sigmaPos_.cols() + 1;
 
   Matrix<T,Dynamic,1> x_i_new(dim);
   x_i_new.setZero();
@@ -185,7 +160,9 @@ T NIWDIR<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
   x_i_new(dim-1) = (rie_log(muDir_, x_i_dir)).norm();
 
   T doF = nu_ - dim + 1.;
-  Matrix<T,Dynamic,Dynamic> scaledSigma = Sigma_*(kappa_+1.)/(kappa_*(nu_-dim+1));   
+  Matrix<T,Dynamic,Dynamic> scaledSigma = sigmaPos_*(kappa_+1.)/(kappa_*(nu_-dim+1));   
+
+  // Matrix<T,Dynamic,Dynamic> scaledSigma = sigma_*(kappa_+1.)/(kappa_*(nu_-dim+1));   
   LLT<Matrix<T,Dynamic,Dynamic>> lltObj(scaledSigma);
 
   T logPredProb = boost::math::lgamma(0.5*(doF + dim));
@@ -193,7 +170,9 @@ T NIWDIR<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
   logPredProb -= 0.5*dim*log(doF);
   logPredProb -= 0.5*dim*log(PI);
   logPredProb -= 0.5*log(lltObj.matrixL().determinant());
-  logPredProb -= (0.5*(doF + dim))*log(1.+ 1/doF*(lltObj.matrixL().solve(x_i_new-mu_)).squaredNorm());
+  // logPredProb -= (0.5*(doF + dim))*log(1.+ 1/doF*(lltObj.matrixL().solve(x_i_new-mu_)).squaredNorm());
+  logPredProb -= (0.5*(doF + dim))*log(1.+ 1/doF*(lltObj.matrixL().solve(x_i_new)).squaredNorm());
+
   return logPredProb;
 };
 
