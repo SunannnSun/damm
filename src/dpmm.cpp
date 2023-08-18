@@ -143,21 +143,26 @@ void DPMM<dist_t>::sampleParameters()
 
 
 
+
 template <class dist_t> 
 void DPMM<dist_t>::sampleCoefficientsParameters()
-{ 
-  components_.clear();
-  parameters_.clear();
-  VectorXd Pi(K_);
+{   
+  vector<dist_t> baseDist(K_, H_);
 
+  parameters_.resize(K_);
+  components_.resize(K_);
+  Pi_.resize(K_);
+
+  #pragma omp parallel for num_threads(8) 
   for (uint32_t kk=0; kk<K_; ++kk)  {
     boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
-    Pi(kk) = gamma_(rndGen_);
-    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));
-    components_.push_back(parameters_[kk].sampleParameter());
+    Pi_(kk) = gamma_(rndGen_);
+    parameters_[kk] = baseDist[kk].posterior(x_(indexLists_[kk], all));
+    components_[kk] = parameters_[kk].sampleParameter();
   }
-  Pi_ = Pi / Pi.sum();
+  Pi_ = Pi_ / Pi_.sum();
 }
+
 
 
 

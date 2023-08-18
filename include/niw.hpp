@@ -17,6 +17,7 @@ template<typename T>
 class NIW
 {
     public:
+        NIW(){};
         NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen, int base);
         NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
         ~NIW();

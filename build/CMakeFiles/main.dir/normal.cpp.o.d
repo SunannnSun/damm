@@ -1,6 +1,6 @@
 CMakeFiles/main.dir/normal.cpp.o: \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normal.cpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/../include/normal.hpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normal.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/../include/normal.hpp \
   /opt/homebrew/include/eigen3/Eigen/Dense \
   /opt/homebrew/include/eigen3/Eigen/Core \
   /opt/homebrew/include/eigen3/Eigen/src/Core/util/DisableStupidWarnings.h \

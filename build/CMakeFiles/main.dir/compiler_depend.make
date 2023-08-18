@@ -6959,8 +6959,7 @@ CMakeFiles/main.dir/normal.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/src/
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_time.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wchar.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wctype.h \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normal.hpp \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normal.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/include/normal.hpp \
   /opt/homebrew/Cellar/libomp/16.0.6/include/omp.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/__stddef_max_align_t.h \
   /opt/homebrew/Cellar/llvm/16.0.6/lib/clang/16/include/arm_bf16.h \
@@ -10285,8 +10284,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normalDir.cpp:
 
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/normal.cpp:
-
 /Users/sunansun/Developer/DAMM-LPVDS/damm/src/normal.cpp:
 
 /Users/sunansun/Developer/DAMM-LPVDS/damm/include/karcher.hpp:
@@ -12742,8 +12739,6 @@ CMakeFiles/main.dir/spectral.cpp.o: /Users/sunansun/Developer/DAMM-LPVDS/damm/sr
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/_types/_wctrans_t.h:
 
 /opt/homebrew/include/eigen3/Eigen/src/Householder/Householder.h:
-
-/Users/sunansun/Developer/DAMM-LPVDS/DAMM/include/normal.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk/usr/include/xlocale/_wctype.h:
 
