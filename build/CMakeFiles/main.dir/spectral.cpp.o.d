@@ -1,5 +1,5 @@
 CMakeFiles/main.dir/spectral.cpp.o: \
-  /Users/sunansun/Developer/DAMM-LPVDS/DAMM/src/spectral.cpp \
+  /Users/sunansun/Developer/DAMM-LPVDS/damm/src/spectral.cpp \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/iostream \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/__assert \
   /opt/homebrew/opt/llvm/bin/../include/c++/v1/__config \

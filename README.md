@@ -5,6 +5,12 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 --- 
 
 ### Update
+8/18
+- finshed split/merge
+- review and organize a note on circular dependency(line 167 in dpmmDir.cpp) 
+- spectral.cpp containing cv::Kmeans should be converted to a header file like karcher.hpp
+
+
 8/17
 - check computation of the empirical scatter
 - line 68 in niwDir.cpp: NOTE ON Posterior SIGMA DIRRECTION

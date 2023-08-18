@@ -15,6 +15,7 @@ template<typename T>
 class NIWDIR
 {
     public:
+        NIWDIR(){};
         NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, T sigmaDir,
         boost::mt19937 &rndGen);
         NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, 

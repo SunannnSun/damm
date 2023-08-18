@@ -164,9 +164,16 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   uint32_t z_split_i = z_split.maxCoeff() + 1;
   uint32_t z_split_j = z_split[indexList[0]];
 
-  NIW<double> H_NIW = * H_.NIW_ptr;  
-  DPMM<NIW<double>> dpmm_split(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
 
+  // std::cout << "here" << std::endl;
+
+
+  // NIW<double> H_NIW = * H_.NIW_ptr;  
+  // std::cout << H_NIW.dim_;
+
+  DPMM<NIW<double>> dpmm_split(x_, z_, indexList, alpha_, * H_.NIW_ptr, rndGen_);
+  
+ 
   for (int tt=0; tt<50; ++tt) {
     if (dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
       return 1;
@@ -174,6 +181,7 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
     dpmm_split.sampleLabels(indexList);
   }
 
+  /*
   vector<int> indexList_i = dpmm_split.indexLists_[0];
   vector<int> indexList_j = dpmm_split.indexLists_[1];
 
@@ -198,12 +206,15 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   else
     std::cout << "Component " << z_split_j <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 1;
+    */
+   return 0;
 }
 
 
 template <class dist_t> 
 int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {  
+  /*
   double logAcceptanceRatio = 0;
   VectorXi z_launch = z_;
   VectorXi z_merge = z_;
@@ -250,6 +261,8 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
   }
   std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   return 1;
+  */
+  return 0;
 }
 
 

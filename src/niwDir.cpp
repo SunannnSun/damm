@@ -17,8 +17,7 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma,
   muPos_  = mu(seq(0, dim_-1), all);
   sigmaPos_ = sigma(seq(0, dim_-1), seq(0, dim_-1));
 
-
-  // NIW_ptr = std::make_shared<NIW<T>>(sigmaPos_, muPos_, nu_, kappa_, rndGen_);
+  NIW_ptr = std::make_shared<NIW<T>> (sigmaPos_, muPos_, nu_, kappa_, rndGen_);
 };
 
 

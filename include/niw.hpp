@@ -18,8 +18,8 @@ class NIW
 {
     public:
         NIW(){};
-        NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen, int base);
-        NIW(const MatrixXd &Sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
+        NIW(const MatrixXd &sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen, int base);
+        NIW(const MatrixXd &sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
         ~NIW();
 
         T logPostPredProb(const Matrix<T,Dynamic,1>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
@@ -34,7 +34,7 @@ class NIW
  
     public:
         boost::mt19937 rndGen_;
-        std::shared_ptr<NIWDIR<T>> NIWDIR_ptr;
+        // std::shared_ptr<NIWDIR<T>> NIWDIR_ptr;
 
 
         // Hyperparameters

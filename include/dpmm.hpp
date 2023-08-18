@@ -39,8 +39,8 @@ class DPMM {
     void sampleCoefficientsParameters(const vector<int> &indexList);
     void sampleLabels(const vector<int> &indexList);
 
-    int splitProposal(const vector<int> &indexList);
-    int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
+    // int splitProposal(const vector<int> &indexList);
+    // int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
     
     double logProposalRatio(vector<int> indexList_i, vector<int> indexList_j);
     double logTargetRatio(vector<int> indexList_i, vector<int> indexList_j);

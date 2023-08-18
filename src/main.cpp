@@ -118,12 +118,12 @@ int main(int argc, char **argv)
         //     // for (int l=0; l<indexLists.size(); ++l) 
         //     //     dpmmDir.splitProposal(indexLists[l]);
         //     // dpmmDir.updateIndexLists();
-        //     if (t%30==0 && t> 15 && t<150){
-        //         vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-        //         for (int l=0; l<indexLists.size(); ++l) 
-        //             dpmmDir.splitProposal(indexLists[l]);
-        //         dpmmDir.updateIndexLists();
-        //     }
+            if (t%30==0 && t> 15 && t<150){
+                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+                for (int l=0; l<indexLists.size(); ++l) 
+                    dpmmDir.splitProposal(indexLists[l]);
+                dpmmDir.updateIndexLists();
+            }
         //     else if (t%3==0 && t>30 && t<175){ 
         //         vector<vector<int>> indexLists = dpmmDir.getIndexLists();
         //         vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));

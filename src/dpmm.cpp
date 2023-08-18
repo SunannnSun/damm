@@ -16,6 +16,19 @@ template <class dist_t>
 DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen, int base)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
+  /**
+   * This constructor is only called when sampling using base 1 and 2
+   *
+   * @param x is the Data (N, 2M) containing both position and velocity
+   * @param init_cluster is the number of initial clusters, i.e. >= 1
+   * @param alpha concentration factor
+   * @param H the base distribution
+   * @param rndGen the random number generator
+   * @param base: 1 pos 2 pos+vel
+   * 
+   * @note
+   */
+
   if (base == 1) {
     dim_ = x.cols()/2;
     x_ = x(all, seq(0, dim_-1));
@@ -25,66 +38,45 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
     x_ = x; 
   }
   
-  
-  // // x_ = x(all, seq(0, x_full_.cols()/2-1))
-  // // Store both the full Data and only Pos Data
-  // x_full_ = x;
-  // // x_      = x_full_(all, seq(0, x_full_.cols()/2-1));
-  // x_ = x_full_;
 
-  VectorXi z(x_.rows());
-
-  if (init_cluster == 1) 
-    z.setZero();
-  else if (init_cluster >= 1) {
+  z_.setZero(N_);  
+  if (init_cluster > 1) {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
     for (int i=0; i<N_; ++i) 
-      z[i] = uni_(rndGen_); 
+      z_[i] = uni_(rndGen_); 
   }
   else { 
     cout<< "Invalid Number of Initial Components" << endl;
     exit(1);
   }
-  z_ = z;
+
+
   K_ = z_.maxCoeff() + 1; 
-  logZ_.push_back(z_);
-  logNum_.push_back(K_);
   this ->updateIndexLists();
 };
 
 
 template <class dist_t> 
 DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
+: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff()+1), indexList_(indexList)
 {
   // Slice the data if containing directional info
-  if (x.cols()==4 || x.cols()==6)  
-    x_ = x(all, seq(0, x.cols()/2-1));
+  dim_ = x.cols()/2;
+  x_ = x(all, seq(0, dim_-1));
 
 
-  //Initialize the data points of given indexList by randomly assigning them into one of the two clusters
+  //Initialize the data points of given indexList via 2 options
   vector<int> indexList_i;
   vector<int> indexList_j;
   int z_i = z_.maxCoeff() + 1; 
   int z_j = z_[indexList_[0]];
 
-  vector<int> kmeans(const MatrixXd& Data, int numClusters);
 
-  vector<int> z_kmeans = kmeans(x_(indexList, all), 2);
-  for (int ii = 0; ii<indexList_.size(); ++ii)  {
-    if (z_kmeans[ii] == 0) {
-        indexList_i.push_back(indexList_[ii]);
-        z_[indexList_[ii]] = z_i;
-      }
-    else  {
-        indexList_j.push_back(indexList_[ii]);
-        z_[indexList_[ii]] = z_j;
-      }
-  }
-
-  // boost::random::uniform_int_distribution<> uni_01(0, 1);
+  // Option 1: perform kmeans 
+  // vector<int> kmeans(const MatrixXd& Data, int numClusters);
+  // vector<int> z_kmeans = kmeans(x_(indexList, all), 2);
   // for (int ii = 0; ii<indexList_.size(); ++ii)  {
-  //   if (uni_01(rndGen_) == 0) {
+  //   if (z_kmeans[ii] == 0) {
   //       indexList_i.push_back(indexList_[ii]);
   //       z_[indexList_[ii]] = z_i;
   //     }
@@ -95,6 +87,18 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
   // }
 
 
+  // Option 2: randomly assigning them into one of the two clusters
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (int ii = 0; ii<indexList_.size(); ++ii)  {
+    if (uni_01(rndGen_) == 0) {
+        indexList_i.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_i;
+      }
+    else  {
+        indexList_j.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_j;
+      }
+  }
 
 
   indexLists_.push_back(indexList_i);
@@ -147,6 +151,17 @@ void DPMM<dist_t>::sampleParameters()
 template <class dist_t> 
 void DPMM<dist_t>::sampleCoefficientsParameters()
 {   
+  /**
+   * This method samples coefficients and parameters together in a parallelizable framework
+   *
+   * @param parameters_ vector of K_ size containing the posterior NIW distribution after seeing observations
+   * @param components_ vector of K_ size containing the drawn Normal distribution from the posterior NIW
+   * @param Pi_ coefficients pi
+   * 
+   * @note resize the the class members with K_ in the beginning; code has been modified to accomodate parallelization.
+   * 
+   */
+
   vector<dist_t> baseDist(K_, H_);
 
   parameters_.resize(K_);
@@ -206,23 +221,20 @@ void DPMM<dist_t>::sampleLabels()
 template <class dist_t> 
 void DPMM<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
 {
-  parameters_.clear();
-  components_.clear();
-  VectorXd Pi(2);
+  vector<dist_t> baseDist(2, H_);
 
-  // parameters_.push_back(H_.posterior(x_(indexLists_[0], all)));
-  // parameters_.push_back(H_.posterior(x_(indexLists_[1], all)));
-  // components_.push_back(parameters_[0].sampleParameter());
-  // components_.push_back(parameters_[1].sampleParameter());
-  
+  parameters_.resize(2);
+  components_.resize(2);
+  Pi_.resize(2);
 
+  #pragma omp parallel for num_threads(8) 
   for (uint32_t kk=0; kk<2; ++kk)  {
     boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
-    Pi(kk) = gamma_(rndGen_);
-    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));
-    components_.push_back(parameters_[kk].sampleParameter());
+    Pi_(kk) = gamma_(rndGen_);
+    parameters_[kk] = baseDist[kk].posterior(x_(indexLists_[kk], all));
+    components_[kk] = parameters_[kk].sampleParameter();
   }
-  Pi_ = Pi / Pi.sum();
+  Pi_ = Pi_ / Pi_.sum();
 }
 
 
@@ -262,6 +274,7 @@ void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
 }
 
 
+/*
 
 template <class dist_t> 
 int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
@@ -360,7 +373,7 @@ int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int
   return 1;
 }
 
-
+*/
 template <class dist_t> 
 double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
@@ -476,23 +489,35 @@ double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexLi
 template <class dist_t>
 void DPMM<dist_t>::reorderAssignments()
 { 
-  vector<uint8_t> rearrange_list;
-  for (uint32_t ii=0; ii<N_; ++ii)
-  {
-    if (rearrange_list.empty()) rearrange_list.push_back(z_[ii]);
+  /**
+   * This method rearranges and reassigns the labels, taking care of the situation when one group vanishes after sampling
+   *
+   * @param rearrangeList contains the labels before rearranging
+   * 
+   * @note rearrangeList.end() does not point to the last element, but rather to an imaginary element just beyond the last
+   */
+
+
+  // Initialize the rearrange the list by appending the label of the first observation
+  vector<uint8_t> rearrangeList;
+  rearrangeList.push_back(z_[0]);
+
+  for (uint32_t ii=1; ii<N_; ++ii) {
     vector<uint8_t>::iterator it;
-    it = find (rearrange_list.begin(), rearrange_list.end(), z_[ii]);
-    if (it == rearrange_list.end())
-    {
-      rearrange_list.push_back(z_[ii]);
-      z_[ii] = rearrange_list.size() - 1;
+    it = find (rearrangeList.begin(), rearrangeList.end(), z_[ii]);
+    
+    // if the the label of the ii_th observation NOT found
+    if (it == rearrangeList.end()) {
+      rearrangeList.push_back(z_[ii]);
+      z_[ii] = rearrangeList.size() - 1;
     }
-    else if (it != rearrange_list.end())
-    {
-      int index = it - rearrange_list.begin();
-      z_[ii] = index;
+    
+    // if the the label of the ii_th observation is found
+    else if (it != rearrangeList.end()) {
+      z_[ii] = it - rearrangeList.begin();
     }
   }
+
   K_ = z_.maxCoeff() + 1;
   logNum_.push_back(K_);
 }
@@ -509,10 +534,20 @@ vector<vector<int>> DPMM<dist_t>::getIndexLists()
 template <class dist_t>
 void DPMM<dist_t>::updateIndexLists()
 {
+  /**
+   * This method updates the class member indexLists_, of which every entry contains the indices of observations belonging to
+   * the same group
+   * 
+   * @param indexLists an empty vector of size K awaits to be populated by the indices of every group
+   * 
+   * @note might be avtangeous to directly modify indexLists_, rather than declaring and moving a new vector? Not 
+   * a significant consideration nevertheless
+   */
+
   vector<vector<int>> indexLists(K_);
   for (uint32_t ii = 0; ii<N_; ++ii)  
     indexLists[z_[ii]].push_back(ii); 
-  indexLists_ = indexLists;
+  indexLists_ = std::move(indexLists);
 }
 
 
