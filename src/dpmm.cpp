@@ -224,7 +224,7 @@ void DPMM<dist_t>::sampleLabels()
 template <class dist_t> 
 void DPMM<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
 {
-    /**
+  /**
    * This method samples coefficients and parameters together in a split/merge scenario
    *
    * @param parameters_ vector of K_ size containing the posterior NIW distribution after seeing observations
@@ -395,27 +395,27 @@ int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int
 template <class dist_t> 
 double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
+  /**
+   * This method computes the proposal probability of the last Gibbs scan
+   *
+   * 
+   * @note the proposal probability in Gibbs sampling is implicitly defined to be the product of conditional probability;
+   * the components_ are the last drawn Normal distribution to sample the labels of observations; hence the last Gibbs scan
+   * from the launch state to the proposed state.
+   */
+
   double logProposalRatio = 0;
 
-
-  // for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
-  //   logProposalRatio += log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all))) -
-  //   log(Pi_(0) * components_[0].prob(x_(indexList_i[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_i[ii], all)));
-  // }
-
-  // for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
-  //   logProposalRatio += log(Pi_(1) * components_[1].prob(x_(indexList_j[ii], all))) -
-  //   log(Pi_(0) * components_[0].prob(x_(indexList_j[ii], all)) + Pi_(1) *  components_[1].prob(x_(indexList_j[ii], all)));
-  // }
-
   for (int ii=0; ii < indexList_i.size(); ++ii)  {
-    logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
-    log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
+    Matrix<double,Dynamic,1> x_i = x_(indexList_i[ii], all);
+    logProposalRatio += log(Pi_(0)) + components_[0].logProb(x_i) -
+    log(Pi_(0) * components_[0].prob(x_i) + Pi_(1) *  components_[1].prob(x_i));
   }
 
   for (int ii=0; ii < indexList_j.size(); ++ii)  {
-    logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
-    log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
+    Matrix<double, Dynamic,1> x_j = x_(indexList_j[ii], all);
+    logProposalRatio += log(Pi_(1)) + components_[1].logProb(x_j) -
+    log(Pi_(0) * components_[0].prob(x_j) + Pi_(1) *  components_[1].prob(x_j));
   }
 
   std::cout << "logProposalRatio: " << logProposalRatio << std::endl;
@@ -426,21 +426,30 @@ double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> index
 template <class dist_t>
 double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
+  /**
+   * This method computes the target probability of the proposed state
+   *
+   * @param parameter_ij associated with @param indexList_ given during initialization
+   * 
+   * @note the target ratio is the posterior probability of assignment after observing data;
+   * the marginal distribution of all the observations are cancelled out in ratio;
+   * after factoring out, the likelihood is the posterior conditional probability
+   * 
+   * @note there could be two choices in defining the posterior conditional probability:
+   * either with parameter included as drawing one Normal from posterior NIW; 
+   * or marginalize out the parameter by defining the marginal distribution over the posterior NIW
+   */
+
+  VectorXd Pi(2);
+  boost::random::gamma_distribution<> gamma_i(indexList_i.size(), 1);
+  boost::random::gamma_distribution<> gamma_j(indexList_j.size(), 1);
+
+  Pi(0) = gamma_i(rndGen_);
+  Pi(1) = gamma_j(rndGen_);
+  Pi = Pi / Pi.sum();
 
 
-  vector<int> indexList_ij;
-  indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
-  indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
-  indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
-
-  // VectorXd mean = x_(indexList_ij, all).colwise().mean();
-  // MatrixXd x_k_mean = x_(indexList_ij, all).rowwise() - mean.transpose();
-  // MatrixXd Variance = x_k_mean.adjoint() * x_k_mean / (indexList_ij.size()-1);
-
-  // Normal<double> component_ij(mean, Variance, rndGen_);
-
-
-  NIW<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
+  NIW<double> parameter_ij = H_.posterior(x_(indexList_, all));
   NIW<double> parameter_i  = H_.posterior(x_(indexList_i, all));
   NIW<double> parameter_j  = H_.posterior(x_(indexList_j, all));
 
@@ -449,17 +458,22 @@ double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexLi
   Normal<double> component_j  = parameter_j.sampleParameter();
   
   double logTargetRatio = 0;
-  double logTargetRatio2 = 0;
 
   for (int ii=0; ii < indexList_i.size(); ++ii) {
-    logTargetRatio += log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all)) + Pi_(1) *  component_j.prob(x_(indexList_i[ii], all)));
-    logTargetRatio -= component_ij.logProb(x_(indexList_i[ii], all));
+    Matrix<double,Dynamic,1> x_i = x_(indexList_i[ii], all);
+
+    logTargetRatio += log(Pi(0)) + component_i.logProb(x_i);
+    logTargetRatio -= component_ij.logProb(x_i);
   }
   for (int jj=0; jj < indexList_j.size(); ++jj)  {
-    logTargetRatio += log(Pi_(0) * component_i.prob(x_(indexList_j[jj], all)) + Pi_(1) *  component_j.prob(x_(indexList_j[jj], all)));    
-    logTargetRatio -= component_ij.logProb(x_(indexList_j[jj], all));
+    Matrix<double,Dynamic,1> x_j = x_(indexList_j[jj], all);
+
+    logTargetRatio += log(Pi(1)) + component_j.logProb(x_j);    
+    logTargetRatio -= component_ij.logProb(x_j);
   }
-  std::cout << logTargetRatio << std::endl;
+
+
+  std::cout << "logTargetRatio: "  << logTargetRatio << std::endl;
 
   // for (int ii=0; ii < indexList_i.size(); ++ii) {
   //   logTargetRatio += log((Pi_(0) * component_i.prob(x_(indexList_i[ii], all))) /

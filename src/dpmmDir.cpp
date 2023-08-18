@@ -182,10 +182,10 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   vector<int> indexList_j = dpmm_split.indexLists_[1];
 
 
-  double logAcceptanceRatio = 100;
+  double logAcceptanceRatio = 0;
   // double logAcceptanceRatio = 0;
-  // logAcceptanceRatio -= dpmm_split.logProposalRatio(indexList_i, indexList_j);
-  // logAcceptanceRatio += dpmm_split.logTargetRatio(indexList_i, indexList_j);
+  logAcceptanceRatio -= dpmm_split.logProposalRatio(indexList_i, indexList_j);
+  logAcceptanceRatio += dpmm_split.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
     for (int i = 0; i < indexList_i.size(); ++i)
