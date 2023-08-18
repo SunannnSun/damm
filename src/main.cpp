@@ -120,7 +120,8 @@ int main(int argc, char **argv)
         //     // dpmmDir.updateIndexLists();
             if (t%30==0 && t> 15 && t<150){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                for (int l=0; l<indexLists.size(); ++l) 
+                // for (int l=0; l<indexLists.size(); ++l)
+                for (int l=0; l<1; ++l)  
                     dpmmDir.splitProposal(indexLists[l]);
                 dpmmDir.updateIndexLists();
             }

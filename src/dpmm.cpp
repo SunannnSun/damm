@@ -73,21 +73,24 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
 
 
   // Option 1: perform kmeans 
-  // vector<int> kmeans(const MatrixXd& Data, int numClusters);
-  // vector<int> z_kmeans = kmeans(x_(indexList, all), 2);
-  // for (int ii = 0; ii<indexList_.size(); ++ii)  {
-  //   if (z_kmeans[ii] == 0) {
-  //       indexList_i.push_back(indexList_[ii]);
-  //       z_[indexList_[ii]] = z_i;
-  //     }
-  //   else  {
-  //       indexList_j.push_back(indexList_[ii]);
-  //       z_[indexList_[ii]] = z_j;
-  //     }
-  // }
+  /*
+  vector<int> kmeans(const MatrixXd& Data, int numClusters);
+  vector<int> z_kmeans = kmeans(x_(indexList, all), 2);
+  for (int ii = 0; ii<indexList_.size(); ++ii)  {
+    if (z_kmeans[ii] == 0) {
+        indexList_i.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_i;
+      }
+    else  {
+        indexList_j.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_j;
+      }
+  }
+  */
 
 
   // Option 2: randomly assigning them into one of the two clusters
+  // /*
   boost::random::uniform_int_distribution<> uni_01(0, 1);
   for (int ii = 0; ii<indexList_.size(); ++ii)  {
     if (uni_01(rndGen_) == 0) {
@@ -99,6 +102,7 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
         z_[indexList_[ii]] = z_j;
       }
   }
+  // */
 
 
   indexLists_.push_back(indexList_i);
@@ -196,7 +200,6 @@ void DPMM<dist_t>::sampleLabels()
       double logProb =  components_[kk].logProb(x_(ii, all));
       prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(ii, all));
       logLik_i += Pi_[kk] * exp(logProb);
-
     }
     logLik += log(logLik_i);
     double max_prob = prob.maxCoeff();
@@ -221,6 +224,17 @@ void DPMM<dist_t>::sampleLabels()
 template <class dist_t> 
 void DPMM<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
 {
+    /**
+   * This method samples coefficients and parameters together in a split/merge scenario
+   *
+   * @param parameters_ vector of K_ size containing the posterior NIW distribution after seeing observations
+   * @param components_ vector of K_ size containing the drawn Normal distribution from the posterior NIW
+   * @param Pi_ coefficients pi
+   * 
+   * @note might be possible to integrate with the original member, but easier to maintain as a standalone method
+   * 
+   */
+
   vector<dist_t> baseDist(2, H_);
 
   parameters_.resize(2);
@@ -241,6 +255,12 @@ void DPMM<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
 template <class dist_t> 
 void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
 {
+   /**
+   * This method samples labels in split merge scenario
+   * 
+   * @note hard to work around appending the indices to indexList_i/j, had to add omp critical to avoid value race condition
+   */
+
   indexLists_.clear();
   vector<int> indexList_i;
   vector<int> indexList_j;
@@ -258,14 +278,12 @@ void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
     // prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
     prob = prob / prob.sum();
     
-    indexVector.push_back(indexList[ii]);
-    if (uni_(rndGen_) < prob[0]) {
-      #pragma omp critical
-      indexList_i.insert(indexList_i.end(), indexVector.begin(), indexVector.end());
-    }
-    else{ 
-      #pragma omp critical
-      indexList_j.insert(indexList_j.end(), indexVector.begin(), indexVector.end());
+    #pragma omp critical
+    {
+      if (uni_(rndGen_) < prob[0])
+        indexList_i.push_back(indexList[ii]);
+      else
+        indexList_j.push_back(indexList[ii]);
     }
   }
 
