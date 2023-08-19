@@ -1,12 +1,8 @@
 #include <iostream>
-// #include <cmath>
 #include <Eigen/Dense>
 
 using namespace Eigen;
 using namespace std;
-
-#define PI 3.141592653589793
-
 
 template <typename T>
 double unsigned_angle(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynamic, 1>&y)
@@ -70,7 +66,7 @@ Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynami
 
 
 template <typename T>
-Matrix<T,Dynamic, 1> rie_exp(const Matrix<T,Dynamic, 1>&x, Matrix<T,Dynamic, 1>&v)
+Matrix<T,Dynamic, 1> rie_exp(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynamic, 1>&v)
 {
   /**
    * This function maps a point y to the tangent space defined by x
@@ -129,22 +125,30 @@ Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& xDir_k)
 
 
 template<typename T>
-T karcherScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k)
+T riemScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k)
 {
-  return karcherScatter(xDir_k, karcherMean(xDir_k));
+  return riemScatter(xDir_k, karcherMean(xDir_k));
 }
 
 
 template<typename T>
-T karcherScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k, Matrix<T, Dynamic, 1> mean)
+T riemScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k, const Matrix<T, Dynamic, 1>& mean)
 {
+
+  /**
+   * This function computes the empirical scatter on the Riemannian manifold
+   * 
+   * @note karcherScatter is a wrong terminology, rather it is the empirical scatter on the tangent space
+   * 
+   * @note this is note variance, this has not been divided by number of component
+   */
+
   int dim = xDir_k.cols();
   int num = xDir_k.rows();
   T scatter = 0;
-  Matrix<T, Dynamic, 1> xDir_i(dim);
 
   for (int i = 0; i < num; ++i) {
-    xDir_i = xDir_k(i, all).transpose();
+    Matrix<T, Dynamic, 1> xDir_i = xDir_k(i, all).transpose();
     scatter = scatter + pow(rie_log(mean, xDir_i).norm(), 2); 
   }
   return scatter;

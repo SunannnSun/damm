@@ -1,5 +1,5 @@
 #include "niwDir.hpp"
-#include "karcher.hpp"
+#include "riem.hpp"
 #include <cmath>
 #include <limits>
 #include <algorithm>
@@ -60,7 +60,7 @@ void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 
 
   meanDir_ = karcherMean(xDir_k);
-  scatterDir_ = karcherScatter(xDir_k, meanDir_); 
+  scatterDir_ = riemScatter(xDir_k, meanDir_); 
 
   count_ = x_k.rows();
 };

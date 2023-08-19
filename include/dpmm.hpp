@@ -16,7 +16,7 @@ class DPMM
     //-------------Constructor & Desctructor--------------
     /*---------------------------------------------------*/
     DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen, int base);
-    DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
+    DPMM(const MatrixXd& x, const VectorXi& z, const vector<int>& indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
     DPMM(){};
     ~DPMM(){};
 
@@ -33,8 +33,8 @@ class DPMM
     /*---------------------------------------------------*/
     void sampleCoefficientsParameters(const vector<int> &indexList);
     void sampleLabels(const vector<int> &indexList);
-    double logProposalRatio(vector<int> indexList_i, vector<int> indexList_j);
-    double logTargetRatio(vector<int> indexList_i, vector<int> indexList_j);
+    double logProposalRatio(const vector<int> & indexList_i,const vector<int> & indexList_j);
+    double logTargetRatio(const vector<int> &indexList_i, const vector<int> &indexList_j);
 
 
     /*---------------------------------------------------*/

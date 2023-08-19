@@ -1,7 +1,4 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 #include <opencv2/core.hpp>
@@ -13,7 +10,7 @@ using namespace Eigen;
 using namespace cv;
 using namespace cv::ml;
 
-// Spectral Clustering function
+// Kmeans function
 
 vector<int> kmeans(const MatrixXd& Data, int numClusters) {
     int numPoints = Data.rows();
@@ -41,21 +38,3 @@ vector<int> kmeans(const MatrixXd& Data, int numClusters) {
 
     return clusterAssignments;
 }
-
-// int main() {
-
-
-//     Data = Data(all, seq(0, 1));
-
-
-//     // vector<int> clusterAssignments = spectralClustering(Data, 2);
-
-//     // // Print the cluster assignments
-//     // cout << "Cluster Assignments:" << endl;
-//     // for (int i = 0; i < numPoints; ++i) {
-//     //     cout << "Point " << i << ": Cluster " << clusterAssignments[i] << endl;
-//     // }
-
-
-//     return 0;
-// }

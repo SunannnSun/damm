@@ -11,6 +11,7 @@
 #include "dpmm.hpp"
 #include "niw.hpp"
 #include "niwDir.hpp"
+#include "kmeans.hpp"
 
 
 
@@ -60,7 +61,7 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
 
 
 template <class dist_t> 
-DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> & indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff()+1), indexList_(indexList)
 {
   /**
@@ -267,7 +268,7 @@ void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
 
 
 template <class dist_t> 
-double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
+double DPMM<dist_t>::logProposalRatio(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {
   /**
    * This method computes the proposal probability of the last Gibbs scan
@@ -298,7 +299,7 @@ double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> index
 
 
 template <class dist_t>
-double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
+double DPMM<dist_t>::logTargetRatio(const vector<int>  &indexList_i, const vector<int> &indexList_j)
 {
   /**
    * This method computes the target probability of the proposed state
@@ -424,14 +425,38 @@ template class DPMM<NIW<double>>;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*---------------------------------------------------*/
 //-------------------Inactive Methods-----------------
 /*---------------------------------------------------*/
 
 /*
-
-
-
 
 
 template <class dist_t> 

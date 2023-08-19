@@ -38,7 +38,7 @@ message("OpenCV Include Directory: ${OpenCV_INCLUDE_DIRS}")
 
 message("Project Root Directory: ${CMAKE_SOURCE_DIR}")
 
-add_executable(main main.cpp niw.cpp niwDir.cpp normal.cpp normalDir.cpp dpmm.cpp dpmmDir.cpp spectral.cpp)
+add_executable(main main.cpp niw.cpp niwDir.cpp normal.cpp normalDir.cpp dpmm.cpp dpmmDir.cpp)
 target_compile_options(main PRIVATE -fopenmp)
 
 set_target_properties(main PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/..)

@@ -1,13 +1,21 @@
-# Directionality-aware Mixture Model(Parallel Implementation)
+# Directionality-aware Mixture Model Parallel Sampling for Efficient Dynamical System Learning
 
-This module consists of the parallel implementation of Directionality-aware Mixture Model(DAMM) that has been optimized for real-time learning performance. Given a set of demonstration trajectories, this module performs unsupervised learning of Gaussian mixture models that best describe the structure of provided data. In addition to the general clustering purposes, this module serves as an intermediate step in the pipeline of learning a Dynamical system-based motion policies from data, and the learned model will proceed to be optimized in the linear parameter varying(LPV) learning of a dynamical system.
+This module is the implementation of Directionality-aware Mixture Model(DAMM) that has been optimized for real-time learning performance. Given a set of demonstration trajectories, DAMM performs unsupervised learning and fits an augmented Gaussian Mixture Models (GMM) that encodes the structure of given motion while identifying linear components along the trajectory. DAMM serves as the statistical model in the pipeline of Linear Parameter Varying Dynamical System (LPV-DS).
+
+## Note
+This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnSun/damm_lpvds), and cannot be used by its own. Please refer to https://github.com/SunannnSun/damm_lpvds for the usage.
 
 --- 
 
 ### Update
+8/19 (Last day in a 5 days streak to maintain the damm repository)
+- optimize by replacing large vector with pointer
+- 
+- wrap up
+
 8/18
-- finshed split/merge
-- review and organize a note on circular dependency(line 167 in dpmmDir.cpp) 
+- ~~finshed split/merge~~
+- ~~review and organize a note on circular dependency(line 167 in dpmmDir.cpp)~~ (circular dependency has been removed)
 - spectral.cpp containing cv::Kmeans should be converted to a header file like karcher.hpp
 
 
@@ -19,11 +27,11 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 
 8/16
 - ~~return c++ outputs(assignment, etc) as memory binary file to improve efficiency~~
-- parse parameters for option 0, ~~1, 2~~
+- ~~parse parameters for option 0, 1, 2~~
 - need to check the effects of kappa on clustering results
-- verify split/merge proposal
+- ~~verify split/merge proposal~~
 - makse sure the plot description fit the selected option
-- collapsed sample? (already implemented)
+- ~~collapsed sample? (already implemented)~~ (inactive method has been hidden)
 
 8/15 Rebuttal Submission
 - ~~Started a new branch named module intended to design the damm as a module-only package and can only be imported and used in damm-lpv-ds environment where loading tools are located~~
@@ -41,23 +49,6 @@ This module consists of the parallel implementation of Directionality-aware Mixt
 ---
 
 ### Installation
-
-Create a python virtual environment and install the dependencies.
-
-```
-virtualenv -p /path/to/python3.8 env3.8
-source env3.8/bin/activate
-pip install -r requirements.txt
-```
-
-Make sure to replace `/path/to/python3.8` with the correct path to the Python 3.8 executable on your system. You can use the which command on Unix-like systems or the where command on Windows to find the path to the Python interpreter. For example:
-
-On Unix-like systems (Linux, macOS):
-
-```
-which python3.8
-```
-
 Compile the source code:
 
 ```
@@ -65,24 +56,8 @@ mkdir build
 cd build
 cmake ../src
 make
-cd ..
 ```
-
-### Instruction
-
-
-Input:
-
-1. Franka Emika Demonstration
-
-1. LASA-Handwriting Dataset
-2. PC-GMM Benchmark Dataset
-<!-- 3. Franka Emika Demonstration -->
-
-
-```python main.py  [-d DATA] [-t ITERATION] [-a ALPHA] [--init INIT]```
-
-
+---
 
 ### Current Split/Merge Scheme
 - Split proposal of every component every 30 iteration before t=150
