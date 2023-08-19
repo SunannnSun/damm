@@ -3,19 +3,24 @@
 This module is the implementation of Directionality-aware Mixture Model(DAMM) that has been optimized for near real-time learning performance. Given a set of demonstration trajectories, DAMM performs unsupervised learning and fits an augmented Gaussian Mixture Models (GMM) that encodes the structure of given motion while identifying linear components along the trajectory. DAMM serves as the statistical model in the pipeline of Linear Parameter Varying Dynamical System (LPV-DS), exhibiting state-of-the-art performance.
 
 ## Note
-This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnSun/damm_lpvds), and cannot be used by its own. Please refer between this repo and damm-lpvds https://github.com/SunannnSun/damm_lpvds for the usage.
+This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnSun/damm_lpvds), and cannot be used by its own. Please refer between this repo and damm-lpvds https://github.com/SunannnSun/damm_lpvds for the usage. The module has been tested in both Mac OS 12.6 (M1) and Ubuntu 24.04.
 
 --- 
 
 ### Dependencies
-- **[Required]** [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page): Eigen library provides fast and efficient implementations of matrix operations and other linear algebra tools. The latest stable release, Eigen 3.4 is required.
-- **[Required]** [Boost](https://www.boost.org/): Boost provides portable C++ source libraries that works efficiently with standard C++ libraries. The latest release Boost 1.81 is recommended.
-- **[Required]** [OpenMP](https://www.openmp.org/): OpenMP allows the parallel computation in C++ platform.
+- **[Required]** [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page): Eigen 3.4 is required.
+- **[Required]** [Boost](https://www.boost.org/): Boost 1.81 is required.
+- **[Required]** [OpenMP](https://www.openmp.org/): OpenMP 5.0 is recommended.
+- **[Required]** [OpenCV](https://opencv.org/) : OpenCV 4.8 is recommended.
 
 ---
 
-### Installation
-Compile the source code:
+
+
+### Compilation
+
+#### Mac
+Please download LLVM compiler separately. The built-in clang compiler in xcode does not support PpenMp. Please refer to ``CMakeLists.txt`` in ``src`` folder to ensure correct path.
 
 ```
 mkdir build
@@ -41,7 +46,7 @@ ___
 - ~~optimize by replacing large vector with pointer (done by passing arguments by reference)~~
 - ~~need to quantify the effects of kappa on clustering results (see what's in Summary)~~
 - ~~line 78 in niwDir.cpp: NOTE ON Posterior SIGMA DIRRECTION (posterior inverse chi-squared)~~
-- ~~line 130 in niwDir.cpp, ficed covDir or drawn from posterior (implemented drawing from scaled inverse chi-squared) ~~
+- ~~line 130 in niwDir.cpp, ficed covDir or drawn from posterior (implemented drawing from scaled inverse chi-squared)~~
 - modify and verify the CMakeLists.txt on mac and linux
 
 

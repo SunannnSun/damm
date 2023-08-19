@@ -261,7 +261,7 @@ void DPMMDIR<dist_t>::updateIndexLists()
 template <class dist_t> 
 vector<array<int, 2>>  DPMMDIR<dist_t>::computeSimilarity(int mergeNum, int mergeIdx)
 {
-  std::cout << "Sim Matrix Idx: " << mergeIdx << std::endl;
+  // std::cout << "Sim Matrix Idx: " << mergeIdx << std::endl;
   vector<vector<int>>     indexLists = this-> getIndexLists();
   vector<MatrixXd>        muLists;
   vector<MatrixXd>        SigmaLists;
