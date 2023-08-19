@@ -11,8 +11,18 @@
 template<typename T>
 NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, 
   const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, T sigmaDir, boost::mt19937 &rndGen):
-  nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
+  nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), rndGen_(rndGen) 
 {
+  /**
+   * This is the NIWDir distribution constructor where the hyperparameters are sparsed from the standard inputs
+   * called for IW Gibbs sampler
+   * 
+   * @param dim is the dimension d of the state variable; i.e. \xi_{pos} in paper
+   * @param rndGen the random number generator
+   * @param NIW_ptr is created as the pointer to a NIW base distribution
+   * 
+   */
+
   dim_ = mu.rows()/2;
   muPos_  = mu(seq(0, dim_-1), all);
   sigmaPos_ = sigma(seq(0, dim_-1), seq(0, dim_-1));
@@ -25,14 +35,15 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma,
 template<typename T>
 NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, const Matrix<T,Dynamic,1>& muDir, 
   T count, boost::mt19937 &rndGen):
-  sigmaPos_(sigmaPos), muPos_(muPos), nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), muDir_(muDir), count_(count), dim_(muPos_.rows()), rndGen_(rndGen) //dim_ is dimParam defined in main.cpp
-{};
+  sigmaPos_(sigmaPos), muPos_(muPos), nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), muDir_(muDir), count_(count), dim_(muPos_.rows()), rndGen_(rndGen)
+{
+  /**
+   * This NIWDIR distribution constructor is only called when:
+   * 1. called from NIWDIR posterior
+   * 
+   */
+};
 
-
-
-template<typename T>
-NIWDIR<T>::~NIWDIR()
-{};
 
 
 
@@ -115,11 +126,11 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   meanPos = cholFacotor * meanPos / sqrt(kappa_) + muPos_;
 
 
-  // covDir = SigmaDir_;
+  // covDir = sigmaDir_;
   // EVERYTHING BELOW NEEDS TO BE RECTIFIED
   boost::random::chi_squared_distribution<> chiSq_(nu_);
   T inv_chi_sqrd = 1 / chiSq_(rndGen_);
-  covDir = inv_chi_sqrd * SigmaDir_ / count_ * nu_;
+  covDir = inv_chi_sqrd * sigmaDir_ / count_ * nu_;
   // if (covDir > 0.2) 
   //   covDir = 0.07;
   // covDir = std::min(covDir, 0.1);  
@@ -141,6 +152,22 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
 
   return NormalDir<T>(meanPos, covPos, meanDir, covDir, rndGen_);
 };
+
+
+
+template class NIWDIR<double>;
+
+
+
+
+
+
+/*---------------------------------------------------*/
+//-------------------Inactive Methods-----------------
+/*---------------------------------------------------*/   
+
+
+/*
 
 
 
@@ -195,4 +222,6 @@ T NIWDIR<T>::logPostPredProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynami
   return posterior.logPredProb(x_i);
 };
 
-template class NIWDIR<double>;
+
+
+*/

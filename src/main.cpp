@@ -106,28 +106,18 @@ int main(int argc, char **argv)
         DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen);
         for (int t=1; t<iter+1; ++t)    {
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
-            std::cout << "Number of components: " << dpmmDir.K_ << endl;
-            
-            dpmmDir.sampleCoefficientsParameters();
-            dpmmDir.sampleLabels();
-            dpmmDir.reorderAssignments();
-            dpmmDir.updateIndexLists();
-
-            
-        //     // vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-        //     // for (int l=0; l<indexLists.size(); ++l) 
-        //     //     dpmmDir.splitProposal(indexLists[l]);
-        //     // dpmmDir.updateIndexLists();
+            std::cout << "Number of components: " << dpmmDir.getK() << endl;    
+  
             if (t%30==0 && t> 15 && t<150){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                // for (int l=0; l<indexLists.size(); ++l)
+
                 for (int l=0; l<indexLists.size(); ++l)  
                     dpmmDir.splitProposal(indexLists[l]);
                 dpmmDir.updateIndexLists();
             }
             else if (t%3==0 && t>30 && t<175){ 
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-                vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
+                vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.getK()), uni(rndGen));
                 for (int i =0; i < mergeIndexLists.size(); ++i){
                     if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
                         break;
@@ -135,13 +125,12 @@ int main(int argc, char **argv)
                 dpmmDir.reorderAssignments();
                 dpmmDir.updateIndexLists();
             }
-        //     else{
-            // dpmmDir.sampleCoefficientsParameters();
-            // dpmmDir.sampleLabels();
-            // dpmmDir.reorderAssignments();
-            // dpmmDir.updateIndexLists();
-        //     }
-            // std::cout << "Number of components: " << dpmmDir.K_ << endl;
+            else{
+                dpmmDir.sampleCoefficientsParameters();
+                dpmmDir.sampleLabels();
+                dpmmDir.reorderAssignments();
+                dpmmDir.updateIndexLists();
+            }
         }
         z = dpmmDir.getLabels();
 
@@ -156,7 +145,7 @@ int main(int argc, char **argv)
             dpmm.sampleLabels();
             dpmm.reorderAssignments();
             dpmm.updateIndexLists();
-            std::cout << "Number of components: " << dpmm.K_ << std::endl;
+            std::cout << "Number of components: " << dpmm.getK() << std::endl;
         }
         z = dpmm.getLabels();
         // logZ.push_back(z);

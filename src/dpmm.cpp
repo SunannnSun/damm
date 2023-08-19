@@ -12,6 +12,8 @@
 #include "niw.hpp"
 #include "niwDir.hpp"
 
+
+
 template <class dist_t> 
 DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen, int base)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
@@ -56,10 +58,23 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
 };
 
 
+
 template <class dist_t> 
 DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff()+1), indexList_(indexList)
 {
+  /**
+   * This constructor is only called from dpmmDir when split/merge
+   *
+   * @param x is the Data (N, 2M) containing both position and velocity
+   * @param init_cluster is the number of initial clusters, i.e. >= 1
+   * @param alpha concentration factor
+   * @param H the base distribution
+   * @param rndGen the random number generator
+   * @param base: 1 pos 2 pos+vel
+   * 
+   * @note
+   */
   // Slice the data if containing directional info
   dim_ = x.cols()/2;
   x_ = x(all, seq(0, dim_-1));
@@ -110,46 +125,6 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
 };
 
 
-template <class dist_t> 
-DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1)
-{
-  // Slice the data if containing directional info
-  if (x.cols()==4 || x.cols()==6)  
-    x_ = x(all, seq(0, x.cols()/2-1));
-
-  this -> updateIndexLists();
-
-};
-
-
-template <class dist_t> 
-void DPMM<dist_t>::sampleCoefficients()
-{
-  VectorXd Pi(K_);
-  for (uint32_t kk=0; kk<K_; ++kk)  { 
-    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
-    Pi(kk) = gamma_(rndGen_);
-  }
-  Pi_ = Pi / Pi.sum();
-}
-
-
-
-template <class dist_t> 
-void DPMM<dist_t>::sampleParameters()
-{ 
-  components_.clear();
-  parameters_.clear();
-
-  for (uint32_t kk=0; kk<K_; ++kk)
-  {
-    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));
-    components_.push_back(parameters_[kk].sampleParameter());
-  }
-}
-
-
 
 
 template <class dist_t> 
@@ -181,8 +156,6 @@ void DPMM<dist_t>::sampleCoefficientsParameters()
   }
   Pi_ = Pi_ / Pi_.sum();
 }
-
-
 
 
 
@@ -292,7 +265,270 @@ void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
 }
 
 
+
+template <class dist_t> 
+double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  /**
+   * This method computes the proposal probability of the last Gibbs scan
+   * 
+   * @note the proposal probability in Gibbs sampling is implicitly defined to be the product of conditional probability;
+   * the components_ are the last drawn Normal distribution to sample the labels of observations; hence the last Gibbs scan
+   * from the launch state to the proposed split state in split, or the original split state in merge
+   */
+
+  double logProposalRatio = 0;
+
+  for (int ii=0; ii < indexList_i.size(); ++ii)  {
+    Matrix<double,Dynamic,1> x_i = x_(indexList_i[ii], all);
+    logProposalRatio += log(Pi_(0)) + components_[0].logProb(x_i) -
+    log(Pi_(0) * components_[0].prob(x_i) + Pi_(1) *  components_[1].prob(x_i));
+  }
+
+  for (int ii=0; ii < indexList_j.size(); ++ii)  {
+    Matrix<double, Dynamic,1> x_j = x_(indexList_j[ii], all);
+    logProposalRatio += log(Pi_(1)) + components_[1].logProb(x_j) -
+    log(Pi_(0) * components_[0].prob(x_j) + Pi_(1) *  components_[1].prob(x_j));
+  }
+
+  // std::cout << "logProposalRatio: " << logProposalRatio << std::endl;
+
+  return logProposalRatio;
+}
+
+
+template <class dist_t>
+double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  /**
+   * This method computes the target probability of the proposed state
+   *
+   * @param parameter_ij associated with @param indexList_ given during initialization
+   * 
+   * @note the target ratio is the posterior probability of assignment after observing data;
+   * the marginal distribution of all the observations are cancelled out in ratio;
+   * after factoring out, the likelihood is the posterior conditional probability
+   * 
+   * @note there could be two choices in defining the posterior conditional probability:
+   * either with parameter included as drawing one Normal from posterior NIW; 
+   * or marginalize out the parameter by defining the marginal distribution over the posterior NIW
+   */
+
+  VectorXd Pi(2);
+  boost::random::gamma_distribution<> gamma_i(indexList_i.size(), 1);
+  boost::random::gamma_distribution<> gamma_j(indexList_j.size(), 1);
+
+  Pi(0) = gamma_i(rndGen_);
+  Pi(1) = gamma_j(rndGen_);
+  Pi = Pi / Pi.sum();
+
+
+  NIW<double> parameter_ij = H_.posterior(x_(indexList_, all));
+  NIW<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  NIW<double> parameter_j  = H_.posterior(x_(indexList_j, all));
+
+  Normal<double> component_ij = parameter_ij.sampleParameter();
+  Normal<double> component_i  = parameter_i.sampleParameter();
+  Normal<double> component_j  = parameter_j.sampleParameter();
+  
+  double logTargetRatio = 0;
+
+  for (int ii=0; ii < indexList_i.size(); ++ii) {
+    Matrix<double,Dynamic,1> x_i = x_(indexList_i[ii], all);
+
+    logTargetRatio += log(Pi(0)) + component_i.logProb(x_i);
+    logTargetRatio -= component_ij.logProb(x_i);
+  }
+
+  for (int jj=0; jj < indexList_j.size(); ++jj)  {
+    Matrix<double,Dynamic,1> x_j = x_(indexList_j[jj], all);
+
+    logTargetRatio += log(Pi(1)) + component_j.logProb(x_j);    
+    logTargetRatio -= component_ij.logProb(x_j);
+  }
+
+  // std::cout << "logTargetRatio: "  << logTargetRatio << std::endl;
+
+  return logTargetRatio;
+}
+
+
+template <class dist_t>
+void DPMM<dist_t>::reorderAssignments()
+{ 
+  /**
+   * This method rearranges and reassigns the labels, taking care of the situation when one group vanishes after sampling
+   *
+   * @param rearrangeList contains the labels before rearranging
+   * 
+   * @note rearrangeList.end() does not point to the last element, but rather to an imaginary element just beyond the last
+   * 
+   * @note Initialize the rearrange the list by appending the label of the first observation
+   */
+
+
+
+  vector<uint8_t> rearrangeList;
+  rearrangeList.push_back(z_[0]);
+
+  for (uint32_t ii=1; ii<N_; ++ii) {
+    vector<uint8_t>::iterator it;
+    it = find (rearrangeList.begin(), rearrangeList.end(), z_[ii]);
+    
+    if (it == rearrangeList.end()) {
+      rearrangeList.push_back(z_[ii]);
+      z_[ii] = rearrangeList.size() - 1;
+    }
+    
+    else if (it != rearrangeList.end()) {
+      z_[ii] = it - rearrangeList.begin();
+    }
+  }
+
+  K_ = z_.maxCoeff() + 1;
+  logNum_.push_back(K_);
+}
+
+
+
+template <class dist_t>
+vector<vector<int>> DPMM<dist_t>::getIndexLists()
+{
+  this ->updateIndexLists();
+  return indexLists_;
+}
+
+
+template <class dist_t>
+void DPMM<dist_t>::updateIndexLists()
+{
+  /**
+   * This method updates the class member indexLists_, of which every entry contains the indices of observations belonging to
+   * the same group
+   * 
+   * @param indexLists an empty vector of size K awaits to be populated by the indices of every group
+   * 
+   * @note might be avtangeous to directly modify indexLists_, rather than declaring and moving a new vector? Not 
+   * a significant consideration nevertheless
+   */
+
+  vector<vector<int>> indexLists(K_);
+  for (uint32_t ii = 0; ii<N_; ++ii)  
+    indexLists[z_[ii]].push_back(ii); 
+  indexLists_ = std::move(indexLists);
+}
+
+
+template class DPMM<NIW<double>>;
+
+
+
+
+/*---------------------------------------------------*/
+//-------------------Inactive Methods-----------------
+/*---------------------------------------------------*/
+
 /*
+
+
+
+
+
+template <class dist_t> 
+vector<vector<vector<int>>> DPMM<dist_t>::computeSimilarity(int num)
+{
+  int num_comp = K_;
+  vector<vector<int>> indexLists = this-> getIndexLists();
+  vector<MatrixXd>       muLists;
+  vector<MatrixXd>       SigmaLists;
+
+
+  for (int kk=0; kk< num_comp; ++kk)  {
+    MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
+    MatrixXd centered = x_k.rowwise() - x_k.colwise().mean();
+    MatrixXd cov = (centered.adjoint() * centered) / double(x_k.rows() - 1);
+
+    muLists.push_back(x_k.colwise().mean().transpose());
+    SigmaLists.push_back(cov);
+  }
+
+  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());  
+  for (int ii=0; ii<num_comp; ++ii)
+      for (int jj=ii+1; jj<num_comp; ++jj)
+          // similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
+          similarityMatrix(ii, jj) = this->KL_div(SigmaLists[ii], SigmaLists[jj], muLists[ii], muLists[jj]);
+  // std::cout << similarityMatrix<< std::endl;
+
+  MatrixXd similarityMatrix_flattened;
+  similarityMatrix_flattened = similarityMatrix.transpose(); 
+  similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
+
+
+  vector<vector<vector<int>>> merge_indexLists;
+  for (int ii=0; ii<num; ++ii){
+    Eigen::MatrixXf::Index min_index;
+    similarityMatrix_flattened.row(0).minCoeff(&min_index);
+
+    int merge_i;
+    int merge_j;
+    int min_index_int = min_index;
+
+    merge_i = min_index_int / num_comp;
+    merge_j = min_index_int % num_comp;
+    vector<vector<int>> merge_indexList;
+
+    merge_indexList.push_back(indexLists[merge_i]);
+    merge_indexList.push_back(indexLists[merge_j]);
+    merge_indexLists.push_back(merge_indexList);
+
+    similarityMatrix_flattened(min_index) = numeric_limits<float>::infinity();
+  }
+
+ return merge_indexLists;
+}
+
+template <class dist_t> 
+double DPMM<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q)
+{
+  double div = 0;
+  LLT<MatrixXd> lltObjp(Sigma_p);
+  LLT<MatrixXd> lltObjq(Sigma_q);
+
+  div += 2*log(lltObjq.matrixL().determinant());
+  div -= 2*log(lltObjp.matrixL().determinant());
+  div -= Sigma_p.cols();
+  div += (lltObjq.matrixL().solve(mu_p-mu_q)).squaredNorm();
+  div += (Sigma_q.inverse() * Sigma_p).trace();
+
+  return div;
+}
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleCoefficients()
+{
+  VectorXd Pi(K_);
+  for (uint32_t kk=0; kk<K_; ++kk)  { 
+    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
+    Pi(kk) = gamma_(rndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+
+template <class dist_t> 
+void DPMM<dist_t>::sampleParameters()
+{ 
+  components_.clear();
+  parameters_.clear();
+
+  for (uint32_t kk=0; kk<K_; ++kk)
+  {
+    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));
+    components_.push_back(parameters_[kk].sampleParameter());
+  }
+}
 
 template <class dist_t> 
 int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
@@ -390,233 +626,6 @@ int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int
   std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   return 1;
 }
-
-*/
-template <class dist_t> 
-double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
-{
-  /**
-   * This method computes the proposal probability of the last Gibbs scan
-   * 
-   * @note the proposal probability in Gibbs sampling is implicitly defined to be the product of conditional probability;
-   * the components_ are the last drawn Normal distribution to sample the labels of observations; hence the last Gibbs scan
-   * from the launch state to the proposed split state in split, or the original split state in merge
-   */
-
-  double logProposalRatio = 0;
-
-  for (int ii=0; ii < indexList_i.size(); ++ii)  {
-    Matrix<double,Dynamic,1> x_i = x_(indexList_i[ii], all);
-    logProposalRatio += log(Pi_(0)) + components_[0].logProb(x_i) -
-    log(Pi_(0) * components_[0].prob(x_i) + Pi_(1) *  components_[1].prob(x_i));
-  }
-
-  for (int ii=0; ii < indexList_j.size(); ++ii)  {
-    Matrix<double, Dynamic,1> x_j = x_(indexList_j[ii], all);
-    logProposalRatio += log(Pi_(1)) + components_[1].logProb(x_j) -
-    log(Pi_(0) * components_[0].prob(x_j) + Pi_(1) *  components_[1].prob(x_j));
-  }
-
-  std::cout << "logProposalRatio: " << logProposalRatio << std::endl;
-  
-  return logProposalRatio;
-}
-
-
-template <class dist_t>
-double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
-{
-  /**
-   * This method computes the target probability of the proposed state
-   *
-   * @param parameter_ij associated with @param indexList_ given during initialization
-   * 
-   * @note the target ratio is the posterior probability of assignment after observing data;
-   * the marginal distribution of all the observations are cancelled out in ratio;
-   * after factoring out, the likelihood is the posterior conditional probability
-   * 
-   * @note there could be two choices in defining the posterior conditional probability:
-   * either with parameter included as drawing one Normal from posterior NIW; 
-   * or marginalize out the parameter by defining the marginal distribution over the posterior NIW
-   */
-
-  VectorXd Pi(2);
-  boost::random::gamma_distribution<> gamma_i(indexList_i.size(), 1);
-  boost::random::gamma_distribution<> gamma_j(indexList_j.size(), 1);
-
-  Pi(0) = gamma_i(rndGen_);
-  Pi(1) = gamma_j(rndGen_);
-  Pi = Pi / Pi.sum();
-
-
-  NIW<double> parameter_ij = H_.posterior(x_(indexList_, all));
-  NIW<double> parameter_i  = H_.posterior(x_(indexList_i, all));
-  NIW<double> parameter_j  = H_.posterior(x_(indexList_j, all));
-
-  Normal<double> component_ij = parameter_ij.sampleParameter();
-  Normal<double> component_i  = parameter_i.sampleParameter();
-  Normal<double> component_j  = parameter_j.sampleParameter();
-  
-  double logTargetRatio = 0;
-
-  for (int ii=0; ii < indexList_i.size(); ++ii) {
-    Matrix<double,Dynamic,1> x_i = x_(indexList_i[ii], all);
-
-    logTargetRatio += log(Pi(0)) + component_i.logProb(x_i);
-    logTargetRatio -= component_ij.logProb(x_i);
-  }
-
-  for (int jj=0; jj < indexList_j.size(); ++jj)  {
-    Matrix<double,Dynamic,1> x_j = x_(indexList_j[jj], all);
-
-    logTargetRatio += log(Pi(1)) + component_j.logProb(x_j);    
-    logTargetRatio -= component_ij.logProb(x_j);
-  }
-
-  std::cout << "logTargetRatio: "  << logTargetRatio << std::endl;
-
-  return logTargetRatio;
-}
-
-
-template <class dist_t>
-void DPMM<dist_t>::reorderAssignments()
-{ 
-  /**
-   * This method rearranges and reassigns the labels, taking care of the situation when one group vanishes after sampling
-   *
-   * @param rearrangeList contains the labels before rearranging
-   * 
-   * @note rearrangeList.end() does not point to the last element, but rather to an imaginary element just beyond the last
-   */
-
-
-  // Initialize the rearrange the list by appending the label of the first observation
-  vector<uint8_t> rearrangeList;
-  rearrangeList.push_back(z_[0]);
-
-  for (uint32_t ii=1; ii<N_; ++ii) {
-    vector<uint8_t>::iterator it;
-    it = find (rearrangeList.begin(), rearrangeList.end(), z_[ii]);
-    
-    // if the the label of the ii_th observation NOT found
-    if (it == rearrangeList.end()) {
-      rearrangeList.push_back(z_[ii]);
-      z_[ii] = rearrangeList.size() - 1;
-    }
-    
-    // if the the label of the ii_th observation is found
-    else if (it != rearrangeList.end()) {
-      z_[ii] = it - rearrangeList.begin();
-    }
-  }
-
-  K_ = z_.maxCoeff() + 1;
-  logNum_.push_back(K_);
-}
-
-
-template <class dist_t>
-vector<vector<int>> DPMM<dist_t>::getIndexLists()
-{
-  this ->updateIndexLists();
-  return indexLists_;
-}
-
-
-template <class dist_t>
-void DPMM<dist_t>::updateIndexLists()
-{
-  /**
-   * This method updates the class member indexLists_, of which every entry contains the indices of observations belonging to
-   * the same group
-   * 
-   * @param indexLists an empty vector of size K awaits to be populated by the indices of every group
-   * 
-   * @note might be avtangeous to directly modify indexLists_, rather than declaring and moving a new vector? Not 
-   * a significant consideration nevertheless
-   */
-
-  vector<vector<int>> indexLists(K_);
-  for (uint32_t ii = 0; ii<N_; ++ii)  
-    indexLists[z_[ii]].push_back(ii); 
-  indexLists_ = std::move(indexLists);
-}
-
-
-
-
-template <class dist_t> 
-vector<vector<vector<int>>> DPMM<dist_t>::computeSimilarity(int num)
-{
-  int num_comp = K_;
-  vector<vector<int>> indexLists = this-> getIndexLists();
-  vector<MatrixXd>       muLists;
-  vector<MatrixXd>       SigmaLists;
-
-
-  for (int kk=0; kk< num_comp; ++kk)  {
-    MatrixXd x_k = x_(indexLists[kk],  seq(0, (x_.cols()/2)-1));
-    MatrixXd centered = x_k.rowwise() - x_k.colwise().mean();
-    MatrixXd cov = (centered.adjoint() * centered) / double(x_k.rows() - 1);
-
-    muLists.push_back(x_k.colwise().mean().transpose());
-    SigmaLists.push_back(cov);
-  }
-
-  MatrixXd similarityMatrix = MatrixXd::Constant(num_comp, num_comp, numeric_limits<float>::infinity());  
-  for (int ii=0; ii<num_comp; ++ii)
-      for (int jj=ii+1; jj<num_comp; ++jj)
-          // similarityMatrix(ii, jj) = (muLists[ii] - muLists[jj]).norm();
-          similarityMatrix(ii, jj) = this->KL_div(SigmaLists[ii], SigmaLists[jj], muLists[ii], muLists[jj]);
-  // std::cout << similarityMatrix<< std::endl;
-
-  MatrixXd similarityMatrix_flattened;
-  similarityMatrix_flattened = similarityMatrix.transpose(); 
-  similarityMatrix_flattened.resize(1, (similarityMatrix.rows() * similarityMatrix.cols()) );  
-
-
-  vector<vector<vector<int>>> merge_indexLists;
-  for (int ii=0; ii<num; ++ii){
-    Eigen::MatrixXf::Index min_index;
-    similarityMatrix_flattened.row(0).minCoeff(&min_index);
-
-    int merge_i;
-    int merge_j;
-    int min_index_int = min_index;
-
-    merge_i = min_index_int / num_comp;
-    merge_j = min_index_int % num_comp;
-    vector<vector<int>> merge_indexList;
-
-    merge_indexList.push_back(indexLists[merge_i]);
-    merge_indexList.push_back(indexLists[merge_j]);
-    merge_indexLists.push_back(merge_indexList);
-
-    similarityMatrix_flattened(min_index) = numeric_limits<float>::infinity();
-  }
-
- return merge_indexLists;
-}
-
-template <class dist_t> 
-double DPMM<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q)
-{
-  double div = 0;
-  LLT<MatrixXd> lltObjp(Sigma_p);
-  LLT<MatrixXd> lltObjq(Sigma_q);
-
-  div += 2*log(lltObjq.matrixL().determinant());
-  div -= 2*log(lltObjp.matrixL().determinant());
-  div -= Sigma_p.cols();
-  div += (lltObjq.matrixL().solve(mu_p-mu_q)).squaredNorm();
-  div += (Sigma_q.inverse() * Sigma_p).trace();
-
-  return div;
-}
-
-
-
 
 template <class dist_t> 
 int DPMM<dist_t>::sampleLabelsCollapsed()
@@ -720,14 +729,18 @@ void DPMM<dist_t>::sampleLabelsCollapsedParallel()
 }
 
 
-template class DPMM<NIW<double>>;
+template <class dist_t> 
+DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1)
+{
+  // Slice the data if containing directional info
+  if (x.cols()==4 || x.cols()==6)  
+    x_ = x(all, seq(0, x.cols()/2-1));
 
+  this -> updateIndexLists();
 
-/*---------------------------------------------------*/
-//Following class methods are currently not being used 
-/*---------------------------------------------------*/
+};
 
-/*
 
 template <class dist_t> 
 void DPMM<dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t index_j)

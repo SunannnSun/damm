@@ -30,7 +30,7 @@ class damm:
 
         parser.add_argument('-b', '--base' , type=int, default=0  , help='0 damm; 1 position; 2 position+directional')
         parser.add_argument('-i', '--init' , type=int, default=15 , help='Number of initial clusters, 0 is one cluster per data; default=15')
-        parser.add_argument('-t', '--iter' , type=int, default=30, help='Number of iterations; default=200')
+        parser.add_argument('-t', '--iter' , type=int, default=200, help='Number of iterations; default=200')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor; default=1')
 
         args = parser.parse_args()

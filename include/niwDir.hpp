@@ -15,44 +15,35 @@ template<typename T>
 class NIWDIR
 {
     public:
-        NIWDIR(){};
         NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, T sigmaDir,
         boost::mt19937 &rndGen);
         NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, 
         const Matrix<T,Dynamic,1>& muDir, T count, boost::mt19937 &rndGen);        
-        ~NIWDIR();
+        NIWDIR(){};
+        ~NIWDIR(){};
+
 
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
         NIWDIR<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
         NormalDir<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
         NormalDir<T> sampleParameter();
-
-        T logPostPredProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
-        T logPredProb(const Matrix<T,Dynamic,1>& x_i);
-        T predProb(const Matrix<T,Dynamic,1>& x_i);
-
+    
     public:
-        boost::mt19937 rndGen_;
         std::shared_ptr<NIW<T>> NIW_ptr;
 
+    private:
+        boost::mt19937 rndGen_;
 
-        // Hyperparameters remain fixed once initialized
-        Matrix<T,Dynamic,Dynamic> sigma_;
-        Matrix<T,Dynamic,1> mu_;
-
-        Matrix<T,Dynamic,Dynamic> SigmaPos_;
-        T SigmaDir_;
-        // Matrix<T,Dynamic,1> muPos_;
-        Matrix<T,Dynamic,1> muDir_;
-
-        T sigmaDir_;
+        // Hyperparameters
         Matrix<T,Dynamic,Dynamic> sigmaPos_;
         Matrix<T,Dynamic,1> muPos_;
         T nu_,kappa_;
+        Matrix<T,Dynamic,1> muDir_;
+        T sigmaDir_;
         uint32_t dim_;
 
 
-        // Sufficient statistics changes everytime when posterior method is called
+        // Sufficient statistics
         Matrix<T,Dynamic,Dynamic> scatterPos_;
         T scatterDir_;
         Matrix<T,Dynamic,1> meanPos_;
@@ -60,3 +51,23 @@ class NIWDIR
         uint16_t count_;
 };
 
+
+
+
+/*---------------------------------------------------*/
+//-------------------Inactive Methods-----------------
+/*---------------------------------------------------*/ 
+// T logPostPredProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k);
+// T logPredProb(const Matrix<T,Dynamic,1>& x_i);
+// T predProb(const Matrix<T,Dynamic,1>& x_i);
+
+
+
+
+/*---------------------------------------------------*/
+//-------------------Inactive Members-----------------
+/*---------------------------------------------------*/  
+// Matrix<T,Dynamic,Dynamic> sigma_;
+// Matrix<T,Dynamic,1> mu_;
+// Matrix<T,Dynamic,Dynamic> SigmaPos_;
+// T SigmaDir_;

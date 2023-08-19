@@ -80,7 +80,11 @@ Input:
 <!-- 3. Franka Emika Demonstration -->
 
 
-
-
-
 ```python main.py  [-d DATA] [-t ITERATION] [-a ALPHA] [--init INIT]```
+
+
+
+### Current Split/Merge Scheme
+- Split proposal of every component every 30 iteration before t=150
+- Merge proposal between two selected components every 3 iteration after t=30 until t=175
+- IW Gibbs filling in between

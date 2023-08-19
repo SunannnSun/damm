@@ -45,63 +45,9 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
 
 
 
-template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
-: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
-{
-  
-  // Initialize the data points of given indexList by randomly assigning them into one of the two clusters
-
-
-  vector<int> indexList_i;
-  vector<int> indexList_j;
-  int z_i = z_.maxCoeff() + 1;
-  int z_j = z_[indexList[0]];
-
-
-  boost::random::uniform_int_distribution<> uni_01(0, 1);
-  for (int ii = 0; ii<indexList_.size(); ++ii)
-  {
-    if (uni_01(rndGen_) == 0) {
-        indexList_i.push_back(indexList_[ii]);
-        z_[indexList_[ii]] = z_i;
-      }
-    else  {
-        indexList_j.push_back(indexList_[ii]);
-        z_[indexList_[ii]] = z_j;
-      }
-  }
-  indexLists_.push_back(indexList_i);
-  indexLists_.push_back(indexList_j);
-};
 
 
 
-template <class dist_t> 
-void DPMMDIR<dist_t>::sampleCoefficients()
-{
-  VectorXd Pi(K_);
-  for (uint32_t kk=0; kk<K_; ++kk)
-  {
-    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
-    Pi(kk) = gamma_(rndGen_);
-  }
-  Pi_ = Pi / Pi.sum();
-}
-
-
-template <class dist_t> 
-void DPMMDIR<dist_t>::sampleParameters()
-{ 
-  parameters_.clear();
-  components_.clear();
-
-  for (uint32_t kk=0; kk<K_; ++kk)
-  {
-    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));     
-    components_.push_back(parameters_[kk].sampleParameter());          
-  }
-}
 
 
 template <class dist_t> 
@@ -204,7 +150,7 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
     return 0;
   }
   else{
-    std::cout << "Component " << z_split_j + 1 <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+    // std::cout << "Component " << z_split_j + 1 <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 1;
   }
 }
@@ -245,7 +191,7 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
     dpmm_merge.sampleLabels(indexList);
     if (dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true) {
       z_(indexList) = VectorXi::Constant(indexList.size(), z_merge_j);
-      std::cout << "Component " << z_merge_j + 1 << " and " << z_merge_i + 1 <<": Merge proposal Aceepted" << std::endl;
+      std::cout << "Component " << z_merge_j + 1 << " and " << z_merge_i + 1 <<": Merge proposal Accepted" << std::endl;
       return 0;
     }
   }
@@ -257,115 +203,14 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
 
   if (logAcceptanceRatio > 0) {
     z_(indexList) = VectorXi::Constant(indexList.size(), z_merge_j);
-    std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+    std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Accepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 0;
   }
-  std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  // std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   return 1;
 }
 
 
-
-template <class dist_t> 
-void DPMMDIR<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
-{
-  parameters_.clear();
-  components_.clear();
-
-  parameters_.push_back(H_.posterior(x_(indexLists_[0], all)));
-  parameters_.push_back(H_.posterior(x_(indexLists_[1], all)));
-  components_.push_back(parameters_[0].sampleParameter());
-  components_.push_back(parameters_[1].sampleParameter());
-  
-
-  VectorXd Pi(2);
-  for (uint32_t kk=0; kk<2; ++kk)  {
-    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
-    Pi(kk) = gamma_(rndGen_);
-  }
-  Pi_ = Pi / Pi.sum();
-}
-
-
-template <class dist_t> 
-void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
-{
-  indexLists_.clear();
-  vector<int> indexList_i;
-  vector<int> indexList_j;
-
-  boost::random::uniform_01<> uni_;
-  #pragma omp parallel for num_threads(6) schedule(static) private(rndGen_)    
-  for(uint32_t ii=0; ii<indexList.size(); ++ii)  {
-    VectorXd prob(2);
-    for (uint32_t kk=0; kk<2; ++kk)
-      prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(indexList[ii], all)); 
-    
-    prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
-    prob = prob / prob.sum();
-
-    double uni_draw = uni_(rndGen_);
-    
-    #pragma omp critical
-    if (uni_draw < prob[0]) 
-      indexList_i.push_back(indexList[ii]);
-    else 
-      indexList_j.push_back(indexList[ii]);
-  }
-
-  indexLists_.push_back(indexList_i);
-  indexLists_.push_back(indexList_j);
-}
-
-
-template <class dist_t> 
-double DPMMDIR<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
-{
-  double logProposalRatio = 0;
-
-  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
-    logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
-    log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
-  }
-
-  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
-    logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
-    log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
-  }
-
-  return logProposalRatio;
-}
-
-
-template <class dist_t>
-double DPMMDIR<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
-{
-  vector<int> indexList_ij;
-  indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
-  indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
-  indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
-
-  NIWDIR<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
-  NIWDIR<double> parameter_i  = H_.posterior(x_(indexList_i, all));
-  NIWDIR<double> parameter_j  = H_.posterior(x_(indexList_j, all));
-
-  double logTargetRatio = 0;
-  for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
-    logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
-    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
-  }
-  for (uint32_t jj=0; jj < indexList_j.size(); ++jj)  {
-    logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
-    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
-  }
-
-  double logPrior = indexList_i.size() * log(indexList_i.size()) + 
-                    indexList_j.size() * log(indexList_j.size()) - 
-                    indexList_ij.size() * log(indexList_ij.size());
-  logTargetRatio += logPrior;
-
-  return logTargetRatio;
-}
 
 
 template <class dist_t>
@@ -493,10 +338,170 @@ template class DPMMDIR<NIWDIR<double>>;
 
 
 /*---------------------------------------------------*/
-//Following class methods are currently not being used 
+//-------------------Inactive Methods-----------------
 /*---------------------------------------------------*/
 
 /*
+
+
+template <class dist_t> 
+DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+: alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
+{
+  
+  // Initialize the data points of given indexList by randomly assigning them into one of the two clusters
+
+
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+  int z_i = z_.maxCoeff() + 1;
+  int z_j = z_[indexList[0]];
+
+
+  boost::random::uniform_int_distribution<> uni_01(0, 1);
+  for (int ii = 0; ii<indexList_.size(); ++ii)
+  {
+    if (uni_01(rndGen_) == 0) {
+        indexList_i.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_i;
+      }
+    else  {
+        indexList_j.push_back(indexList_[ii]);
+        z_[indexList_[ii]] = z_j;
+      }
+  }
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+};
+
+
+
+template <class dist_t> 
+void DPMMDIR<dist_t>::sampleCoefficients()
+{
+  VectorXd Pi(K_);
+  for (uint32_t kk=0; kk<K_; ++kk)
+  {
+    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
+    Pi(kk) = gamma_(rndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+template <class dist_t> 
+void DPMMDIR<dist_t>::sampleParameters()
+{ 
+  parameters_.clear();
+  components_.clear();
+
+  for (uint32_t kk=0; kk<K_; ++kk)
+  {
+    parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));     
+    components_.push_back(parameters_[kk].sampleParameter());          
+  }
+}
+
+template <class dist_t> 
+void DPMMDIR<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
+{
+  parameters_.clear();
+  components_.clear();
+
+  parameters_.push_back(H_.posterior(x_(indexLists_[0], all)));
+  parameters_.push_back(H_.posterior(x_(indexLists_[1], all)));
+  components_.push_back(parameters_[0].sampleParameter());
+  components_.push_back(parameters_[1].sampleParameter());
+  
+
+  VectorXd Pi(2);
+  for (uint32_t kk=0; kk<2; ++kk)  {
+    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
+    Pi(kk) = gamma_(rndGen_);
+  }
+  Pi_ = Pi / Pi.sum();
+}
+
+
+template <class dist_t> 
+void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
+{
+  indexLists_.clear();
+  vector<int> indexList_i;
+  vector<int> indexList_j;
+
+  boost::random::uniform_01<> uni_;
+  #pragma omp parallel for num_threads(6) schedule(static) private(rndGen_)    
+  for(uint32_t ii=0; ii<indexList.size(); ++ii)  {
+    VectorXd prob(2);
+    for (uint32_t kk=0; kk<2; ++kk)
+      prob[kk] = log(Pi_[kk]) + components_[kk].logProb(x_(indexList[ii], all)); 
+    
+    prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+
+    double uni_draw = uni_(rndGen_);
+    
+    #pragma omp critical
+    if (uni_draw < prob[0]) 
+      indexList_i.push_back(indexList[ii]);
+    else 
+      indexList_j.push_back(indexList[ii]);
+  }
+
+  indexLists_.push_back(indexList_i);
+  indexLists_.push_back(indexList_j);
+}
+
+
+template <class dist_t> 
+double DPMMDIR<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  double logProposalRatio = 0;
+
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii)  {
+    logProposalRatio += log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_i[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_i[ii], all)));
+  }
+
+  for (uint32_t ii=0; ii < indexList_j.size(); ++ii)  {
+    logProposalRatio += log(Pi_(1) * parameters_[1].predProb(x_(indexList_j[ii], all))) -
+    log(Pi_(0) * parameters_[0].predProb(x_(indexList_j[ii], all)) + Pi_(1) *  parameters_[1].predProb(x_(indexList_j[ii], all)));
+  }
+
+  return logProposalRatio;
+}
+
+
+template <class dist_t>
+double DPMMDIR<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
+{
+  vector<int> indexList_ij;
+  indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
+  indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
+  indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
+
+  NIWDIR<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
+  NIWDIR<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  NIWDIR<double> parameter_j  = H_.posterior(x_(indexList_j, all));
+
+  double logTargetRatio = 0;
+  for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
+    logTargetRatio += parameter_i.logPredProb(x_(indexList_i[ii], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
+  }
+  for (uint32_t jj=0; jj < indexList_j.size(); ++jj)  {
+    logTargetRatio += parameter_j.logPredProb(x_(indexList_j[jj], all)) ;
+    logTargetRatio -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
+  }
+
+  double logPrior = indexList_i.size() * log(indexList_i.size()) + 
+                    indexList_j.size() * log(indexList_j.size()) - 
+                    indexList_ij.size() * log(indexList_ij.size());
+  logTargetRatio += logPrior;
+
+  return logTargetRatio;
+}
 
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)

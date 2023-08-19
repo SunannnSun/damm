@@ -11,14 +11,14 @@ template<typename T>
 class NormalDir
 {
     public:
-        NormalDir(){};
         NormalDir(const Matrix<T,Dynamic,1> &meanPos, const Matrix<T,Dynamic, Dynamic> &covPos,
         const Matrix<T,Dynamic,1>& meanDir, T covDir, boost::mt19937 &rndGen);   
+        NormalDir(){};
         ~NormalDir(){};
         T logProb(const Matrix<T,Dynamic,1> &x_i);
 
 
-    public:
+    private:
         boost::mt19937 rndGen_;
 
         // parameters
