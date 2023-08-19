@@ -9,7 +9,7 @@ This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnS
 
 ### Dependencies
 - **[Required]** [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page): Eigen 3.4 is required.
-- **[Required]** [Boost](https://www.boost.org/): Boost 1.81 is required.
+- **[Required]** [Boost](https://www.boost.org/): Boost 1.74 is recommended.
 - **[Required]** [OpenMP](https://www.openmp.org/): OpenMP 5.0 is recommended.
 - **[Required]** [OpenCV](https://opencv.org/) : OpenCV 4.8 is recommended.
 
@@ -17,10 +17,12 @@ This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnS
 
 
 
-### Compilation
 
-#### Mac
-Please download LLVM compiler separately. The built-in clang compiler in xcode does not support PpenMp. Please refer to ``CMakeLists.txt`` in ``src`` folder to ensure correct path.
+### Caution:
+
+Mac users please download LLVM compiler separately. The built-in clang compiler in Xcode does not support OpenMP. Please refer to ``CMakeLists.txt`` in ``src`` folder to ensure correct compiler.
+
+### Compilation
 
 ```
 mkdir build
@@ -28,6 +30,8 @@ cd build
 cmake ../src
 make
 ```
+
+
 ---
 
 
@@ -42,12 +46,12 @@ The code base has been significantly cleaned up during the five day period (8/15
 ___
 
 
-8/19 ~~(Last day in a 5 days streak to wrap up the damm repository)~~
+8/19 (Last day in a 5 days streak to wrap up the damm repository)
 - ~~optimize by replacing large vector with pointer (done by passing arguments by reference)~~
 - ~~need to quantify the effects of kappa on clustering results (see what's in Summary)~~
 - ~~line 78 in niwDir.cpp: NOTE ON Posterior SIGMA DIRRECTION (posterior inverse chi-squared)~~
 - ~~line 130 in niwDir.cpp, ficed covDir or drawn from posterior (implemented drawing from scaled inverse chi-squared)~~
-- modify and verify the CMakeLists.txt on mac and linux
+- ~~modify and verify the CMakeLists.txt on mac and linux~~
 
 
 8/18

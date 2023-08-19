@@ -7,22 +7,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(APPLE)
+    message("Apple (macOS) detected")
+    # change default compiler to llvm
     set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm/bin/clang)
     set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm/bin/clang++)
     set(CMAKE_PREFIX_PATH /opt/homebrew/opt/libomp)
-    message("Apple (macOS) detected")
 endif()
 
 if(LINUX) 
     message("Ubuntu detected")
+    set(CMAKE_CXX_FLAGS "-lstdc++fs -std=c++17") # for gcc in linux
 endif()
+
+
 
 # Display the compiler being used
 message("Using C++ compiler: ${CMAKE_CXX_COMPILER}")
 message("Project Root Directory: ${CMAKE_SOURCE_DIR}")
 
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.4 REQUIRED)
 message("Eigen3 Include Directory: ${EIGEN3_INCLUDE_DIRS}")
 
 find_package(Boost REQUIRED COMPONENTS program_options)

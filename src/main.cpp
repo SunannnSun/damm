@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <filesystem>
 
 #include <Eigen/Dense>
 #include <boost/random/mersenne_twister.hpp>
