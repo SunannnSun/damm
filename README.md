@@ -2,6 +2,10 @@
 
 This module is the implementation of Directionality-aware Mixture Model(DAMM) that has been optimized for near real-time learning performance. Given a set of demonstration trajectories, DAMM performs unsupervised learning and fits an augmented Gaussian Mixture Models (GMM) that encodes the structure of given motion while identifying linear components along the trajectory. DAMM serves as the statistical model in the pipeline of Linear Parameter Varying Dynamical System (LPV-DS), exhibiting state-of-the-art performance.
 
+![damm](https://github.com/SunannnSun/damm/assets/97807687/c14b3afe-a50d-43bc-b437-2dfbe864bbf0)
+
+
+
 ## Note
 This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnSun/damm_lpvds), and cannot be used by its own. Please refer between this repo and damm-lpvds https://github.com/SunannnSun/damm_lpvds for the usage. The module has been tested in both Mac OS 12.6 (M1) and Ubuntu 24.04.
 
