@@ -53,10 +53,10 @@ class damm:
         ####################### hyperparameters #######################
         ###############################################################  
         mu_0            = np.zeros((self.dim, )) 
-        sigma_0         = 0.1 * np.eye(self.dim)
+        sigma_0         = 1 * np.eye(self.dim)
         nu_0            = self.dim + 3
         kappa_0         = 1
-        sigma_dir_0     = 1
+        sigma_dir_0     = 0.1
 
         self.param = ' '.join(map(str, np.r_[sigma_dir_0, nu_0, kappa_0, mu_0.ravel(), sigma_0.ravel()]))
 
@@ -80,7 +80,7 @@ class damm:
 
         
     def result(self, if_plot=True):
-        # Data = self.Data
+        Data = self.Data
 
         # logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
         # logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
@@ -103,24 +103,20 @@ class damm:
 
             
                 
-        # _, _, param_dict        = data_tools.post_process(Data, assignment_arr )
-        # reg_assignment_array    = data_tools.regress(Data, param_dict)  
-        # reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
+        _, _, param_dict        = data_tools.post_process(Data, assignment_arr )
+        reg_assignment_array    = data_tools.regress(Data, param_dict)  
+        reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
 
-        reg_param_dict          = data_tools.extract_param(self.Data, self.assignment_arr)
+        # reg_param_dict          = data_tools.extract_param(self.Data, self.assignment_arr)
         Priors = reg_param_dict["Priors"]
         Mu     = reg_param_dict["Mu"]
         Sigma  = reg_param_dict["Sigma"]
 
         if if_plot:
             plot_tools.plot_results(self.Data, self.assignment_arr, self.base)
-            # plot_tools.plot_results(Data, reg_assignment_array)
+            # plot_tools.plot_results(Data, reg_assignment_array, self.base)
             # data_tools.computeBIC(Data, reg_param_dict)
             # plot_tools.animate_results(Data, logZ             )
-
-        # np.save(os.path.join(self.log_path, "Priors.npy"), Priors )
-        # np.save(os.path.join(self.log_path, "Mu.npy"    ), Mu     )
-        # np.save(os.path.join(self.log_path, "Sigma.npy" ), Sigma.T)
 
         json_output = {
             "name": "DAMM result",

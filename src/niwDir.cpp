@@ -75,9 +75,7 @@ NIWDIR<T> NIWDIR<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
     (kappa_*muPos_+ count_*meanPos_)/(kappa_+count_),
     nu_+count_,
     kappa_+count_,
-    // NOTE ON Posterior SIGMA DIRRECTION
-    // sigmaDir_+scatterDir_ + ((kappa_*count_)/(kappa_+count_))*pow(rie_log(meanDir_, muDir_).norm(), 2),
-    sigmaDir_+scatterDir_ ,
+    (nu_ * sigmaDir_ + scatterDir_)/(nu_+count_),
     meanDir_,
 
     count_, 
@@ -107,7 +105,7 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
 
   Matrix<T,Dynamic,Dynamic> matrixA(dim_, dim_);
   matrixA.setZero();
-  boost::random::normal_distribution<> gauss_;
+  boost::random::normal_distribution<> gauss_(0.0, 1.0);
   for (uint32_t i=0; i<dim_; ++i)  {
     boost::random::chi_squared_distribution<> chiSq_(nu_-i);
     matrixA(i,i) = sqrt(chiSq_(rndGen_)); 
@@ -118,37 +116,29 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   covPos = covPos.transpose()*covPos;
 
 
-  lltObj.compute(covPos);
+  lltObj.compute(covPos/kappa_);
   cholFacotor = lltObj.matrixL();
 
   for (uint32_t i=0; i<dim_; ++i)
     meanPos[i] = gauss_(rndGen_);
-  meanPos = cholFacotor * meanPos / sqrt(kappa_) + muPos_;
+  meanPos = muPos_ + cholFacotor * meanPos;
 
+  /**
+   * Below implements the sampling of a variance from a posterior inverse chi-squared distribution
+   * 
+   * @note first sample an instance from @param chiSq_ and take the reciprocal; hence @param inv_chi_sqrd
+   * as if comes from an inverse chi-squared distribution
+   * 
+   * @note then convert the instance from chi-squared distribution to scaled chi-squared distribution by
+   * multiplying it with the scale and dof, https://en.wikipedia.org/wiki/Scaled_inverse_chi-squared_distribution
+   */
 
-  // covDir = sigmaDir_;
-  // EVERYTHING BELOW NEEDS TO BE RECTIFIED
   boost::random::chi_squared_distribution<> chiSq_(nu_);
   T inv_chi_sqrd = 1 / chiSq_(rndGen_);
-  covDir = inv_chi_sqrd * sigmaDir_ / count_ * nu_;
-  // if (covDir > 0.2) 
-  //   covDir = 0.07;
-  // covDir = std::min(covDir, 0.1);  
-  covDir = 0.5;
+  covDir = inv_chi_sqrd * sigmaDir_ * nu_;
 
-  // if (dim==2)
-  // {
-  //   boost::random::normal_distribution<> normal_(0, covDir/kappa_);
-  //   T angDiff = normal_(rndGen_);
-  //   Matrix<T,Dynamic,Dynamic> rotationMatrix(2, 2); // change the rotation matrix dimension later on to accomodate for 3D data
-  //   rotationMatrix << cos(angDiff), -sin(angDiff), sin(angDiff), cos(angDiff);
-  //   meanDir = (muDir_.transpose() * rotationMatrix).transpose();
-  // }
-  // else 
-  
   meanDir = muDir_;
 
-  // std::cout << meanDir << std::endl;
 
   return NormalDir<T>(meanPos, covPos, meanDir, covDir, rndGen_);
 };

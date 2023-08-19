@@ -39,8 +39,8 @@ Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynami
    * @param v is the point y mapped to tangent space defined by x as the point of tangency; i.e. log_x(y)
    * 
    * @note v gives the corrdinates starting at point x
-   * when x and y are in opposite direction (rarely happens), log map returns zero; hence we manually add perturbation
-   * when x and y are equal (tanDir.norm()=0), return tanDir = (0, 0, 0)
+   * @note when x and y are in opposite direction (rarely happens), log map returns zero; hence we manually add perturbation
+   * @note when x and y are equal (tanDir.norm()=0), return tanDir = (0, 0, 0)
    */
 
   double angle;
@@ -87,6 +87,7 @@ Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& xDir_k)
 {
   /**
    * This function computes the Fréchet mean in unit sphere
+   * 
    * @param xDir_k denotes all the directional vectors belong to k_th group
    * @param xTan is the point of tangency that is randomly initalized, updated, and eventually converged to the mean
    * @param xDir is the directional part of xDir_k
@@ -134,19 +135,18 @@ T riemScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k)
 template<typename T>
 T riemScatter(const Matrix<T,Dynamic, Dynamic>& xDir_k, const Matrix<T, Dynamic, 1>& mean)
 {
-
   /**
    * This function computes the empirical scatter on the Riemannian manifold
    * 
    * @note karcherScatter is a wrong terminology, rather it is the empirical scatter on the tangent space
    * 
-   * @note this is note variance, this has not been divided by number of component
+   * @note this is SCATTER and NOT variance, this has not been divided by number of component
    */
 
   int dim = xDir_k.cols();
   int num = xDir_k.rows();
-  T scatter = 0;
 
+  T scatter = 0;
   for (int i = 0; i < num; ++i) {
     Matrix<T, Dynamic, 1> xDir_i = xDir_k(i, all).transpose();
     scatter = scatter + pow(rie_log(mean, xDir_i).norm(), 2); 

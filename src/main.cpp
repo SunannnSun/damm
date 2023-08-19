@@ -126,10 +126,10 @@ int main(int argc, char **argv)
                 dpmmDir.updateIndexLists();
             }
             else{
-                dpmmDir.sampleCoefficientsParameters();
-                dpmmDir.sampleLabels();
-                dpmmDir.reorderAssignments();
-                dpmmDir.updateIndexLists();
+            dpmmDir.sampleCoefficientsParameters();
+            dpmmDir.sampleLabels();
+            dpmmDir.reorderAssignments();
+            dpmmDir.updateIndexLists();
             }
         }
         z = dpmmDir.getLabels();
