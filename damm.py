@@ -113,7 +113,7 @@ class damm:
         Sigma  = reg_param_dict["Sigma"]
 
         if if_plot:
-            plot_tools.plot_results(self.Data, self.assignment_arr)
+            plot_tools.plot_results(self.Data, self.assignment_arr, self.base)
             # plot_tools.plot_results(Data, reg_assignment_array)
             # data_tools.computeBIC(Data, reg_param_dict)
             # plot_tools.animate_results(Data, logZ             )

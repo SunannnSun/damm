@@ -10,9 +10,9 @@ from . import data_tools
 
 
 font = {'family' : 'Times New Roman',
-         'size'   : 13
-
+         'size'   : 16
          }
+
 mpl.rc('font', **font)
 mpl.rc('text', usetex = True)
 
@@ -22,7 +22,7 @@ colors = ["r", "g", "b", "k", 'c', 'm', 'y', 'crimson', 'lime'] + [
 "#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(200)]
 
 
-def plot_results(data, assignment_array):
+def plot_results(data, assignment_array, base):
     color_mapping = np.take(colors, assignment_array)
 
     param_dict = data_tools.extract_param(data, assignment_array)
@@ -73,14 +73,14 @@ def plot_results(data, assignment_array):
         ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
         ax.zaxis.set_major_locator(MaxNLocator(nbins=6))
 
-    # ax.set_title('Vanilla GMM (position only)', fontsize = 24)
-    # ax.set_title('Vanilla GMM (position+velocity)',  fontsize = 24)
-    # ax.set_title('DAMM',  fontsize = 24)
-    # ax.set_title('Vanilla GMM (position only)',  fontsize = 24)
-    ax.set_title('PC-GMM',  fontsize = 24)
-
-    # ax.set_title(r'Directionality-aware Mixture Model Clustering Result')
-    # ax.set_title(r'Gaussian Mixture Model Clustering Result')
+    if base == 0:
+        ax.set_title('DAMM',  fontsize = 24)
+    elif base == 1:
+        ax.set_title('Vanilla GMM (position only)', fontsize = 24)
+    elif base == 2:
+        ax.set_title('Vanilla GMM (position+velocity)',  fontsize = 24)
+    
+    # ax.set_title('PC-GMM',  fontsize = 24)
 
 
 

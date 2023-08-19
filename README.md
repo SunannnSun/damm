@@ -8,15 +8,14 @@ This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnS
 --- 
 
 ### Update
-8/19 (Last day in a 5 days streak to maintain the damm repository)
-- optimize by replacing large vector with pointer
-- 
-- wrap up
+8/19 (Last day in a 5 days streak to wrap up the damm repository)
+- ~~optimize by replacing large vector with pointer~~ (done by passing arguments by reference)
+
 
 8/18
 - ~~finshed split/merge~~
 - ~~review and organize a note on circular dependency(line 167 in dpmmDir.cpp)~~ (circular dependency has been removed)
-- spectral.cpp containing cv::Kmeans should be converted to a header file like karcher.hpp
+- ~~spectral.cpp containing cv::Kmeans should be converted to a header file like karcher.hpp~~
 
 
 8/17
@@ -30,10 +29,10 @@ This module is part of [DAMM-based LPV-DS framework](https://github.com/SunannnS
 - ~~parse parameters for option 0, 1, 2~~
 - need to check the effects of kappa on clustering results
 - ~~verify split/merge proposal~~
-- makse sure the plot description fit the selected option
+- ~~makse sure the plot description fit the selected option~~ (PC-GMM not integrated yet, required manual input)
 - ~~collapsed sample? (already implemented)~~ (inactive method has been hidden)
 
-8/15 Rebuttal Submission
+8/15 (Rebuttal Submission)
 - ~~Started a new branch named module intended to design the damm as a module-only package and can only be imported and used in damm-lpv-ds environment where loading tools are located~~
 - ~~if i can circumvent using a csv writer and directly pass the input DATA to c++~~
 - ~~need to include a full covariance passed to c++ to allow for clustering in full dimension~~
