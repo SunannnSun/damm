@@ -158,23 +158,29 @@ void DPMMDIR<dist_t>::sampleLabels()
 
 template <class dist_t> 
 int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
-{
-  VectorXi z_launch = z_;
-  VectorXi z_split = z_;
-  uint32_t z_split_i = z_split.maxCoeff() + 1;
-  uint32_t z_split_j = z_split[indexList[0]];
+{ 
+  /**
+   * This method proposes a split of the given indexList
+   * 
+   * @note While performing intermediate Gibbs scans, if one of two groups vanishes; i.e., the if condition below meets,
+   * the split proposal should be immediately rejected
+   * @note Notice in split proposals, no need to call reorderAssignments(), as the newly added group are already 
+   * taken care by z_split_i
+   */
+
+
+  uint32_t z_split_i = z_.maxCoeff() + 1;
+  uint32_t z_split_j = z_[indexList[0]];
 
 
   DPMM<NIW<double>> dpmm_split(x_, z_, indexList, alpha_, * H_.NIW_ptr, rndGen_);
   
  
   for (int tt=0; tt<50; ++tt) {
-    if (dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true){
-      std::cout << "Component " << z_split_j <<": Split proposal Rejected with Log Acceptance Ratio "<< std::endl;
-      return 1;
-    } 
     dpmm_split.sampleCoefficientsParameters(indexList);
     dpmm_split.sampleLabels(indexList);
+    if (dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
+      return 1;
   }
 
   
@@ -183,83 +189,79 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
 
 
   double logAcceptanceRatio = 0;
-  // double logAcceptanceRatio = 0;
+
   logAcceptanceRatio -= dpmm_split.logProposalRatio(indexList_i, indexList_j);
   logAcceptanceRatio += dpmm_split.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
-    for (int i = 0; i < indexList_i.size(); ++i)
-      z_split[indexList_i[i]] = z_split_i;
-    for (int i = 0; i < indexList_j.size(); ++i)
-      z_split[indexList_j[i]] = z_split_j;
+    z_(indexList_i) = VectorXi::Constant(indexList_i.size(), z_split_i);
+    z_(indexList_j) = VectorXi::Constant(indexList_j.size(), z_split_j);
 
-    z_ = z_split;
     logZ_.push_back(z_);
     K_ += 1;
     logNum_.push_back(K_);
-    std::cout << "Component " << z_split_j <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+    std::cout << "Component " << z_split_j + 1 <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 0;
   }
-  else
-    std::cout << "Component " << z_split_j <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
+  else{
+    std::cout << "Component " << z_split_j + 1 <<": Split proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 1;
-
-   return 0;
+  }
 }
 
 
 template <class dist_t> 
 int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {  
-  /*
-  double logAcceptanceRatio = 0;
-  VectorXi z_launch = z_;
-  VectorXi z_merge = z_;
-  uint32_t z_merge_i = z_merge[indexList_i[0]];
-  uint32_t z_merge_j = z_merge[indexList_j[0]];
+  /**
+   * This method proposes a merge between two given indexList_i and indexList_j
+   * 
+   * @note While performing intermediate Gibbs scans, if one of two groups vanishes; i.e., the if condition below meets,
+   * the merge proposal should be immediately accepted
+   * 
+   * @note Notice in merge proposals reorderAssignments() needs to be called (Outside) unlike in split proposal 
+   * because the vanishing group results in a void among assignment labels, hence requiring an re-order
+   * 
+   * @note By default, if merge accepts, z_merge_i vanishes and merges into z_merge_j
+   * 
+   * @note Calling logProposalRatio would always use the launch state which is stored in 
+   * class member as the one used in final Gibbs scan. In this case, we are as if generating
+   * the original split state from the launch state
+   */
+
+
+  uint32_t z_merge_i = z_[indexList_i[0]];
+  uint32_t z_merge_j = z_[indexList_j[0]];
 
   vector<int> indexList;
   indexList.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
   indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
   indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
 
-  NIW<double> H_NIW = * H_.NIW_ptr;
-  DPMM<NIW<double>> dpmm_merge(x_, z_launch, indexList, alpha_, H_NIW, rndGen_);
-  
-  for (int tt=0; tt<50; ++tt)
-  {    
-    if (dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
-    {
-      // logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
-      // logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
 
-      for (int i = 0; i < indexList_i.size(); ++i) 
-        z_merge[indexList_i[i]] = z_merge_j;
-      z_ = z_merge;
-      this -> reorderAssignments();
-      std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
-      return 0;
-    };
+  DPMM<NIW<double>> dpmm_merge(x_, z_, indexList, alpha_, * H_.NIW_ptr, rndGen_);  
+  for (int tt=0; tt<50; ++tt)  {    
     dpmm_merge.sampleCoefficientsParameters(indexList);
     dpmm_merge.sampleLabels(indexList);
+    if (dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true) {
+      z_(indexList) = VectorXi::Constant(indexList.size(), z_merge_j);
+      std::cout << "Component " << z_merge_j + 1 << " and " << z_merge_i + 1 <<": Merge proposal Aceepted" << std::endl;
+      return 0;
+    }
   }
 
+  double logAcceptanceRatio = 0;
 
   logAcceptanceRatio += dpmm_merge.logProposalRatio(indexList_i, indexList_j);
   logAcceptanceRatio -= dpmm_merge.logTargetRatio(indexList_i, indexList_j);
 
   if (logAcceptanceRatio > 0) {
-    for (int i = 0; i < indexList_i.size(); ++i) 
-      z_merge[indexList_i[i]] = z_merge_j;
-    z_ = z_merge;
-    this -> reorderAssignments();
+    z_(indexList) = VectorXi::Constant(indexList.size(), z_merge_j);
     std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 0;
   }
   std::cout << "Component " << z_merge_j << " and " << z_merge_i <<": Merge proposal Rejected with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
   return 1;
-  */
-  return 0;
 }
 
 

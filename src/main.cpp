@@ -121,19 +121,20 @@ int main(int argc, char **argv)
             if (t%30==0 && t> 15 && t<150){
                 vector<vector<int>> indexLists = dpmmDir.getIndexLists();
                 // for (int l=0; l<indexLists.size(); ++l)
-                for (int l=0; l<1; ++l)  
+                for (int l=0; l<indexLists.size(); ++l)  
                     dpmmDir.splitProposal(indexLists[l]);
                 dpmmDir.updateIndexLists();
             }
-        //     else if (t%3==0 && t>30 && t<175){ 
-        //         vector<vector<int>> indexLists = dpmmDir.getIndexLists();
-        //         vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
-        //         for (int i =0; i < mergeIndexLists.size(); ++i){
-        //             if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
-        //                 break;
-        //         }
-        //         dpmmDir.updateIndexLists();
-        //     }
+            else if (t%3==0 && t>30 && t<175){ 
+                vector<vector<int>> indexLists = dpmmDir.getIndexLists();
+                vector<array<int, 2>>  mergeIndexLists = dpmmDir.computeSimilarity(int(dpmmDir.K_), uni(rndGen));
+                for (int i =0; i < mergeIndexLists.size(); ++i){
+                    if (!dpmmDir.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
+                        break;
+                }
+                dpmmDir.reorderAssignments();
+                dpmmDir.updateIndexLists();
+            }
         //     else{
             // dpmmDir.sampleCoefficientsParameters();
             // dpmmDir.sampleLabels();

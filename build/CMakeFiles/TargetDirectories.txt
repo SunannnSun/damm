@@ -1,3 +1,0 @@
-/Users/sunansun/Developer/DAMM-LPVDS/damm/build/CMakeFiles/main.dir
-/Users/sunansun/Developer/DAMM-LPVDS/damm/build/CMakeFiles/edit_cache.dir
-/Users/sunansun/Developer/DAMM-LPVDS/damm/build/CMakeFiles/rebuild_cache.dir

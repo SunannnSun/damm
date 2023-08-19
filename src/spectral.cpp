@@ -20,7 +20,7 @@ vector<int> kmeans(const MatrixXd& Data, int numClusters) {
     Mat kmeansInputMat(Data.rows(), Data.cols(), CV_32F);
     eigen2cv(Data, kmeansInputMat);
     kmeansInputMat.convertTo(kmeansInputMat, CV_32F);
-    std::cout << kmeansInputMat.type() << std::endl;
+    // std::cout << kmeansInputMat.type() << std::endl;
     
     Mat labels;
     // std::vector<Point3f> centers;

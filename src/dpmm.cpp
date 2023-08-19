@@ -73,7 +73,7 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
 
 
   // Option 1: perform kmeans 
-  /*
+  // /*
   vector<int> kmeans(const MatrixXd& Data, int numClusters);
   vector<int> z_kmeans = kmeans(x_(indexList, all), 2);
   for (int ii = 0; ii<indexList_.size(); ++ii)  {
@@ -86,11 +86,11 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
         z_[indexList_[ii]] = z_j;
       }
   }
-  */
+  // */
 
 
   // Option 2: randomly assigning them into one of the two clusters
-  // /*
+  /*
   boost::random::uniform_int_distribution<> uni_01(0, 1);
   for (int ii = 0; ii<indexList_.size(); ++ii)  {
     if (uni_01(rndGen_) == 0) {
@@ -102,7 +102,7 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> index
         z_[indexList_[ii]] = z_j;
       }
   }
-  // */
+  */
 
 
   indexLists_.push_back(indexList_i);
@@ -397,11 +397,10 @@ double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> index
 {
   /**
    * This method computes the proposal probability of the last Gibbs scan
-   *
    * 
    * @note the proposal probability in Gibbs sampling is implicitly defined to be the product of conditional probability;
    * the components_ are the last drawn Normal distribution to sample the labels of observations; hence the last Gibbs scan
-   * from the launch state to the proposed state.
+   * from the launch state to the proposed split state in split, or the original split state in merge
    */
 
   double logProposalRatio = 0;
@@ -419,6 +418,7 @@ double DPMM<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> index
   }
 
   std::cout << "logProposalRatio: " << logProposalRatio << std::endl;
+  
   return logProposalRatio;
 }
 
@@ -465,6 +465,7 @@ double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexLi
     logTargetRatio += log(Pi(0)) + component_i.logProb(x_i);
     logTargetRatio -= component_ij.logProb(x_i);
   }
+
   for (int jj=0; jj < indexList_j.size(); ++jj)  {
     Matrix<double,Dynamic,1> x_j = x_(indexList_j[jj], all);
 
@@ -472,47 +473,7 @@ double DPMM<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexLi
     logTargetRatio -= component_ij.logProb(x_j);
   }
 
-
   std::cout << "logTargetRatio: "  << logTargetRatio << std::endl;
-
-  // for (int ii=0; ii < indexList_i.size(); ++ii) {
-  //   logTargetRatio += log((Pi_(0) * component_i.prob(x_(indexList_i[ii], all))) /
-  //   (Pi_(0) * component_i.prob(x_(indexList_i[ii], all)) + Pi_(1) * component_j.prob(x_(indexList_i[ii], all))));
-  //   // logTargetRatio2 += log(Pi_(0)) + component_i.logProb(x_(indexList_i[ii], all)) ;
-  //   // logTargetRatio2 -= log(Pi_(0) * component_i.prob(x_(indexList_i[ii], all)) + Pi_(1) * component_j.prob(x_(indexList_i[ii], all)) ) ;
-
-  //   logTargetRatio2 -= log(component_ij.prob(x_(indexList_i[ii], all)));
-  // }
-  // for (int jj=0; jj < indexList_j.size(); ++jj)  {
-  //   logTargetRatio += log((Pi_(1) * component_j.prob(x_(indexList_j[jj], all))) /
-  //   (Pi_(0) * component_i.prob(x_(indexList_j[jj], all)) + Pi_(1) * component_j.prob(x_(indexList_j[jj], all))));
-  //   // logTargetRatio2 += log(Pi_(1)) + component_j.logProb(x_(indexList_j[jj], all)) ;
-  //   // logTargetRatio2 -= log(Pi_(0) * component_i.prob(x_(indexList_j[jj], all)) + Pi_(1) * component_j.prob(x_(indexList_j[jj], all)) ) ;
-
-  //   // logTargetRatio2 -= component_ij.logProb(x_(indexList_j[jj], all));
-  //   logTargetRatio2 -= log(component_ij.prob(x_(indexList_j[jj], all)));
-  // }
-  // std::cout << logTargetRatio << std::endl;
-  // std::cout << logTargetRatio2 << std::endl;
-
-
-  // double logTargetRatio = 0;
-  // for (int ii=0; ii < indexList_i.size(); ++ii) {
-  //   logTargetRatio += log((Pi_(0) * parameter_i.predProb(x_(indexList_i[ii], all))) /
-  //   (Pi_(0) * parameter_i.predProb(x_(indexList_i[ii], all)) + Pi_(1) * parameter_j.predProb(x_(indexList_i[ii], all))));
-    
-  //   logTargetRatio2 -= parameter_ij.logPredProb(x_(indexList_i[ii], all));
-  // }
-  // for (int jj=0; jj < indexList_j.size(); ++jj)  {
-
-  //   logTargetRatio += log((Pi_(1) * parameter_j.predProb(x_(indexList_j[jj], all))) /
-  //   (Pi_(0) * parameter_i.predProb(x_(indexList_j[jj], all)) + Pi_(1) * parameter_j.predProb(x_(indexList_j[jj], all))));
-
-  //   logTargetRatio2 -= parameter_ij.logPredProb(x_(indexList_j[jj], all));
-  // }
-
-  // std::cout << logTargetRatio << std::endl;
-  // std::cout << logTargetRatio2 << std::endl;
 
   return logTargetRatio;
 }
