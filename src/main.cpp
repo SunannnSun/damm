@@ -81,6 +81,7 @@ int main(int argc, char **argv)
     double sigmaDir_0, nu_0, kappa_0;
     std::cin >> sigmaDir_0 >> nu_0 >> kappa_0; 
 
+
     Eigen::VectorXd mu_0(dim);
     for(int i=0; i < dim; ++i)
         std::cin >> mu_0(i);
