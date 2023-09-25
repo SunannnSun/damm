@@ -93,6 +93,28 @@ int main(int argc, char **argv)
         }
     }
 
+
+    Eigen::VectorXi assignment_arr(num);
+    if (std::cin.eof()){
+        assignment_arr(0) = -1;
+        std::cout << "No assignment label is provided." << std::endl;
+    }
+    else{
+        for (int i = 0; i < num; ++i)
+            if (std::cin.eof() && i < num) {
+                std::cout << "Assignment labels don't match the data size" << std::endl;
+                return 1;
+            }
+            else
+                std::cin >> assignment_arr(i);
+        std::cout << "Assignment label is provided." << std::endl;
+    }
+
+
+    // std::cout << assignment_arr << std::endl;    
+    
+
+
     /*---------------------------------------------------*/
     //----------------------Sampler----------------------
     /*---------------------------------------------------*/
@@ -105,7 +127,7 @@ int main(int argc, char **argv)
     if (base==0)  {
         boost::random::uniform_int_distribution<> uni(0, 3);  
         NIWDIR<double> niwDir(sigma_0, mu_0, nu_0, kappa_0, sigmaDir_0, rndGen);
-        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen);
+        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen, assignment_arr);
         for (int t=1; t<iter+1; ++t)    {
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
             std::cout << "Number of components: " << dpmmDir.getK() << endl;    

@@ -15,7 +15,7 @@ class DPMMDIR
     /*---------------------------------------------------*/
     //-------------Constructor & Desctructor--------------
     /*---------------------------------------------------*/
-    DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen);
+    DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z);
     DPMMDIR(){};
     ~DPMMDIR(){};
 
