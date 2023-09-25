@@ -12,7 +12,7 @@ def write_json(data, path):
 
 
 class damm:
-    def __init__(self, data_, hyper_param_):
+    def __init__(self, hyper_param_):
 
         self.file_path           = os.path.dirname(os.path.realpath(__file__))
         self.dir_path            = os.path.dirname(self.file_path)
@@ -34,17 +34,16 @@ class damm:
         self.iter               = args.iter
         self.alpha              = args.alpha
 
-        # load data 
-        Data = data_
-        self.Data = data_tools.normalize_vel(Data)
-        self.num, self.dim = self.Data.shape             
-
         # load hyperparameters
         mu_0, sigma_0, nu_0, kappa_0, sigma_dir_0 = hyper_param_.values()
         self.param = ' '.join(map(str, np.r_[sigma_dir_0, nu_0, kappa_0, mu_0.ravel(), sigma_0.ravel()]))
 
 
-    def begin(self):
+    def begin(self, data_, *args_):
+
+        # load and process data
+        self.Data = data_tools.normalize_vel(data_)
+        self.num, self.dim = self.Data.shape  
 
         # perform damm 
         command_line_args = ['time ' + os.path.join(self.file_path, "main"),
@@ -54,11 +53,41 @@ class damm:
                             '--alpha {}'.format(self.alpha),
                             '--log {}'.format(self.log_path)
         ]
-        input_data  = f"{self.num}\n{self.dim}\n{' '.join(map(str, self.Data.flatten()))}\n{self.param}"
+        if len(args_) == 0:
+            input_data  = f"{self.num}\n{self.dim}\n{' '.join(map(str, self.Data.flatten()))}\n{self.param}"
+        else:
+            input_data  = f"{self.num}\n{self.dim}\n{' '.join(map(str, self.Data.flatten()))}\n{self.param}\n{' '.join(map(str, args_[0]))}"
 
         completed_process = subprocess.run(' '.join(command_line_args), input=input_data, text=True, shell=True)
-    
+        
+        #store old data for incremental learning
+        self.prev_data = data_
+
         return completed_process.returncode
+    
+
+    def begin_next(self, next_data):
+
+        K = np.max(self.assignment_arr)+1
+        prev_assignment_arr = self.assignment_arr
+        next_assignment_arr = K * np.ones((next_data.shape[1]), dtype=np.int32)
+        comb_assignment_arr = np.concatenate((prev_assignment_arr, next_assignment_arr))
+
+
+        comb_data = np.hstack((self.prev_data, next_data))
+
+        self.begin(comb_data, comb_assignment_arr)
+        self.evaluate()
+        self.plot()
+
+        # next_assignment_arr = np.zeros((next_data.shape[0]))
+        # for i in range(next_assignment_arr.shape[0]):
+        #     next_assignment_arr[i] = 1
+
+        # self.assignment_arr = np.vstack((self.assignment_arr, next_assignment_arr))
+
+        # self.begin()
+
 
         
     def evaluate(self):

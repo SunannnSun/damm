@@ -108,6 +108,7 @@ int main(int argc, char **argv)
             else
                 std::cin >> assignment_arr(i);
         std::cout << "Assignment label is provided." << std::endl;
+        std::cout << assignment_arr.maxCoeff() << std::endl;
     }
 
 
