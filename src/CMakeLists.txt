@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 project(DAMM VERSION 1.0)
 
@@ -26,8 +26,8 @@ message("Using C++ compiler: ${CMAKE_CXX_COMPILER}")
 message("Project Root Directory: ${CMAKE_SOURCE_DIR}")
 
 
-find_package(Eigen3 3.4 REQUIRED)
-message("Eigen3 Include Directory: ${EIGEN3_INCLUDE_DIRS}")
+# find_package(Eigen3 3.4 REQUIRED)
+# message("Eigen3 Include Directory: ${EIGEN3_INCLUDE_DIRS}")
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 message("Boost Include Directory: ${Boost_INCLUDE_DIRS}")
@@ -49,8 +49,10 @@ target_compile_options(main PRIVATE -fopenmp)
 set_target_properties(main PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/..)
 
 target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/../include)
+target_include_directories(main PRIVATE /usr/include/eigen-3.4.0)
+
 target_include_directories(main PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
-target_include_directories(main PRIVATE ${EIGEN3_INCLUDE_DIRS})
+# target_include_directories(main PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_include_directories(main PRIVATE ${Boost_INCLUDE_DIRS})
 target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS})
 
