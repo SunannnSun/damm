@@ -15,6 +15,7 @@ class DPMMDIR
     /*---------------------------------------------------*/
     //-------------Constructor & Desctructor--------------
     /*---------------------------------------------------*/
+    DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen);
     DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z);
     DPMMDIR(){};
     ~DPMMDIR(){};
@@ -33,6 +34,10 @@ class DPMMDIR
     int splitProposal(const vector<int> &indexList);
     int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
 
+    /*---------------------------------------------------*/
+    //----------------Incremental Learning----------------
+    /*---------------------------------------------------*/
+    void sampleLabels_increm();
 
     /*---------------------------------------------------*/
     //---------------------Utilities---------------------
@@ -75,6 +80,11 @@ class DPMMDIR
     vector<VectorXi> logZ_;
     vector<int> logNum_;
     vector<double> logLogLik_; //https://stats.stackexchange.com/questions/398780/understanding-the-log-likelihood-score-in-scikit-learn-gmm
+
+
+
+    // incremental Learning
+    vector<int> indexList_new_;
 };
 
 

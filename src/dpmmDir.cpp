@@ -12,8 +12,9 @@
 #include "niwDir.hpp"
 
 
+
 template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z)
+DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
   dim_   = x.cols()/2;
@@ -21,29 +22,75 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
   xPos_  = x_(all, seq(0, dim_-1));
   xDir_  = x_(all, seq(dim_, last));
 
-  if (z(0) == -1){
-    //  VectorXi z(x.rows());
 
-    if (init_cluster == 1) 
-      z.setZero();
-    else if (init_cluster > 1)  {
-      boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
-      for (int ii=0; ii<N_; ++ii) 
-        z[ii] = uni_(rndGen_); 
-    }
-    else  { 
-      cout<< "Number of initial clusters not supported yet" << endl;
-      exit(1);
-    }
+  VectorXi z(x.rows());
+
+  if (init_cluster == 1) 
+    z.setZero();
+  else if (init_cluster > 1)  {
+    boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
+    for (int ii=0; ii<N_; ++ii) 
+      z[ii] = uni_(rndGen_); 
+  }
+  else  { 
+    cout<< "Number of initial clusters not supported yet" << endl;
+    exit(1);
   }
 
- 
 
   z_ = z;
   K_ = z_.maxCoeff() + 1; 
   logZ_.push_back(z_);
   logNum_.push_back(K_);
   this ->updateIndexLists();
+};
+
+
+
+template <class dist_t> 
+DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z)
+: alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
+{
+  // incremental learning framework when assignment array, z is provided
+
+  dim_   = x.cols()/2;
+  x_     = x;
+  xPos_  = x_(all, seq(0, dim_-1));
+  xDir_  = x_(all, seq(dim_, last));
+
+  // store the index list of new data
+
+  std::cout << "here" << std::endl;
+
+  // ArrayXi index = (z.array() == -1).cast<int>();
+  // vector<int> indexList_new_; 
+  int K_old = -1;
+
+  for (int ii=0; ii<N_; ++ii){
+    if (z[ii] == -1){
+      indexList_new_.push_back(ii);
+    }
+    if (z[ii] > K_old)
+      K_old = z[ii];
+  }
+
+
+  std::cout << K_old << std::endl;
+  std::cout << indexList_new_.size() << std::endl;
+
+  boost::random::uniform_int_distribution<> uni_(1+K_old, K_old+init_cluster);
+  for (int ii=0; ii<indexList_new_.size(); ++ii){
+    z[indexList_new_[ii]] = uni_(rndGen_);
+  }
+
+  std::cout << z << std::endl;
+
+  z_ = z;
+  K_ = z_.maxCoeff() + 1; 
+  logZ_.push_back(z_);
+  logNum_.push_back(K_);
+  this ->updateIndexLists();
+ 
 };
 
 
@@ -69,7 +116,38 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters()
   Pi_ = Pi / Pi.sum();
 }
 
+template <class dist_t> 
+void DPMMDIR<dist_t>::sampleLabels_increm()
+{
+  // double logLik = 0;
+  #pragma omp parallel for num_threads(8) schedule(dynamic, 300) private(rndGen_)
+  for(uint32_t ii=0; ii<indexList_new_.size(); ++ii) {
+    VectorXd prob(K_);
+    // double logLik_i = 0;
 
+    for (uint32_t kk=0; kk<K_; ++kk) { 
+      double logProb =  components_[kk].logProb(x_(indexList_new_[ii], all));
+      prob[kk] = log(Pi_[kk]) + logProb;
+      // logLik_i += Pi_[kk] * exp(logProb);
+    }
+    // logLik += log(logLik_i);
+    double max_prob = prob.maxCoeff();
+    prob = (prob.array() - max_prob).exp() / (prob.array() - max_prob).exp().sum();
+    // prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
+    prob = prob / prob.sum();
+    for (uint32_t kk = 1; kk < prob.size(); ++kk) 
+      prob[kk] = prob[kk-1]+ prob[kk];
+    
+    boost::random::uniform_01<> uni_;   
+    double uni_draw = uni_(rndGen_);
+    uint32_t kk = 0;
+    while (prob[kk] < uni_draw) 
+      kk++;
+    z_[ii] = kk;
+  } 
+  // logLogLik_.push_back(logLik);
+  // logZ_.push_back(z_);
+}
 
 template <class dist_t> 
 void DPMMDIR<dist_t>::sampleLabels()

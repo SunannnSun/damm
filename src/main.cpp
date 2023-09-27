@@ -113,13 +113,36 @@ int main(int argc, char **argv)
 
 
     // std::cout << assignment_arr << std::endl;    
+    Eigen::Matrix<std::int32_t, Eigen::Dynamic, 1> z;
+    if (assignment_arr(0) != -1){
+        NIWDIR<double> niwDir(sigma_0, mu_0, nu_0, kappa_0, sigmaDir_0, rndGen);
+        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen, assignment_arr);
+
+        for (int t=1; t<iter+1; ++t)    {
+            std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
+            std::cout << "Number of components: " << dpmmDir.getK() << endl;      
+            
+            dpmmDir.sampleCoefficientsParameters();
+            dpmmDir.sampleLabels();
+            dpmmDir.reorderAssignments();
+            dpmmDir.updateIndexLists();   
+        
+        }
+        
+        z = dpmmDir.getLabels();
+        std::ofstream outputFile(logPath / "assignment.bin", std::ios::binary);
+        outputFile.write(reinterpret_cast<const char*>(z.data()), z.size() * sizeof(std::int32_t));
+        outputFile.close();
+        
+        return 0;
+    }
     
 
 
     /*---------------------------------------------------*/
     //----------------------Sampler----------------------
     /*---------------------------------------------------*/
-    Eigen::Matrix<std::int32_t, Eigen::Dynamic, 1> z;
+    // Eigen::Matrix<std::int32_t, Eigen::Dynamic, 1> z;
 
     // vector<VectorXi> logZ;
     // vector<int> logNum;
@@ -128,7 +151,7 @@ int main(int argc, char **argv)
     if (base==0)  {
         boost::random::uniform_int_distribution<> uni(0, 3);  
         NIWDIR<double> niwDir(sigma_0, mu_0, nu_0, kappa_0, sigmaDir_0, rndGen);
-        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen, assignment_arr);
+        DPMMDIR<NIWDIR<double>> dpmmDir(Data, init, alpha, niwDir, rndGen);
         for (int t=1; t<iter+1; ++t)    {
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
             std::cout << "Number of components: " << dpmmDir.getK() << endl;    

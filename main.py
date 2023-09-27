@@ -70,7 +70,7 @@ class damm:
 
         K = np.max(self.assignment_arr)+1
         prev_assignment_arr = self.assignment_arr
-        next_assignment_arr = K * np.ones((next_data.shape[1]), dtype=np.int32)
+        next_assignment_arr = -1 * np.ones((next_data.shape[1]), dtype=np.int32)
         comb_assignment_arr = np.concatenate((prev_assignment_arr, next_assignment_arr))
 
 
@@ -91,7 +91,8 @@ class damm:
 
         
     def evaluate(self):
-        
+        print(self.Data.shape)
+
         # read output in binary (avoid csv reading)
         try:
             with open(os.path.join(self.log_path, "assignment.bin"), "rb") as file:
@@ -108,6 +109,10 @@ class damm:
         except Exception as e:
             print("Error:", e)
             sys.exit()
+
+
+        print(self.Data.shape)
+        print(assignment_arr.shape)
 
         Data = self.Data
         _, _, param_dict        = data_tools.post_process(Data, assignment_arr )
