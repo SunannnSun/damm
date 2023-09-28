@@ -68,7 +68,6 @@ class damm:
 
     def begin_next(self, next_data):
 
-        K = np.max(self.assignment_arr)+1
         prev_assignment_arr = self.assignment_arr
         next_assignment_arr = -1 * np.ones((next_data.shape[1]), dtype=np.int32)
         comb_assignment_arr = np.concatenate((prev_assignment_arr, next_assignment_arr))
@@ -80,20 +79,13 @@ class damm:
         self.evaluate()
         self.plot()
 
-        # next_assignment_arr = np.zeros((next_data.shape[0]))
-        # for i in range(next_assignment_arr.shape[0]):
-        #     next_assignment_arr[i] = 1
-
-        # self.assignment_arr = np.vstack((self.assignment_arr, next_assignment_arr))
-
-        # self.begin()
 
 
         
     def evaluate(self):
         print(self.Data.shape)
 
-        # read output in binary (avoid csv reading)
+        # read binary output file and store assignment array
         try:
             with open(os.path.join(self.log_path, "assignment.bin"), "rb") as file:
                 assignment_bin = file.read()
@@ -109,13 +101,10 @@ class damm:
         except Exception as e:
             print("Error:", e)
             sys.exit()
-
-
-        print(self.Data.shape)
-        print(assignment_arr.shape)
+        
 
         Data = self.Data
-        _, _, param_dict        = data_tools.post_process(Data, assignment_arr )
+        _, _, param_dict        = data_tools.post_process(Data, assignment_arr)
         reg_assignment_array    = data_tools.regress(Data, param_dict)  
         reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
 
