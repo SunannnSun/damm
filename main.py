@@ -82,7 +82,7 @@ class damm:
 
 
         
-    def evaluate(self):
+    def evaluate(self, *args_):
         print(self.Data.shape)
 
         # read binary output file and store assignment array
@@ -108,9 +108,15 @@ class damm:
         reg_assignment_array    = data_tools.regress(Data, param_dict)  
         reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
 
+
         Priors = reg_param_dict["Priors"]
         Mu     = reg_param_dict["Mu"]
         Sigma  = reg_param_dict["Sigma"]
+        
+
+        if len(args_) == 1:
+            Sigma = self.expand_cov(args_[0], Sigma)
+
 
         json_output = {
             "name": "DAMM result",
@@ -121,8 +127,8 @@ class damm:
             "Sigma": Sigma.ravel().tolist(),
         }
         write_json(json_output, os.path.join(os.path.dirname(self.file_path), 'output.json'))
-
-
+        
+        return Priors, Mu, Sigma, assignment_arr
 
     def plot(self):
 
@@ -137,4 +143,42 @@ class damm:
         # plot_tools.plot_logs(logNum, logLogLik)
         # data_tools.computeBIC(Data, reg_param_dict)
         # plot_tools.animate_results(Data, logZ)
+    
+
+    def expand_cov(self, x0_all, Sigma):
+        M = self.Data.shape[1]
+        Data = self.Data[:, 0:int(M/2)]
+
+        assignment_arr = self.assignment_arr
+        
+        x0 = x0_all[:, 0].T
+        distances = np.linalg.norm(Data - x0, axis=1)
+
+        idx = np.argmin(distances)
+        
+        k = assignment_arr[idx]
+
+        cov = Sigma[k, :, :]
+        
+
+
+        eigenvalues, eigenvectors = np.linalg.eigh(cov)
+
+        sorted_indices = np.argsort(eigenvalues)[::-1]
+        eigenvalues = eigenvalues[sorted_indices]
+        eigenvectors = eigenvectors[:, sorted_indices]
+
+        largest_eigenvalues = eigenvalues[0] * np.ones((3, ))
+
+        V = eigenvectors.copy()
+        L = np.diag(eigenvalues)
+        L_largest = np.diag(largest_eigenvalues)
+        
+        # Sigma = V @ L @ V.T
+        Sigma_sphere = V @ L_largest @ V.T
+        
+        Sigma[k, :, :] = Sigma_sphere
+
+        return Sigma
+
             
