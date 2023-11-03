@@ -112,14 +112,14 @@ def normalize_vel(data):
     return norm_data
 
 
-def post_process(data, assignment_array):
+def post_process(data, assignment_array, min_num):
     """
     delete super tiny component
     """
     unique_elements, counts = np.unique(assignment_array, return_counts=True)
     for element, count in zip(unique_elements, counts):
         print("Number of", element+1, ":", count)
-        if count < 1/20*counts.max() or  count < 60:
+        if count < 1/20*counts.max() or  count < min_num:
             indices_to_remove =  np.where(assignment_array==element)[0]
             assignment_array = np.delete(assignment_array, indices_to_remove)
             data = np.delete(data, indices_to_remove, axis=0)

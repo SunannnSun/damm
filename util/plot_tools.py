@@ -4,6 +4,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import FormatStrFormatter
 from gmr import GMM, plot_error_ellipses
 from . import data_tools
 
@@ -66,12 +67,18 @@ def plot_results(data, assignment_array, base):
             ax.plot_surface(x, y, z, rstride=3, cstride=3, color=colors[k], linewidth=0.1, alpha=0.3, shade=True) 
             ax.text(Mu[k, 0], Mu[k, 1], Mu[k, 2], str(k + 1), fontsize=20)
 
-        ax.set_xlabel(r'$\xi_1$')
-        ax.set_ylabel(r'$\xi_2$')
-        ax.set_zlabel(r'$\xi_3$')
-        ax.xaxis.set_major_locator(MaxNLocator(nbins=6))
-        ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
-        ax.zaxis.set_major_locator(MaxNLocator(nbins=6))
+        ax.set_xlabel(r'$\xi_1(m)$')
+        ax.set_ylabel(r'$\xi_2(m)$')
+        ax.set_zlabel(r'$\xi_3(m)$')
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=5))
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
+        ax.zaxis.set_major_locator(MaxNLocator(nbins=5))
+        ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        ax.zaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
 
     if base == 0:
         ax.set_title('DAMM',  fontsize = 24)

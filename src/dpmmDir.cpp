@@ -83,19 +83,14 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
     z[indexList_new_[ii]] = uni_(rndGen_);
   }
 
-  std::cout << z << std::endl;
+  // std::cout << z << std::endl;
 
   z_ = z;
   K_ = z_.maxCoeff() + 1; 
   logZ_.push_back(z_);
   logNum_.push_back(K_);
   this ->updateIndexLists();
- 
 };
-
-
-
-
 
 
 

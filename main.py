@@ -35,7 +35,7 @@ class damm:
         self.alpha              = args.alpha
 
         # load hyperparameters
-        mu_0, sigma_0, nu_0, kappa_0, sigma_dir_0 = hyper_param_.values()
+        mu_0, sigma_0, nu_0, kappa_0, sigma_dir_0, self.min_num = hyper_param_.values()
         self.param = ' '.join(map(str, np.r_[sigma_dir_0, nu_0, kappa_0, mu_0.ravel(), sigma_0.ravel()]))
 
 
@@ -45,6 +45,8 @@ class damm:
         self.Data = data_tools.normalize_vel(data_)
         self.num, self.dim = self.Data.shape  
 
+
+        print(self.num)
         # perform damm 
         command_line_args = ['time ' + os.path.join(self.file_path, "main"),
                             '--base {}'.format(self.base),
@@ -67,11 +69,13 @@ class damm:
     
 
     def begin_next(self, next_data):
+        """
+        For incremental learning only
+        """
 
         prev_assignment_arr = self.assignment_arr
         next_assignment_arr = -1 * np.ones((next_data.shape[1]), dtype=np.int32)
         comb_assignment_arr = np.concatenate((prev_assignment_arr, next_assignment_arr))
-
 
         comb_data = np.hstack((self.prev_data, next_data))
 
@@ -104,13 +108,14 @@ class damm:
         
 
         Data = self.Data
-        _, _, param_dict        = data_tools.post_process(Data, assignment_arr)
+        _, _, param_dict        = data_tools.post_process(Data, assignment_arr, self.min_num)
         reg_assignment_array    = data_tools.regress(Data, param_dict)  
         reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
+        self.reg_assignment_array = reg_assignment_array
 
-        Priors = reg_param_dict["Priors"]
-        Mu     = reg_param_dict["Mu"]
-        Sigma  = reg_param_dict["Sigma"]
+        Priors = param_dict["Priors"]
+        Mu     = param_dict["Mu"]
+        Sigma  = param_dict["Sigma"]
 
         json_output = {
             "name": "DAMM result",
@@ -127,14 +132,6 @@ class damm:
     def plot(self):
 
         plot_tools.plot_results(self.Data, self.assignment_arr, self.base)
+        plot_tools.plot_results(self.Data, self.reg_assignment_array, self.base)
 
-
-        # logZ             = np.genfromtxt(os.path.join(self.log_path, 'logZ.csv'     ), dtype=int,   delimiter=None )
-        # logNum           = np.genfromtxt(os.path.join(self.log_path, 'logNum.csv'   ), dtype=int,   delimiter=','  )
-        # logLogLik        = np.genfromtxt(os.path.join(self.log_path, 'logLogLik.csv'), dtype=float, delimiter=','  )
-
-        # plot_tools.plot_results(Data, reg_assignment_array, self.base)
-        # plot_tools.plot_logs(logNum, logLogLik)
-        # data_tools.computeBIC(Data, reg_param_dict)
-        # plot_tools.animate_results(Data, logZ)
             
