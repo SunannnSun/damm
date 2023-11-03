@@ -86,7 +86,7 @@ class damm:
 
 
         
-    def evaluate(self):
+    def evaluate(self, *args_):
         print(self.Data.shape)
 
         # read binary output file and store assignment array
@@ -126,8 +126,8 @@ class damm:
             "Sigma": Sigma.ravel().tolist(),
         }
         write_json(json_output, os.path.join(os.path.dirname(self.file_path), 'output.json'))
-
-
+        
+        return Priors, Mu, Sigma, assignment_arr
 
     def plot(self):
 

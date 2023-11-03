@@ -163,3 +163,15 @@ def regress(data, param_dict):
         reg_assignment_array[n] = np.argmax(prob_array)
 
     return reg_assignment_array
+
+
+# def expand_cov(cov):
+#     """
+#     Expand the covariance matrix corresponding to the initial points
+#     """
+
+#     w, v = np.linalg.eig(cov)
+
+
+    
+#     pass
