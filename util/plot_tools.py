@@ -70,6 +70,7 @@ def plot_results(data, assignment_array, base):
         ax.set_xlabel(r'$\xi_1(m)$')
         ax.set_ylabel(r'$\xi_2(m)$')
         ax.set_zlabel(r'$\xi_3(m)$')
+        ax.set_yticks((-0.6, -0.3, 0, 0.3, 0.6))
         ax.xaxis.set_major_locator(MaxNLocator(nbins=5))
         ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
         ax.zaxis.set_major_locator(MaxNLocator(nbins=5))
