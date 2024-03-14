@@ -116,7 +116,7 @@ class damm:
 
 
     
-    def logOut(self):
+    def logOut(self, js_path=[]):
 
         json_output = {
             "name": "DAMM result",
@@ -126,8 +126,9 @@ class damm:
             "Mu": self.Mu.ravel().tolist(),
             "Sigma": self.Sigma.ravel().tolist(),
         }
-
-        write_json(json_output, os.path.join(os.path.dirname(self.file_path), 'output.json'))
+        if len(js_path) == 0:
+            js_path =  os.path.join(os.path.dirname(self.file_path), 'output.json')
+        write_json(json_output, js_path)
         
 
 
