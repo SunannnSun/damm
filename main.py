@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse, subprocess, os, sys, json
-from .util import plot_tools, data_tools
+from scipy.stats import multivariate_normal
 
 
 
@@ -12,20 +12,47 @@ def write_json(data, path):
 
 
 class damm:
-    def __init__(self, hyper_param_):
+    def __init__(self, x, x_dot, param_dict):
+        """
+        Parameters:
+        -----------
 
-        self.file_path           = os.path.dirname(os.path.realpath(__file__))
-        self.dir_path            = os.path.dirname(self.file_path)
-        self.log_path            = os.path.join(self.file_path, "log", "")
+        x:     (M, N) NumPy array of position input, assuming no shift (not ending at origin)
+
+        x_dot: (M, N) NumPy array of position output (velocity)
+
+        param_dict: a dictionary containing the hyperparameters of Gaussian conjugate prior
+                    {
+                        <mu_0>: 
+                        <sigma_0>:
+                        <nu_0>: 
+                        <kappa_0>:
+                        <sigma_dir>: 
+                        <min_thold>:
+                    }
+        """
+
+        # Define parameters and path
+        self.x      = x
+        self.x_dot  = x_dot
+        mu_0, sigma_0, nu_0, kappa_0, sigma_dir_0, self.min_thold = param_dict.values()
+        self.param  = ' '.join(map(str, np.r_[sigma_dir_0, nu_0, kappa_0, mu_0.ravel(), sigma_0.ravel()]))
+        self.dir_path   = os.path.dirname(os.path.realpath(__file__))
         
-        # command-line arguments 
+
+        # Pre-process input data
+        self.x_concat  = self._pre_process(self.x, self.x_dot) 
+        self.M, self.N = self.x_concat.shape      # N is 4 or 6
+
+
+        # Store command-line arguments 
         parser = argparse.ArgumentParser(
-                            prog = 'Directionality-aware Mixture Model',
+                            prog = 'Directionality-Aware Mixture Model',
                             description = 'C++ Implementaion with Python Interface')
 
-        parser.add_argument('-b', '--base' , type=int, default=0  , help='0 damm; 1 position; 2 position+directional')
-        parser.add_argument('-i', '--init' , type=int, default=15 , help='Number of initial clusters, 0 is one cluster per data; default=15')
-        parser.add_argument('-t', '--iter' , type=int, default=30, help='Number of iterations')
+        parser.add_argument('-b', '--base' , type=int, default=0,   help='0: DAMM, 1: GMM-P, 2: GMM-PV')
+        parser.add_argument('-i', '--init' , type=int, default=15,  help='Number of initial clusters')
+        parser.add_argument('-t', '--iter' , type=int, default=30,  help='Number of iterations')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor')
 
         args = parser.parse_args()
@@ -34,48 +61,30 @@ class damm:
         self.iter               = args.iter
         self.alpha              = args.alpha
 
-        # load hyperparameters
-        mu_0, sigma_0, nu_0, kappa_0, sigma_dir_0, self.min_num = hyper_param_.values()
-        self.param = ' '.join(map(str, np.r_[sigma_dir_0, nu_0, kappa_0, mu_0.ravel(), sigma_0.ravel()]))
 
 
-    def begin(self, data_, *args_):
-
-        # load and process data
-        self.Data = data_tools.normalize_vel(data_)
-        self.num, self.dim = self.Data.shape  
-
-
-        # perform damm 
-        command_line_args = ['time ' + os.path.join(self.file_path, "main"),
+    def begin(self):
+        # Pack input and arguments
+        input = f"{self.M}\n{self.N}\n{' '.join(map(str, self.x_concat.flatten()))}\n{self.param}"
+        args  = ['time ' + os.path.join(self.dir_path, "main"),
                             '--base {}'.format(self.base),
                             '--init {}'.format(self.init),
                             '--iter {}'.format(self.iter),
                             '--alpha {}'.format(self.alpha),
-                            '--log {}'.format(self.log_path)
-        ]
-        if len(args_) == 0:
-            input_data  = f"{self.num}\n{self.dim}\n{' '.join(map(str, self.Data.flatten()))}\n{self.param}"
-        else:
-            input_data  = f"{self.num}\n{self.dim}\n{' '.join(map(str, self.Data.flatten()))}\n{self.param}\n{' '.join(map(str, args_[0]))}"
+                            '--log {}'.format(self.dir_path)]
 
-        completed_process = subprocess.run(' '.join(command_line_args), input=input_data, text=True, shell=True)
+
+        # Run DAMM 
+        subprocess.run(' '.join(args), input=input, text=True, shell=True)
         
-
-        #store old data for incremental learning
-        self.prev_data = data_
-
-
-        # extract param
         try:
-            with open(os.path.join(self.log_path, "assignment.bin"), "rb") as file:
+            with open(os.path.join(self.dir_path, "assignment.bin"), "rb") as file:
                 assignment_bin = file.read()
-                assignment_arr = np.frombuffer(assignment_bin, dtype=np.int32).copy().reshape(self.num, )
+                assignment_arr = np.frombuffer(assignment_bin, dtype=np.int32).copy().reshape(self.M, )
                 if assignment_arr.min() != 0:
                     raise ValueError("Invalid assignment array")
                 if not all(isinstance(value, np.int32) for value in assignment_arr):
                     raise ValueError("Invalid assignment array")
-                self.assignment_arr = assignment_arr
         except FileNotFoundError:
             print("Error: assignment.bin not found.")
             sys.exit()
@@ -84,58 +93,96 @@ class damm:
             sys.exit()
 
 
+        # Extract Gaussians
+        self._post_process(assignment_arr)
+        self._extract_gaussian()
 
-        Data = self.Data
-        _, _, param_dict        = data_tools.post_process(Data, assignment_arr, self.min_num)
-        reg_assignment_array    = data_tools.regress(Data, param_dict)  
-        reg_param_dict          = data_tools.extract_param(Data, reg_assignment_array)
-        self.reg_assignment_array = reg_assignment_array
-
-        self.Priors, self.Mu, self.Sigma = param_dict.values()
-
-
-        self.K = self.Priors.shape[0]
-        
-        return self.Priors, self.Mu, self.Sigma
-
-    
-
-    def begin_next(self, next_data):
-        """
-        For incremental learning only
-        """
-
-        prev_assignment_arr = self.assignment_arr
-        next_assignment_arr = -1 * np.ones((next_data.shape[1]), dtype=np.int32)
-        comb_assignment_arr = np.concatenate((prev_assignment_arr, next_assignment_arr))
-
-        comb_data = np.hstack((self.prev_data, next_data))
-
-        self.begin(comb_data, comb_assignment_arr)
-        self.plot()
+        return self.logProb(self.x)
 
 
     
-    def logOut(self, js_path=[]):
 
-        json_output = {
-            "name": "DAMM result",
-            "K": self.K,
-            "M": self.Mu.shape[1],
-            "Priors": self.Priors.tolist(),
-            "Mu": self.Mu.ravel().tolist(),
-            "Sigma": self.Sigma.ravel().tolist(),
-        }
-        if len(js_path) == 0:
-            js_path =  os.path.join(os.path.dirname(self.file_path), 'output.json')
-        write_json(json_output, js_path)
+    def _pre_process(self, x, x_dot):
+        """ Extract x_dir, remove Nan values and concatenate states """
+
+        x_dot_norm = np.linalg.norm(x_dot, axis=1)
+
+        x     = x[x_dot_norm!=0]
+        x_dot = x_dot[x_dot_norm!=0]
+
+        x_dir = x_dot / x_dot_norm[x_dot_norm!=0].reshape(-1, 1)
         
+        return np.hstack((x, x_dir)) 
 
 
 
-    def plot(self):
 
-        plot_tools.plot_results(self.Data, self.assignment_arr, self.base)
-        plot_tools.plot_results(self.Data, self.reg_assignment_array, self.base)
+    def _post_process(self, assignment_arr):
+        # Delete small components
+        unique_elements, counts = np.unique(assignment_arr, return_counts=True)
+        for element, count in zip(unique_elements, counts):
+            if  count < self.min_thold:
+                indices_to_remove = np.where(assignment_arr==element)[0]
+                assignment_arr  = np.delete(assignment_arr, indices_to_remove)
+                self.x_concat   = np.delete(self.x_concat, indices_to_remove, axis=0)
 
+        # Rearrange assignment label
+        rearrange_list = []
+        for idx, entry in enumerate(assignment_arr):
+            if not rearrange_list:
+                rearrange_list.append(entry)
+            if entry not in rearrange_list:
+                rearrange_list.append(entry)
+                assignment_arr[idx] = len(rearrange_list) - 1
+            else:
+                assignment_arr[idx] = rearrange_list.index(entry)
+        
+        self.K = assignment_arr.max()+1
+        self.assignment_arr = assignment_arr
+
+    
             
+    def _extract_gaussian(self):
+        assignment_arr = self.assignment_arr
+        K = self.K
+        M = assignment_arr.shape[0]
+        N = int(self.N/2)
+
+        Priors  = [0] * K
+        Mu      = [np.zeros((N, ))] * K 
+        Sigma   = [np.zeros((N, N), dtype=np.float32)] * K
+
+        gaussian_list = []
+        for k in range(K):
+            x_k             = self.x_concat[assignment_arr==k, :N]
+
+            Priors[k]       = x_k.shape[0] / M
+            Mu[k]           = np.mean(x_k, axis=0)
+            Sigma[k]        = np.cov(x_k.T)
+
+            gaussian_list.append({   
+                "prior" : Priors[k],
+                "mu"    : Mu[k],
+                "sigma" : Sigma[k],
+                "rv"    : multivariate_normal(Mu[k], Sigma[k], allow_singular=True)
+            })
+
+        self.gaussian_list = gaussian_list
+
+
+
+    def logProb(self, x):
+        """ Compute log probability"""
+
+        logProb = np.zeros((self.K, x.shape[0]))
+
+        for k in range(self.K):
+            prior_k, _, _, normal_k = tuple(self.gaussian_list[k].values())
+
+            logProb[k, :] = np.log(prior_k) + normal_k.logpdf(x)
+
+        maxPostLogProb = np.max(logProb, axis=0, keepdims=True)
+        expProb = np.exp(logProb - np.tile(maxPostLogProb, (self.K, 1)))
+        postProb = expProb / np.sum(expProb, axis = 0, keepdims=True)
+
+        return postProb
