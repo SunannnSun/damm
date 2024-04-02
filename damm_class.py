@@ -11,7 +11,7 @@ def write_json(data, path):
 
 
 
-class damm:
+class damm_class:
     def __init__(self, x, x_dot, param_dict):
         """
         Parameters:
