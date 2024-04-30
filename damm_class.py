@@ -32,6 +32,7 @@ class damm_class:
                     }
         """
 
+
         # Define parameters and path
         self.x      = x
         self.x_dot  = x_dot
@@ -54,6 +55,7 @@ class damm_class:
         parser.add_argument('-i', '--init' , type=int, default=15,  help='Number of initial clusters')
         parser.add_argument('-t', '--iter' , type=int, default=30,  help='Number of iterations')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor')
+
 
         args = parser.parse_args()
         self.base               = args.base
@@ -116,7 +118,6 @@ class damm_class:
 
 
 
-
     def _post_process(self, assignment_arr):
         # Delete small components
         unique_elements, counts = np.unique(assignment_arr, return_counts=True)
@@ -149,17 +150,16 @@ class damm_class:
         N = int(self.N/2)
 
         Priors  = [0] * K
-        Mu      = [np.zeros((N, ))] * K 
-        Sigma   = [np.zeros((N, N), dtype=np.float32)] * K
-
+        Mu      = np.zeros((K, N)) 
+        Sigma   = np.zeros((K, N, N), dtype=np.float32)
         gaussian_list = []
         for k in range(K):
             x_k             = self.x_concat[assignment_arr==k, :N]
 
-            Priors[k]       = x_k.shape[0] / M
-            Mu[k]           = np.mean(x_k, axis=0)
-            Sigma[k]        = np.cov(x_k.T)
-
+            Priors[k]          = x_k.shape[0] / M
+            Mu[k, :]           = np.mean(x_k, axis=0)
+            Sigma[k, :, :]     = np.cov(x_k.T)
+            
             gaussian_list.append({   
                 "prior" : Priors[k],
                 "mu"    : Mu[k],
@@ -168,6 +168,7 @@ class damm_class:
             })
 
         self.gaussian_list = gaussian_list
+        self._logOut(Priors, Mu, Sigma)
 
 
 
@@ -186,3 +187,20 @@ class damm_class:
         postProb = expProb / np.sum(expProb, axis = 0, keepdims=True)
 
         return postProb
+    
+
+
+
+    def _logOut(self, Priors, Mu, Sigma, js_path=[]):
+
+        json_output = {
+            "name": "DAMM result",
+            "K": Mu.shape[0],
+            "M": Mu.shape[1],
+            "Priors": Priors,
+            "Mu": Mu.ravel().tolist(),
+            "Sigma": Sigma.ravel().tolist(),
+        }
+        if len(js_path) == 0:
+            js_path =  os.path.join(os.path.dirname(self.dir_path), 'output.json')
+        write_json(json_output, js_path)
