@@ -23,7 +23,7 @@ class damm_class:
 
         param_dict: a dictionary containing the hyperparameters of Gaussian conjugate prior
                     {
-                        <mu_0>: 
+                        <mu_0>:       
                         <sigma_0>:
                         <nu_0>: 
                         <kappa_0>:
@@ -51,19 +51,28 @@ class damm_class:
                             prog = 'Directionality-Aware Mixture Model',
                             description = 'C++ Implementaion with Python Interface')
 
-        parser.add_argument('-b', '--base' , type=int, default=0,   help='0: DAMM, 1: GMM-P, 2: GMM-PV')
+        parser.add_argument('-b', '--base' , type=int, default=0,   help='0: Damm, 1: GMM-P, 2: GMM-PV')
         parser.add_argument('-i', '--init' , type=int, default=15,  help='Number of initial clusters')
         parser.add_argument('-t', '--iter' , type=int, default=30,  help='Number of iterations')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor')
 
 
         args = parser.parse_args()
-        self.base               = args.base
-        self.init               = args.init
-        self.iter               = args.iter
-        self.alpha              = args.alpha
+        self.base      = args.base
+        self.init      = args.init
+        self.iter      = args.iter
+        self.alpha     = args.alpha
 
 
+        x = self.x_concat[:, :3]
+        mean = np.mean(x, axis=0).reshape(-1, 3)
+        scatter = (x-mean).T @ (x-mean)
+        count = x.shape[0]
+
+        sigma_n = sigma_0[:3, :3] + scatter + (kappa_0 * count)/(kappa_0+count) * (mean-mu_0[:3]).T@(mean-mu_0[:3])
+        mu_n = kappa_0/(kappa_0+count) * mu_0[:3] + count/(kappa_0+count)*mean.reshape(3, )
+
+        a =1
 
     def begin(self):
         # Pack input and arguments
@@ -76,7 +85,7 @@ class damm_class:
                             '--log {}'.format(self.dir_path)]
 
 
-        # Run DAMM 
+        # Run Damm 
         subprocess.run(' '.join(args), input=input, text=True, shell=True)
         
         try:
@@ -99,6 +108,8 @@ class damm_class:
         self._post_process(assignment_arr)
         self._extract_gaussian()
 
+
+        # Return Gamma value
         return self.logProb(self.x)
 
 
@@ -194,7 +205,7 @@ class damm_class:
     def _logOut(self, Priors, Mu, Sigma, js_path=[]):
 
         json_output = {
-            "name": "DAMM result",
+            "name": "Damm result",
             "K": Mu.shape[0],
             "M": Mu.shape[1],
             "Priors": Priors,

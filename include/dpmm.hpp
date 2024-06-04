@@ -2,23 +2,23 @@
 
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
-#include "normal.hpp"
+#include "gauss.hpp"
 
 using namespace Eigen;
 using namespace std;
 
 
 template <class dist_t>
-class DPMM 
+class Dpmm 
 {
   public:
     /*---------------------------------------------------*/
     //-------------Constructor & Desctructor--------------
     /*---------------------------------------------------*/
-    DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen, int base);
-    DPMM(const MatrixXd& x, const VectorXi& z, const vector<int>& indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
-    DPMM(){};
-    ~DPMM(){};
+    Dpmm(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen, int base);
+    Dpmm(const MatrixXd& x, const VectorXi& z, const vector<int>& indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
+    Dpmm(){};
+    ~Dpmm(){};
 
 
     /*---------------------------------------------------*/
@@ -63,7 +63,7 @@ class DPMM
 
     //sampled parameters
     vector<dist_t> parameters_; 
-    vector<Normal<double>> components_; 
+    vector<Gauss<double>> components_; 
 
     //spilt/merge proposal
     vector<int> indexList_;
@@ -102,11 +102,11 @@ public:
 // void sampleLabelsCollapsedParallel();
 // int splitProposal(const vector<int> &indexList);
 // int mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j);
-// DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen);
-// DPMM(const MatrixXd& x, const VectorXi& z, const double alpha, const dist_t& H, boost::mt19937 &rndGen);
+// Dpmm(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937& rndGen);
+// Dpmm(const MatrixXd& x, const VectorXi& z, const double alpha, const dist_t& H, boost::mt19937 &rndGen);
 // void sampleCoefficients(const uint32_t index_i, const uint32_t index_j);
 // void sampleParameters(const uint32_t index_i, const uint32_t index_j);
-// Normal<double> sampleParameters(vector<int> indexList);
+// Gauss<double> sampleParameters(vector<int> indexList);
 // void sampleCoefficientsParameters(const uint32_t index_i, const uint32_t index_j);
 // void sampleLabels(const uint32_t index_i, const uint32_t index_j);
 // void sampleSplit(uint32_t z_i, uint32_t z_j);

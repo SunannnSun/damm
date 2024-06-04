@@ -8,13 +8,13 @@
 using namespace Eigen;
 
 template<typename T>
-class NormalDir
+class gaussDamm
 {
     public:
-        NormalDir(const Matrix<T,Dynamic,1> &meanPos, const Matrix<T,Dynamic, Dynamic> &covPos,
+        gaussDamm(const Matrix<T,Dynamic,1> &meanPos, const Matrix<T,Dynamic, Dynamic> &covPos,
         const Matrix<T,Dynamic,1>& meanDir, T covDir, boost::mt19937 &rndGen);   
-        NormalDir(){};
-        ~NormalDir(){};
+        gaussDamm(){};
+        ~gaussDamm(){};
         T logProb(const Matrix<T,Dynamic,1> &x_i);
 
 

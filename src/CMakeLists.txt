@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(DAMM VERSION 1.0)
+project(Damm VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,8 +26,8 @@ message("Using C++ compiler: ${CMAKE_CXX_COMPILER}")
 message("Project Root Directory: ${CMAKE_SOURCE_DIR}")
 
 
-# find_package(Eigen3 3.4 REQUIRED)
-# message("Eigen3 Include Directory: ${EIGEN3_INCLUDE_DIRS}")
+find_package(Eigen3 3.4 REQUIRED)
+message("Eigen3 Include Directory: ${EIGEN3_INCLUDE_DIRS}")
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 message("Boost Include Directory: ${Boost_INCLUDE_DIRS}")
@@ -40,7 +40,7 @@ message(STATUS "OpenMP Include Directory: ${OpenMP_CXX_INCLUDE_DIRS}")
 
 
 
-add_executable(main main.cpp niw.cpp niwDir.cpp normal.cpp normalDir.cpp dpmm.cpp dpmmDir.cpp)
+add_executable(main main.cpp niw.cpp niwDamm.cpp gauss.cpp gaussDamm.cpp dpmm.cpp damm.cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
@@ -49,7 +49,7 @@ target_compile_options(main PRIVATE -fopenmp)
 set_target_properties(main PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/..)
 
 target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/../include)
-target_include_directories(main PRIVATE /usr/include/eigen-3.4.0)
+# target_include_directories(main PRIVATE /usr/include/eigen-3.4.0)
 
 target_include_directories(main PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
 target_include_directories(main PRIVATE ${EIGEN3_INCLUDE_DIRS})

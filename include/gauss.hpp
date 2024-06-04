@@ -8,12 +8,12 @@
 using namespace Eigen;
 
 template<typename T>
-class Normal
+class Gauss
 {
     public:
-        Normal(const Matrix<T,Dynamic,1> &mu, const Matrix<T,Dynamic,Dynamic> &sigma, boost::mt19937 &rndGen);
-        Normal(){};
-        ~Normal(){};
+        Gauss(const Matrix<T,Dynamic,1> &mu, const Matrix<T,Dynamic,Dynamic> &sigma, boost::mt19937 &rndGen);
+        Gauss(){};
+        ~Gauss(){};
 
 
         T logProb(const Matrix<T,Dynamic,1> &x_i);

@@ -1,6 +1,6 @@
 # Directionality-aware Mixture Model Parallel Sampling for Efficient Dynamical System Learning
 
-Barebone implementation of Directionality-aware Mixture Model(DAMM) that has been optimized for near real-time learning performance. Given a set of demonstration trajectories, DAMM performs unsupervised learning and fits an augmented Gaussian Mixture Models (GMM) that encodes the structure of given motion while identifying linear components along the trajectory. DAMM serves as the statistical model in the pipeline of Linear Parameter Varying Dynamical System (LPV-DS), exhibiting state-of-the-art performance.
+Barebone implementation of Directionality-aware Mixture Model(Damm) that has been optimized for near real-time learning performance. Given a set of demonstration trajectories, Damm performs unsupervised learning and fits an augmented Gaussian Mixture Models (GMM) that encodes the structure of given motion while identifying linear components along the trajectory. Damm serves as the statistical model in the pipeline of Linear Parameter Varying Dynamical System (LPV-DS), exhibiting state-of-the-art performance.
 
 ![damm](https://github.com/SunannnSun/damm/assets/97807687/c14b3afe-a50d-43bc-b437-2dfbe864bbf0)
 

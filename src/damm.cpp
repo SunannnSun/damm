@@ -7,14 +7,14 @@
 
 
 #include "dpmm.hpp"
-#include "dpmmDir.hpp"
+#include "damm.hpp"
 #include "niw.hpp"
-#include "niwDir.hpp"
+#include "niwDamm.hpp"
 
 
 
 template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen)
+Damm<dist_t>::Damm(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
   dim_   = x.cols()/2;
@@ -48,7 +48,7 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
 
 
 template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z)
+Damm<dist_t>::Damm(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
   // incremental learning framework when assignment array, z is provided
@@ -96,7 +96,7 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, cons
 
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleCoefficientsParameters()
+void Damm<dist_t>::sampleCoefficientsParameters()
 { 
   parameters_.clear();
   components_.clear();
@@ -112,7 +112,7 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters()
 }
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleLabels_increm()
+void Damm<dist_t>::sampleLabels_increm()
 {
   // double logLik = 0;
   #pragma omp parallel for num_threads(8) schedule(dynamic, 300) private(rndGen_)
@@ -145,7 +145,7 @@ void DPMMDIR<dist_t>::sampleLabels_increm()
 }
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleLabels()
+void Damm<dist_t>::sampleLabels()
 {
   double logLik = 0;
   #pragma omp parallel for num_threads(8) schedule(dynamic, 300) private(rndGen_)
@@ -179,7 +179,7 @@ void DPMMDIR<dist_t>::sampleLabels()
 
 
 template <class dist_t> 
-int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
+int Damm<dist_t>::splitProposal(const vector<int> &indexList)
 { 
   /**
    * This method proposes a split of the given indexList
@@ -195,7 +195,7 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
   uint32_t z_split_j = z_[indexList[0]];
 
 
-  DPMM<NIW<double>> dpmm_split(x_, z_, indexList, alpha_, * H_.NIW_ptr, rndGen_);
+  Dpmm<Niw<double>> dpmm_split(x_, z_, indexList, alpha_, * H_.NIW_ptr, rndGen_);
   
  
   for (int tt=0; tt<50; ++tt) {
@@ -233,7 +233,7 @@ int DPMMDIR<dist_t>::splitProposal(const vector<int> &indexList)
 
 
 template <class dist_t> 
-int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
+int Damm<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {  
   /**
    * This method proposes a merge between two given indexList_i and indexList_j
@@ -261,7 +261,7 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
   indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
 
 
-  DPMM<NIW<double>> dpmm_merge(x_, z_, indexList, alpha_, * H_.NIW_ptr, rndGen_);  
+  Dpmm<Niw<double>> dpmm_merge(x_, z_, indexList, alpha_, * H_.NIW_ptr, rndGen_);  
   for (int tt=0; tt<50; ++tt)  {    
     dpmm_merge.sampleCoefficientsParameters(indexList);
     dpmm_merge.sampleLabels(indexList);
@@ -290,7 +290,7 @@ int DPMMDIR<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<
 
 
 template <class dist_t>
-void DPMMDIR<dist_t>::reorderAssignments()  //mainly called after clusters vanish during parallel sampling
+void Damm<dist_t>::reorderAssignments()  //mainly called after clusters vanish during parallel sampling
 { 
 
   vector<uint8_t> rearrange_list;
@@ -316,7 +316,7 @@ void DPMMDIR<dist_t>::reorderAssignments()  //mainly called after clusters vanis
 
 
 template <class dist_t>
-vector<vector<int>> DPMMDIR<dist_t>::getIndexLists()
+vector<vector<int>> Damm<dist_t>::getIndexLists()
 {
   this ->updateIndexLists();
   return indexLists_;
@@ -324,7 +324,7 @@ vector<vector<int>> DPMMDIR<dist_t>::getIndexLists()
 
 
 template <class dist_t>
-void DPMMDIR<dist_t>::updateIndexLists()
+void Damm<dist_t>::updateIndexLists()
 {
   vector<vector<int>> indexLists(K_);
   for (uint32_t ii = 0; ii<N_; ++ii) 
@@ -335,7 +335,7 @@ void DPMMDIR<dist_t>::updateIndexLists()
 
 
 template <class dist_t> 
-vector<array<int, 2>>  DPMMDIR<dist_t>::computeSimilarity(int mergeNum, int mergeIdx)
+vector<array<int, 2>>  Damm<dist_t>::computeSimilarity(int mergeNum, int mergeIdx)
 {
   // std::cout << "Sim Matrix Idx: " << mergeIdx << std::endl;
   vector<vector<int>>     indexLists = this-> getIndexLists();
@@ -393,7 +393,7 @@ vector<array<int, 2>>  DPMMDIR<dist_t>::computeSimilarity(int mergeNum, int merg
 }
 
 template <class dist_t> 
-double DPMMDIR<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q)
+double Damm<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q)
 {
   double div = 0;
   LLT<MatrixXd> lltObjp(Sigma_p);
@@ -409,7 +409,7 @@ double DPMMDIR<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q,
 }
 
 
-template class DPMMDIR<NIWDIR<double>>;
+template class Damm<NiwDamm<double>>;
 
 
 
@@ -421,7 +421,7 @@ template class DPMMDIR<NIWDIR<double>>;
 
 
 template <class dist_t> 
-DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+Damm<dist_t>::Damm(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), x_(x), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1), indexList_(indexList)
 {
   
@@ -453,7 +453,7 @@ DPMMDIR<dist_t>::DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int>
 
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleCoefficients()
+void Damm<dist_t>::sampleCoefficients()
 {
   VectorXd Pi(K_);
   for (uint32_t kk=0; kk<K_; ++kk)
@@ -466,7 +466,7 @@ void DPMMDIR<dist_t>::sampleCoefficients()
 
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleParameters()
+void Damm<dist_t>::sampleParameters()
 { 
   parameters_.clear();
   components_.clear();
@@ -479,7 +479,7 @@ void DPMMDIR<dist_t>::sampleParameters()
 }
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
+void Damm<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
 {
   parameters_.clear();
   components_.clear();
@@ -500,7 +500,7 @@ void DPMMDIR<dist_t>::sampleCoefficientsParameters(vector<int> indexList)
 
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
+void Damm<dist_t>::sampleLabels(vector<int> indexList)
 {
   indexLists_.clear();
   vector<int> indexList_i;
@@ -531,7 +531,7 @@ void DPMMDIR<dist_t>::sampleLabels(vector<int> indexList)
 
 
 template <class dist_t> 
-double DPMMDIR<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
+double Damm<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
   double logProposalRatio = 0;
 
@@ -550,16 +550,16 @@ double DPMMDIR<dist_t>::logProposalRatio(vector<int> indexList_i, vector<int> in
 
 
 template <class dist_t>
-double DPMMDIR<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
+double Damm<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
   vector<int> indexList_ij;
   indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
   indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
   indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
 
-  NIWDIR<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
-  NIWDIR<double> parameter_i  = H_.posterior(x_(indexList_i, all));
-  NIWDIR<double> parameter_j  = H_.posterior(x_(indexList_j, all));
+  NiwDamm<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
+  NiwDamm<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  NiwDamm<double> parameter_j  = H_.posterior(x_(indexList_j, all));
 
   double logTargetRatio = 0;
   for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {
@@ -580,7 +580,7 @@ double DPMMDIR<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> inde
 }
 
 template <class dist_t> 
-void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
+void Damm<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
 {
   int dimPos;
   if (x_.cols()==4) dimPos=1;
@@ -648,7 +648,7 @@ void DPMMDIR<dist_t>::sampleLabelsCollapsed(vector<int> indexList)
 
 
 template <class dist_t> 
-double DPMMDIR<dist_t>::logTransitionProb(vector<int> indexList_i, vector<int> indexList_j)
+double Damm<dist_t>::logTransitionProb(vector<int> indexList_i, vector<int> indexList_j)
 {
   double logTransitionProb = 0;
 
@@ -671,16 +671,16 @@ double DPMMDIR<dist_t>::logTransitionProb(vector<int> indexList_i, vector<int> i
 
 
 template <class dist_t>
-double DPMMDIR<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
+double Damm<dist_t>::logTargetRatio(vector<int> indexList_i, vector<int> indexList_j)
 {
   vector<int> indexList_ij;
   indexList_ij.reserve(indexList_i.size() + indexList_j.size() ); // preallocate memory
   indexList_ij.insert( indexList_ij.end(), indexList_i.begin(), indexList_i.end() );
   indexList_ij.insert( indexList_ij.end(), indexList_j.begin(), indexList_j.end() );
 
-  NIWDIR<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
-  NIWDIR<double> parameter_i  = H_.posterior(x_(indexList_i, all));
-  NIWDIR<double> parameter_j  = H_.posterior(x_(indexList_j, all));
+  NiwDamm<double> parameter_ij = H_.posterior(x_(indexList_ij, all));
+  NiwDamm<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  NiwDamm<double> parameter_j  = H_.posterior(x_(indexList_j, all));
 
   double logTargetRatio = 0;
   for (uint32_t ii=0; ii < indexList_i.size(); ++ii) {

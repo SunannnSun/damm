@@ -7,22 +7,22 @@
 #include <boost/random/gamma_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
 
-#include "dpmmDir.hpp"
+#include "damm.hpp"
 #include "dpmm.hpp"
 #include "niw.hpp"
-#include "niwDir.hpp"
+#include "niwDamm.hpp"
 #include "kmeans.hpp"
 
 
 
 template <class dist_t> 
-DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen, int base)
+Dpmm<dist_t>::Dpmm(const MatrixXd& x, int init_cluster, double alpha, const dist_t& H, const boost::mt19937 &rndGen, int base)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows())
 {
   /**
    * This constructor is only called when sampling using base 1 and 2
    *
-   * @param x is the Data (N, 2M) containing both position and velocity
+   * @param x is the Data (N, 2initM) containing both position and velocity
    * @param init_cluster is the number of initial clusters, i.e. >= 1
    * @param alpha concentration factor
    * @param H the base distribution
@@ -42,8 +42,11 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
   }
   
 
-  z_.setZero(N_);  
-  if (init_cluster > 1) {
+  // z_.setZero(N_);  
+  
+  if (init_cluster == 1) 
+    z_.setZero(N_);
+  else if (init_cluster > 1) {
     boost::random::uniform_int_distribution<> uni_(0, init_cluster-1);
     for (int i=0; i<N_; ++i) 
       z_[i] = uni_(rndGen_); 
@@ -61,11 +64,11 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, int init_cluster, double alpha, const dist
 
 
 template <class dist_t> 
-DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> & indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+Dpmm<dist_t>::Dpmm(const MatrixXd& x, const VectorXi& z, const vector<int> & indexList, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff()+1), indexList_(indexList)
 {
   /**
-   * This constructor is only called from dpmmDir when split/merge
+   * This constructor is only called from damm when split/merge
    *
    * @param x is the Data (N, 2M) containing both position and velocity
    * @param init_cluster is the number of initial clusters, i.e. >= 1
@@ -129,13 +132,13 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const vector<int> & ind
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleCoefficientsParameters()
+void Dpmm<dist_t>::sampleCoefficientsParameters()
 {   
   /**
    * This method samples coefficients and parameters together in a parallelizable framework
    *
-   * @param parameters_ vector of K_ size containing the posterior NIW distribution after seeing observations
-   * @param components_ vector of K_ size containing the drawn Normal distribution from the posterior NIW
+   * @param parameters_ vector of K_ size containing the posterior Niw distribution after seeing observations
+   * @param components_ vector of K_ size containing the drawn Gauss distribution from the posterior Niw
    * @param Pi_ coefficients pi
    * 
    * @note resize the the class members with K_ in the beginning; code has been modified to accomodate parallelization.
@@ -161,7 +164,7 @@ void DPMM<dist_t>::sampleCoefficientsParameters()
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleLabels()
+void Dpmm<dist_t>::sampleLabels()
 {
   double logLik = 0;
   boost::random::uniform_01<> uni_;   
@@ -196,13 +199,13 @@ void DPMM<dist_t>::sampleLabels()
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
+void Dpmm<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
 {
   /**
    * This method samples coefficients and parameters together in a split/merge scenario
    *
-   * @param parameters_ vector of K_ size containing the posterior NIW distribution after seeing observations
-   * @param components_ vector of K_ size containing the drawn Normal distribution from the posterior NIW
+   * @param parameters_ vector of K_ size containing the posterior Niw distribution after seeing observations
+   * @param components_ vector of K_ size containing the drawn Gauss distribution from the posterior Niw
    * @param Pi_ coefficients pi
    * 
    * @note might be possible to integrate with the original member, but easier to maintain as a standalone method
@@ -227,7 +230,7 @@ void DPMM<dist_t>::sampleCoefficientsParameters(const vector<int> &indexList)
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
+void Dpmm<dist_t>::sampleLabels(const vector<int> &indexList)
 {
    /**
    * This method samples labels in split merge scenario
@@ -268,13 +271,13 @@ void DPMM<dist_t>::sampleLabels(const vector<int> &indexList)
 
 
 template <class dist_t> 
-double DPMM<dist_t>::logProposalRatio(const vector<int> &indexList_i, const vector<int> &indexList_j)
+double Dpmm<dist_t>::logProposalRatio(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {
   /**
    * This method computes the proposal probability of the last Gibbs scan
    * 
    * @note the proposal probability in Gibbs sampling is implicitly defined to be the product of conditional probability;
-   * the components_ are the last drawn Normal distribution to sample the labels of observations; hence the last Gibbs scan
+   * the components_ are the last drawn Gauss distribution to sample the labels of observations; hence the last Gibbs scan
    * from the launch state to the proposed split state in split, or the original split state in merge
    */
 
@@ -299,7 +302,7 @@ double DPMM<dist_t>::logProposalRatio(const vector<int> &indexList_i, const vect
 
 
 template <class dist_t>
-double DPMM<dist_t>::logTargetRatio(const vector<int>  &indexList_i, const vector<int> &indexList_j)
+double Dpmm<dist_t>::logTargetRatio(const vector<int>  &indexList_i, const vector<int> &indexList_j)
 {
   /**
    * This method computes the target probability of the proposed state
@@ -311,8 +314,8 @@ double DPMM<dist_t>::logTargetRatio(const vector<int>  &indexList_i, const vecto
    * after factoring out, the likelihood is the posterior conditional probability
    * 
    * @note there could be two choices in defining the posterior conditional probability:
-   * either with parameter included as drawing one Normal from posterior NIW; 
-   * or marginalize out the parameter by defining the marginal distribution over the posterior NIW
+   * either with parameter included as drawing one Gauss from posterior Niw; 
+   * or marginalize out the parameter by defining the marginal distribution over the posterior Niw
    */
 
   VectorXd Pi(2);
@@ -324,13 +327,13 @@ double DPMM<dist_t>::logTargetRatio(const vector<int>  &indexList_i, const vecto
   Pi = Pi / Pi.sum();
 
 
-  NIW<double> parameter_ij = H_.posterior(x_(indexList_, all));
-  NIW<double> parameter_i  = H_.posterior(x_(indexList_i, all));
-  NIW<double> parameter_j  = H_.posterior(x_(indexList_j, all));
+  Niw<double> parameter_ij = H_.posterior(x_(indexList_, all));
+  Niw<double> parameter_i  = H_.posterior(x_(indexList_i, all));
+  Niw<double> parameter_j  = H_.posterior(x_(indexList_j, all));
 
-  Normal<double> component_ij = parameter_ij.sampleParameter();
-  Normal<double> component_i  = parameter_i.sampleParameter();
-  Normal<double> component_j  = parameter_j.sampleParameter();
+  Gauss<double> component_ij = parameter_ij.sampleParameter();
+  Gauss<double> component_i  = parameter_i.sampleParameter();
+  Gauss<double> component_j  = parameter_j.sampleParameter();
   
   double logTargetRatio = 0;
 
@@ -355,7 +358,7 @@ double DPMM<dist_t>::logTargetRatio(const vector<int>  &indexList_i, const vecto
 
 
 template <class dist_t>
-void DPMM<dist_t>::reorderAssignments()
+void Dpmm<dist_t>::reorderAssignments()
 { 
   /**
    * This method rearranges and reassigns the labels, taking care of the situation when one group vanishes after sampling
@@ -393,7 +396,7 @@ void DPMM<dist_t>::reorderAssignments()
 
 
 template <class dist_t>
-vector<vector<int>> DPMM<dist_t>::getIndexLists()
+vector<vector<int>> Dpmm<dist_t>::getIndexLists()
 {
   this ->updateIndexLists();
   return indexLists_;
@@ -401,7 +404,7 @@ vector<vector<int>> DPMM<dist_t>::getIndexLists()
 
 
 template <class dist_t>
-void DPMM<dist_t>::updateIndexLists()
+void Dpmm<dist_t>::updateIndexLists()
 {
   /**
    * This method updates the class member indexLists_, of which every entry contains the indices of observations belonging to
@@ -420,7 +423,7 @@ void DPMM<dist_t>::updateIndexLists()
 }
 
 
-template class DPMM<NIW<double>>;
+template class Dpmm<Niw<double>>;
 
 
 
@@ -460,7 +463,7 @@ template class DPMM<NIW<double>>;
 
 
 template <class dist_t> 
-vector<vector<vector<int>>> DPMM<dist_t>::computeSimilarity(int num)
+vector<vector<vector<int>>> Dpmm<dist_t>::computeSimilarity(int num)
 {
   int num_comp = K_;
   vector<vector<int>> indexLists = this-> getIndexLists();
@@ -513,7 +516,7 @@ vector<vector<vector<int>>> DPMM<dist_t>::computeSimilarity(int num)
 }
 
 template <class dist_t> 
-double DPMM<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q)
+double Dpmm<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, const MatrixXd& mu_p, const MatrixXd& mu_q)
 {
   double div = 0;
   LLT<MatrixXd> lltObjp(Sigma_p);
@@ -530,7 +533,7 @@ double DPMM<dist_t>::KL_div(const MatrixXd& Sigma_p, const MatrixXd& Sigma_q, co
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleCoefficients()
+void Dpmm<dist_t>::sampleCoefficients()
 {
   VectorXd Pi(K_);
   for (uint32_t kk=0; kk<K_; ++kk)  { 
@@ -543,7 +546,7 @@ void DPMM<dist_t>::sampleCoefficients()
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleParameters()
+void Dpmm<dist_t>::sampleParameters()
 { 
   components_.clear();
   parameters_.clear();
@@ -556,15 +559,15 @@ void DPMM<dist_t>::sampleParameters()
 }
 
 template <class dist_t> 
-int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
+int Dpmm<dist_t>::splitProposal(const vector<int> &indexList)
 {
   VectorXi z_launch = z_;
   VectorXi z_split = z_;
   uint32_t z_split_i = z_split.maxCoeff() + 1;
   uint32_t z_split_j = z_split[indexList[0]];
 
-  NIWDIR<double> H_NIWDIR = * H_.NIWDIR_ptr;
-  DPMMDIR<NIWDIR<double>> dpmm_split(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
+  NiwDamm<double> H_NIWDIR = * H_.NIWDIR_ptr;
+  Damm<NiwDamm<double>> dpmm_split(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
 
   for (int tt=0; tt<50; ++tt)  {
     if (dpmm_split.indexLists_[0].empty()==true || dpmm_split.indexLists_[1].empty()==true)
@@ -600,7 +603,7 @@ int DPMM<dist_t>::splitProposal(const vector<int> &indexList)
 
 
 template <class dist_t> 
-int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
+int Dpmm<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int> &indexList_j)
 {
   double logAcceptanceRatio = 0;
   VectorXi z_launch = z_;
@@ -613,9 +616,9 @@ int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int
   indexList.insert( indexList.end(), indexList_i.begin(), indexList_i.end() );
   indexList.insert( indexList.end(), indexList_j.begin(), indexList_j.end() );
 
-  NIWDIR<double> H_NIWDIR = * H_.NIWDIR_ptr;
-  DPMMDIR<NIWDIR<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
-  // DPMM<NIW<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_, rndGen_);
+  NiwDamm<double> H_NIWDIR = * H_.NIWDIR_ptr;
+  Damm<NiwDamm<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_NIWDIR, rndGen_);
+  // Dpmm<Niw<double>> dpmm_merge(x_full_, z_launch, indexList, alpha_, H_, rndGen_);
   
   for (int tt=0; tt<50; ++tt)  {    
     if (dpmm_merge.indexLists_[0].empty()==true || dpmm_merge.indexLists_[1].empty()==true)
@@ -653,7 +656,7 @@ int DPMM<dist_t>::mergeProposal(const vector<int> &indexList_i, const vector<int
 }
 
 template <class dist_t> 
-int DPMM<dist_t>::sampleLabelsCollapsed()
+int Dpmm<dist_t>::sampleLabelsCollapsed()
 {
   if (indexLists_[0].size()==1) {
     z_[indexLists_[0][0]] =  z_[indexLists_[1][0]];
@@ -730,7 +733,7 @@ int DPMM<dist_t>::sampleLabelsCollapsed()
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleLabelsCollapsedParallel()
+void Dpmm<dist_t>::sampleLabelsCollapsedParallel()
 {
   #pragma omp parallel for num_threads(4) schedule(static) private(rndGen_)
   for(uint32_t ii=0; ii<N_; ++ii)  { 
@@ -755,7 +758,7 @@ void DPMM<dist_t>::sampleLabelsCollapsedParallel()
 
 
 template <class dist_t> 
-DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
+Dpmm<dist_t>::Dpmm(const MatrixXd& x, const VectorXi& z, const double alpha, const dist_t& H, boost::mt19937 &rndGen)
 : alpha_(alpha), H_(H), rndGen_(rndGen), N_(x.rows()), z_(z), K_(z.maxCoeff() + 1)
 {
   // Slice the data if containing directional info
@@ -768,7 +771,7 @@ DPMM<dist_t>::DPMM(const MatrixXd& x, const VectorXi& z, const double alpha, con
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t index_j)
+void Dpmm<dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t index_j)
 {
   VectorXi Nk(2);
   Nk.setZero();
@@ -798,7 +801,7 @@ void DPMM<dist_t>::sampleCoefficients(const uint32_t index_i, const uint32_t ind
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index_j)
+void Dpmm<dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index_j)
 {
   components_.clear();
   parameters_.clear();
@@ -833,7 +836,7 @@ void DPMM<dist_t>::sampleParameters(const uint32_t index_i, const uint32_t index
 }
 
 template <class dist_t> 
-Normal<double> DPMM<dist_t>::sampleParameters(vector<int> indexList)
+Gauss<double> Dpmm<dist_t>::sampleParameters(vector<int> indexList)
 { 
   return H_.posterior(x_(indexList, all)).sampleParameter();
 }
@@ -842,7 +845,7 @@ Normal<double> DPMM<dist_t>::sampleParameters(vector<int> indexList)
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleCoefficientsParameters(uint32_t index_i, uint32_t index_j)
+void Dpmm<dist_t>::sampleCoefficientsParameters(uint32_t index_i, uint32_t index_j)
 {
   vector<int> indexList_i;
   vector<int> indexList_j;
@@ -900,7 +903,7 @@ void DPMM<dist_t>::sampleCoefficientsParameters(uint32_t index_i, uint32_t index
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
+void Dpmm<dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
 {
   uint32_t z_i = z_[index_i];
   uint32_t z_j = z_[index_j];
@@ -937,7 +940,7 @@ void DPMM<dist_t>::sampleLabels(const uint32_t index_i, const uint32_t index_j)
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleSplit(uint32_t z_i, uint32_t z_j)
+void Dpmm<dist_t>::sampleSplit(uint32_t z_i, uint32_t z_j)
 {
   vector<int> indexList_i;
   vector<int> indexList_j;
@@ -1013,7 +1016,7 @@ void DPMM<dist_t>::sampleSplit(uint32_t z_i, uint32_t z_j)
 }
 
 template <class dist_t> 
-int DPMM<dist_t>::splitProposal(vector<int> indexList)
+int Dpmm<dist_t>::splitProposal(vector<int> indexList)
 { 
   
   boost::random::uniform_int_distribution<> uni_(0, indexList.size()-1);
@@ -1058,7 +1061,7 @@ int DPMM<dist_t>::splitProposal(vector<int> indexList)
   }
   
   
-  DPMM<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
+  Dpmm<dist_t> dpmm_split(x_, z_launch, indexList, alpha_, H_, rndGen_);
 
   for (uint32_t t=0; t<500; ++t)
   {
@@ -1099,7 +1102,7 @@ int DPMM<dist_t>::splitProposal(vector<int> indexList)
 
 
 template <class dist_t> 
-int DPMM<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j)
+int Dpmm<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j)
 { 
   VectorXi z_split = z_; //original split state
   
@@ -1129,7 +1132,7 @@ int DPMM<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j
   z_launch[index_j] = z_split_j;
 
 
-  DPMM<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
+  Dpmm<dist_t> dpmm_merge(x_, z_launch, indexList, alpha_, H_, rndGen_);
   for (uint32_t t=0; t<50; ++t)
   {
     // std::cout << t << std::endl;
@@ -1172,7 +1175,7 @@ int DPMM<dist_t>::mergeProposal(vector<int> indexList_i, vector<int> indexList_j
 
 
 template <class dist_t> 
-double DPMM<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j)
+double Dpmm<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j)
 {
   assert(!components_.empty());
   double transitionProb = 1;
@@ -1189,7 +1192,7 @@ double DPMM<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index
 }
 
 template <class dist_t> 
-double DPMM<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j,VectorXi z_original)
+double Dpmm<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index_j,VectorXi z_original)
 {
   z_ = z_original;
   return this->transitionProb(index_i, index_j);
@@ -1197,11 +1200,11 @@ double DPMM<dist_t>::transitionProb(const uint32_t index_i, const uint32_t index
 
 
 template <class dist_t>
-double DPMM<dist_t>::posteriorRatio(vector<int> indexList_i, vector<int> indexList_j, vector<int> indexList_ij)
+double Dpmm<dist_t>::posteriorRatio(vector<int> indexList_i, vector<int> indexList_j, vector<int> indexList_ij)
 {
-  Normal<double> parameter_ij = H_.posterior(x_(indexList_ij, all)).sampleParameter();
-  Normal<double> parameter_i  = H_.posterior(x_(indexList_i, all)).sampleParameter();
-  Normal<double> parameter_j  = H_.posterior(x_(indexList_j, all)).sampleParameter();
+  Gauss<double> parameter_ij = H_.posterior(x_(indexList_ij, all)).sampleParameter();
+  Gauss<double> parameter_i  = H_.posterior(x_(indexList_i, all)).sampleParameter();
+  Gauss<double> parameter_j  = H_.posterior(x_(indexList_j, all)).sampleParameter();
 
   double logPosteriorRatio = 0;
   for (uint32_t ii=0; ii < indexList_i.size(); ++ii)
@@ -1220,7 +1223,7 @@ double DPMM<dist_t>::posteriorRatio(vector<int> indexList_i, vector<int> indexLi
 
 
 template <class dist_t>
-void DPMM<dist_t>::removeEmptyClusters()
+void Dpmm<dist_t>::removeEmptyClusters()
 {
   for(uint32_t k=parameters_.size()-1; k>=0; --k)
   {
@@ -1319,7 +1322,7 @@ void DPMM<dist_t>::removeEmptyClusters()
 
 
 template <class dist_t> 
-void DPMM<dist_t>::sampleLabelsCollapsed(const vector<int> &indexList)
+void Dpmm<dist_t>::sampleLabelsCollapsed(const vector<int> &indexList)
 {
   int dimPos;
   if (x_.cols()==4) dimPos=1;

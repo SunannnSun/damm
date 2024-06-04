@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 #include <boost/random/mersenne_twister.hpp>
-#include "normalDir.hpp"
+#include "gaussDamm.hpp"
 #include "niw.hpp"
 #include <memory>
 
@@ -12,24 +12,24 @@ using namespace Eigen;
 
 
 template<typename T>
-class NIWDIR
+class NiwDamm
 {
     public:
-        NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, T sigmaDir,
+        NiwDamm(const Matrix<T,Dynamic,Dynamic>& sigma, const Matrix<T,Dynamic,Dynamic>& mu, T nu, T kappa, T sigmaDir,
         boost::mt19937 &rndGen);
-        NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, 
+        NiwDamm(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, 
         const Matrix<T,Dynamic,1>& muDir, T count, boost::mt19937 &rndGen);        
-        NIWDIR(){};
-        ~NIWDIR(){};
+        NiwDamm(){};
+        ~NiwDamm(){};
 
 
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k);
-        NIWDIR<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
-        NormalDir<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
-        NormalDir<T> sampleParameter();
+        NiwDamm<T> posterior(const Matrix<T,Dynamic, Dynamic>& x_k);
+        gaussDamm<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
+        gaussDamm<T> sampleParameter();
     
     public:
-        std::shared_ptr<NIW<T>> NIW_ptr;
+        std::shared_ptr<Niw<T>> NIW_ptr;
 
     private:
         boost::mt19937 rndGen_;

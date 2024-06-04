@@ -1,10 +1,10 @@
-#include "normal.hpp"
+#include "gauss.hpp"
 
 #define PI 3.141592653589793
 
 
 template<class T>
-Normal<T>::Normal(const Matrix<T,Dynamic,1> &mu, const Matrix<T,Dynamic,Dynamic> &sigma, boost::mt19937 &rndGen)
+Gauss<T>::Gauss(const Matrix<T,Dynamic,1> &mu, const Matrix<T,Dynamic,Dynamic> &sigma, boost::mt19937 &rndGen)
 :mu_(mu), sigma_(sigma), dim_(mu.size()), rndGen_(rndGen) 
 {
   assert(sigma_.rows()==mu_.size()); 
@@ -14,7 +14,7 @@ Normal<T>::Normal(const Matrix<T,Dynamic,1> &mu, const Matrix<T,Dynamic,Dynamic>
 
 
 template<class T>
-T Normal<T>::logProb(const Matrix<T,Dynamic,1> &x_i)
+T Gauss<T>::logProb(const Matrix<T,Dynamic,1> &x_i)
 { 
   LLT<Matrix<T,Dynamic,Dynamic>> lltObj(sigma_);
   T logProb =  dim_ * log(2*PI);
@@ -29,11 +29,11 @@ T Normal<T>::logProb(const Matrix<T,Dynamic,1> &x_i)
 
 
 template<class T>
-T Normal<T>::prob(const Matrix<T,Dynamic,1> &x_i)
+T Gauss<T>::prob(const Matrix<T,Dynamic,1> &x_i)
 { 
   T logProb = this ->logProb(x_i);
   return exp(logProb);
 };
 
 
-template class Normal<double>;
+template class Gauss<double>;

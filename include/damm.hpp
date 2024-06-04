@@ -2,23 +2,23 @@
 
 #include <boost/random/mersenne_twister.hpp>
 #include <Eigen/Dense>
-#include "normalDir.hpp"
+#include "gaussDamm.hpp"
 
 using namespace Eigen;
 using namespace std;
 
 
 template <class dist_t>
-class DPMMDIR
+class Damm
 {
   public:
     /*---------------------------------------------------*/
     //-------------Constructor & Desctructor--------------
     /*---------------------------------------------------*/
-    DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen);
-    DPMMDIR(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z);
-    DPMMDIR(){};
-    ~DPMMDIR(){};
+    Damm(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen);
+    Damm(const MatrixXd &x, int init_cluster, double alpha, const dist_t &H, const boost::mt19937 &rndGen, VectorXi z);
+    Damm(){};
+    ~Damm(){};
 
 
     /*---------------------------------------------------*/
@@ -71,7 +71,7 @@ class DPMMDIR
 
     //sampled parameters
     vector<dist_t> parameters_ ;     
-    vector<NormalDir<double>> components_;      
+    vector<gaussDamm<double>> components_;      
 
     vector<vector<int>> indexLists_;
 
@@ -100,7 +100,7 @@ class DPMMDIR
 /*---------------------------------------------------*/
 //-------------------Inactive Methods-----------------
 /*---------------------------------------------------*/
-// DPMMDIR(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
+// Damm(const MatrixXd& x, const VectorXi& z, const vector<int> indexList, const double alpha, const dist_t& H, boost::mt19937& rndGen);
 // void sampleCoefficients();
 // void sampleParameters();
 // void sampleCoefficientsParameters(vector<int> indexList);

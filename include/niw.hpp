@@ -1,42 +1,46 @@
+/*
+* Normal Inverse Wishart distribution class
+*/
+
 #pragma once
 
 #include <Eigen/Dense>
 #include <boost/random/mersenne_twister.hpp>
-#include "normal.hpp"
+#include "gauss.hpp"
 #include <memory>
 
 
 using namespace Eigen;
 
-template<typename T>
-class NIWDIR;
+template<typename T> //cyclic dependency
+class NiwDamm;
 
 
 template<typename T>
-class NIW
+class Niw
 {
     public:
-        NIW(const MatrixXd &sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen, int base);
-        NIW(const MatrixXd &sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
-        NIW(){};
-        ~NIW(){};
+        Niw(const MatrixXd &sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen, int base);
+        Niw(const MatrixXd &sigma, const VectorXd &mu, T nu, T kappa, boost::mt19937 &rndGen);
+        Niw(){};
+        ~Niw(){};
 
-        NIW<T> posterior(const Matrix<T,Dynamic, Dynamic> &x_k);
         void getSufficientStatistics(const Matrix<T,Dynamic, Dynamic> &x_k);
-        Normal<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
-        Normal<T> sampleParameter();
+        Niw<T> posterior(const Matrix<T,Dynamic, Dynamic> &x_k);
+        Gauss<T> samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic> &x_k);
+        Gauss<T> sampleParameter();
 
  
     private:
         boost::mt19937 rndGen_;
+        uint32_t dim_;  // 2 or 3 for base 1; 4 or 6 for base 2
 
-
+        // hyperparameter
         Matrix<T,Dynamic,Dynamic> sigma_;
         Matrix<T,Dynamic,1> mu_;
         T nu_,kappa_;
-        uint32_t dim_;
 
-
+        // sufficient statistics
         Matrix<T,Dynamic,Dynamic> scatter_;
         Matrix<T,Dynamic,1> mean_;
         uint16_t count_;
@@ -57,7 +61,7 @@ class NIW
 /*---------------------------------------------------*/
 //-------------------Inactive Members-----------------
 /*---------------------------------------------------*/
-// std::shared_ptr<NIWDIR<T>> NIWDIR_ptr;
+// std::shared_ptr<NiwDamm<T>> NIWDIR_ptr;
 // Matrix<T,Dynamic,Dynamic> SigmaPos_;
 // T SigmaDir_;
 // Matrix<T,Dynamic,1> muPos_;

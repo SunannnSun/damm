@@ -1,4 +1,4 @@
-#include "niwDir.hpp"
+#include "niwDamm.hpp"
 #include "riem.hpp"
 #include <cmath>
 #include <limits>
@@ -9,7 +9,7 @@
 
 
 template<typename T>
-NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma, 
+NiwDamm<T>::NiwDamm(const Matrix<T,Dynamic,Dynamic>& sigma, 
   const Matrix<T,Dynamic,Dynamic>& mu, T nu,  T kappa, T sigmaDir, boost::mt19937 &rndGen):
   nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), rndGen_(rndGen) 
 {
@@ -19,7 +19,7 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma,
    * 
    * @param dim is the dimension d of the state variable; i.e. \xi_{pos} in paper
    * @param rndGen the random number generator
-   * @param NIW_ptr is created as the pointer to a NIW base distribution
+   * @param NIW_ptr is created as the pointer to a Niw base distribution
    * 
    */
 
@@ -27,19 +27,19 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigma,
   muPos_  = mu(seq(0, dim_-1), all);
   sigmaPos_ = sigma(seq(0, dim_-1), seq(0, dim_-1));
 
-  NIW_ptr = std::make_shared<NIW<T>> (sigmaPos_, muPos_, nu_, kappa_, rndGen_);
+  NIW_ptr = std::make_shared<Niw<T>> (sigmaPos_, muPos_, nu_, kappa_, rndGen_);
 };
 
 
 
 template<typename T>
-NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, const Matrix<T,Dynamic,1>& muDir, 
+NiwDamm<T>::NiwDamm(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dynamic,1>& muPos, T nu, T kappa, T sigmaDir, const Matrix<T,Dynamic,1>& muDir, 
   T count, boost::mt19937 &rndGen):
   sigmaPos_(sigmaPos), muPos_(muPos), nu_(nu), kappa_(kappa), sigmaDir_(sigmaDir), muDir_(muDir), count_(count), dim_(muPos_.rows()), rndGen_(rndGen)
 {
   /**
-   * This NIWDIR distribution constructor is only called when:
-   * 1. called from NIWDIR posterior
+   * This NiwDamm distribution constructor is only called when:
+   * 1. called from NiwDamm posterior
    * 
    */
 };
@@ -48,7 +48,7 @@ NIWDIR<T>::NIWDIR(const Matrix<T,Dynamic,Dynamic>& sigmaPos, const Matrix<T,Dyna
 
 
 template<typename T>
-void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
+void NiwDamm<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
   const MatrixXd xPos_k = x_k(all, seq(0, dim_-1));
   const MatrixXd xDir_k = x_k(all, seq(dim_, last));
@@ -67,10 +67,10 @@ void NIWDIR<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
 
 
 template<typename T>
-NIWDIR<T> NIWDIR<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
+NiwDamm<T> NiwDamm<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
   getSufficientStatistics(x_k);
-  return NIWDIR<T>(
+  return NiwDamm<T>(
     sigmaPos_+scatterPos_ + ((kappa_*count_)/(kappa_+count_))*(meanPos_-muPos_)*(meanPos_-muPos_).transpose(),
     (kappa_*muPos_+ count_*meanPos_)/(kappa_+count_),
     nu_+count_,
@@ -84,15 +84,15 @@ NIWDIR<T> NIWDIR<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
 
 
 template<class T>
-NormalDir<T> NIWDIR<T>::samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic>& x_k)
+gaussDamm<T> NiwDamm<T>::samplePosteriorParameter(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
-  NIWDIR<T> posterior = this ->posterior(x_k);
+  NiwDamm<T> posterior = this ->posterior(x_k);
   return posterior.sampleParameter();
 }
 
 
 template<class T>
-NormalDir<T> NIWDIR<T>::sampleParameter()
+gaussDamm<T> NiwDamm<T>::sampleParameter()
 {
   Matrix<T,Dynamic,1> meanPos(dim_);
   Matrix<T,Dynamic,Dynamic> covPos(dim_, dim_);
@@ -140,12 +140,12 @@ NormalDir<T> NIWDIR<T>::sampleParameter()
   meanDir = muDir_;
 
 
-  return NormalDir<T>(meanPos, covPos, meanDir, covDir, rndGen_);
+  return gaussDamm<T>(meanPos, covPos, meanDir, covDir, rndGen_);
 };
 
 
 
-template class NIWDIR<double>;
+template class NiwDamm<double>;
 
 
 
@@ -162,7 +162,7 @@ template class NIWDIR<double>;
 
 
 template<class T>
-T NIWDIR<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
+T NiwDamm<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
 {
   // Multivariate student-t distribution
   // https://en.wikipedia.org/wiki/Multivariate_t-distribution
@@ -198,7 +198,7 @@ T NIWDIR<T>::logPredProb(const Matrix<T,Dynamic,1>& x_i)
 
 
 template<class T>
-T NIWDIR<T>::predProb(const Matrix<T,Dynamic,1>& x_i)
+T NiwDamm<T>::predProb(const Matrix<T,Dynamic,1>& x_i)
 { 
   T logPredProb = this ->logPredProb(x_i);
   return exp(logPredProb);
@@ -206,9 +206,9 @@ T NIWDIR<T>::predProb(const Matrix<T,Dynamic,1>& x_i)
 
 
 template<typename T>
-T NIWDIR<T>::logPostPredProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k)
+T NiwDamm<T>::logPostPredProb(const Vector<T,Dynamic>& x_i, const Matrix<T,Dynamic, Dynamic>& x_k)
 {
-  NIWDIR<T> posterior = this ->posterior(x_k);
+  NiwDamm<T> posterior = this ->posterior(x_k);
   return posterior.logPredProb(x_i);
 };
 
