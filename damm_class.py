@@ -11,6 +11,35 @@ def write_json(data, path):
 
 
 
+def adjust_cov(cov, tot_scale_fact=2, rel_scale_fact=0.15):
+
+    eigenvalues, eigenvectors = np.linalg.eig(cov)
+
+    idxs = eigenvalues.argsort()
+    inverse_idxs = np.zeros((idxs.shape[0]), dtype=int)
+    for index, element in enumerate(idxs):
+        inverse_idxs[element] = index
+
+    eigenvalues_sorted  = np.sort(eigenvalues)
+    cov_ratio = eigenvalues_sorted[1]/eigenvalues_sorted[2]
+    if cov_ratio < rel_scale_fact:
+        lambda_3 = eigenvalues_sorted[2]
+        lambda_2 = eigenvalues_sorted[1] + lambda_3 * (rel_scale_fact - cov_ratio)
+        lambda_1 = eigenvalues_sorted[0] + lambda_3 * (rel_scale_fact - cov_ratio)
+
+        lambdas = np.array([lambda_1, lambda_2, lambda_3])
+
+        L = np.diag(lambdas[inverse_idxs]) * tot_scale_fact
+    else:
+        L = np.diag(eigenvalues) * tot_scale_fact
+
+    Sigma = eigenvectors @ L @ eigenvectors.T
+
+    return Sigma
+
+
+
+
 class damm_class:
     def __init__(self, x, x_dot, param_dict):
         """
@@ -169,7 +198,9 @@ class damm_class:
 
             Priors[k]          = x_k.shape[0] / M
             Mu[k, :]           = np.mean(x_k, axis=0)
-            Sigma[k, :, :]     = np.cov(x_k.T)
+            Sigma_k            = np.cov(x_k.T)            
+
+            Sigma[k, :, :]     = adjust_cov(Sigma_k)
             
             gaussian_list.append({   
                 "prior" : Priors[k],
