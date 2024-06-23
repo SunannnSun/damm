@@ -39,7 +39,6 @@ def adjust_cov(cov, tot_scale_fact=2, rel_scale_fact=0.15):
 
 
 
-
 class damm_class:
     def __init__(self, x, x_dot, param_dict):
         """
@@ -93,15 +92,17 @@ class damm_class:
         self.alpha     = args.alpha
 
 
-        x = self.x_concat[:, :3]
-        mean = np.mean(x, axis=0).reshape(-1, 3)
-        scatter = (x-mean).T @ (x-mean)
-        count = x.shape[0]
+        # x = self.x_concat[:, :3]
+        # mean = np.mean(x, axis=0).reshape(-1, 3)
+        # scatter = (x-mean).T @ (x-mean)
+        # count = x.shape[0]
 
-        sigma_n = sigma_0[:3, :3] + scatter + (kappa_0 * count)/(kappa_0+count) * (mean-mu_0[:3]).T@(mean-mu_0[:3])
-        mu_n = kappa_0/(kappa_0+count) * mu_0[:3] + count/(kappa_0+count)*mean.reshape(3, )
+        # sigma_n = sigma_0[:3, :3] + scatter + (kappa_0 * count)/(kappa_0+count) * (mean-mu_0[:3]).T@(mean-mu_0[:3])
+        # mu_n = kappa_0/(kappa_0+count) * mu_0[:3] + count/(kappa_0+count)*mean.reshape(3, )
 
-        a =1
+        # a =1
+
+
 
     def begin(self):
         # Pack input and arguments
@@ -140,7 +141,6 @@ class damm_class:
 
         # Return Gamma value
         return self.logProb(self.x)
-
 
     
 
@@ -189,28 +189,31 @@ class damm_class:
         M = assignment_arr.shape[0]
         N = int(self.N/2)
 
-        Priors  = [0] * K
+        Prior  = [0] * K
         Mu      = np.zeros((K, N)) 
         Sigma   = np.zeros((K, N, N), dtype=np.float32)
         gaussian_list = []
         for k in range(K):
-            x_k             = self.x_concat[assignment_arr==k, :N]
+            x_k                = self.x_concat[assignment_arr==k, :N]
 
-            Priors[k]          = x_k.shape[0] / M
+            Prior[k]           = x_k.shape[0] / M
             Mu[k, :]           = np.mean(x_k, axis=0)
             Sigma_k            = np.cov(x_k.T)            
 
             Sigma[k, :, :]     = adjust_cov(Sigma_k)
             
             gaussian_list.append({   
-                "prior" : Priors[k],
+                "prior" : Prior[k],
                 "mu"    : Mu[k],
                 "sigma" : Sigma[k],
                 "rv"    : multivariate_normal(Mu[k], Sigma[k], allow_singular=True)
             })
 
         self.gaussian_list = gaussian_list
-        self._logOut(Priors, Mu, Sigma)
+
+        self.Prior  = Prior
+        self.Mu     = Mu
+        self.Sigma  = Sigma
 
 
 
@@ -232,16 +235,15 @@ class damm_class:
     
 
 
-
-    def _logOut(self, Priors, Mu, Sigma, js_path=[]):
+    def _logOut(self, *args):
 
         json_output = {
             "name": "Damm result",
-            "K": Mu.shape[0],
-            "M": Mu.shape[1],
-            "Priors": Priors,
-            "Mu": Mu.ravel().tolist(),
-            "Sigma": Sigma.ravel().tolist(),
+            "K": self.Mu.shape[0],
+            "M": self.Mu.shape[1],
+            "Prior": self.Prior,
+            "Mu": self.Mu.ravel().tolist(),
+            "Sigma": self.Sigma.ravel().tolist(),
         }
         if len(js_path) == 0:
             js_path =  os.path.join(os.path.dirname(self.dir_path), 'output.json')
