@@ -92,21 +92,14 @@ class damm_class:
         self.alpha     = args.alpha
 
 
-        # x = self.x_concat[:, :3]
-        # mean = np.mean(x, axis=0).reshape(-1, 3)
-        # scatter = (x-mean).T @ (x-mean)
-        # count = x.shape[0]
 
-        # sigma_n = sigma_0[:3, :3] + scatter + (kappa_0 * count)/(kappa_0+count) * (mean-mu_0[:3]).T@(mean-mu_0[:3])
-        # mu_n = kappa_0/(kappa_0+count) * mu_0[:3] + count/(kappa_0+count)*mean.reshape(3, )
-
-        # a =1
-
-
-
-    def begin(self):
+    def begin(self, *args_):
         # Pack input and arguments
-        input = f"{self.M}\n{self.N}\n{' '.join(map(str, self.x_concat.flatten()))}\n{self.param}"
+        if len(args_) == 0:
+            input = f"{self.M}\n{self.N}\n{' '.join(map(str, self.x_concat.flatten()))}\n{self.param}"
+        else:
+            input = f"{self.M}\n{self.N}\n{' '.join(map(str, self.x_concat.flatten()))}\n{self.param}\n{' '.join(map(str, args_[0]))}" # incremental learning
+
         args  = ['time ' + os.path.join(self.dir_path, "main"),
                             '--base {}'.format(self.base),
                             '--init {}'.format(self.init),

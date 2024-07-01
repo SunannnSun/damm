@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     /*---------------------------------------------------*/
     //---- Incremental Learning (update needed)-----------
     /*---------------------------------------------------*/
-    /*
+    // /*
     Eigen::VectorXi assignment_arr(num);
     if (std::cin.eof()){
         assignment_arr(0) = -1;
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
             std::cout << "Number of components: " << damm.getK() << endl;      
             
             damm.sampleCoefficientsParameters();
-            damm.sampleLabels();
+            damm.sampleLabels_increm();
             damm.reorderAssignments();
             damm.updateIndexLists();   
         
@@ -134,13 +134,13 @@ int main(int argc, char **argv)
         
         return 0;
     }
-    */
+    // */
 
 
     /*---------------------------------------------------*/
     //----------------------Sampler----------------------
     /*---------------------------------------------------*/
-    Eigen::Matrix<std::int32_t, Eigen::Dynamic, 1> z;
+    // Eigen::Matrix<std::int32_t, Eigen::Dynamic, 1> z;
     // vector<VectorXi> logZ;
     // vector<int> logNum;
     // vector<double> logLogLik;

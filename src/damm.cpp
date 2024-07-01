@@ -87,8 +87,8 @@ Damm<dist_t>::Damm(const MatrixXd &x, int init_cluster, double alpha, const dist
 
   z_ = z;
   K_ = z_.maxCoeff() + 1; 
-  logZ_.push_back(z_);
-  logNum_.push_back(K_);
+  // logZ_.push_back(z_);
+  // logNum_.push_back(K_);
   this ->updateIndexLists();
 };
 
@@ -138,7 +138,7 @@ void Damm<dist_t>::sampleLabels_increm()
     uint32_t kk = 0;
     while (prob[kk] < uni_draw) 
       kk++;
-    z_[ii] = kk;
+    z_[indexList_new_[ii]] = kk;
   } 
   // logLogLik_.push_back(logLik);
   // logZ_.push_back(z_);
