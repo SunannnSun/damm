@@ -193,8 +193,10 @@ class damm_class:
             Mu[k, :]           = np.mean(x_k, axis=0)
             Sigma_k            = np.cov(x_k.T)            
 
-            Sigma[k, :, :]     = adjust_cov(Sigma_k)
+            # Sigma[k, :, :]     = adjust_cov(Sigma_k)
+            Sigma[k, :, :]     = Sigma_k
             
+
             gaussian_list.append({   
                 "prior" : Prior[k],
                 "mu"    : Mu[k],
@@ -207,6 +209,7 @@ class damm_class:
         self.Prior  = Prior
         self.Mu     = Mu
         self.Sigma  = Sigma
+
 
 
 
