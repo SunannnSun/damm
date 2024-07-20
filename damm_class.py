@@ -193,8 +193,8 @@ class damm_class:
             Mu[k, :]           = np.mean(x_k, axis=0)
             Sigma_k            = np.cov(x_k.T)            
 
-            # Sigma[k, :, :]     = adjust_cov(Sigma_k)
-            Sigma[k, :, :]     = Sigma_k
+            Sigma[k, :, :]     = adjust_cov(Sigma_k)
+            # Sigma[k, :, :]     = Sigma_k
             
 
             gaussian_list.append({   
@@ -210,6 +210,33 @@ class damm_class:
         self.Mu     = Mu
         self.Sigma  = Sigma
 
+
+
+    def elasticUpdate(self, new_traj, new_gmm_struct):
+
+        self.x     = new_traj[:int(self.N/2), :].T
+        self.x_dot = new_traj[int(self.N/2): ,:].T
+        self.K = new_gmm_struct["Sigma"].shape[0] # shouldn't change
+        self.M = self.x.shape[0]
+        self.Prior  = new_gmm_struct["Prior"].tolist()
+        self.Mu     = new_gmm_struct["Mu"].T
+        self.Sigma  = new_gmm_struct["Sigma"]
+        gaussian_list = []
+        for k in range(self.K):
+            gaussian_list.append({   
+                "prior" : self.Prior[k],
+                "mu"    : self.Mu[k],
+                "sigma" : self.Sigma[k],
+                # "sigma" : adjust_cov(self.Sigma[k]),
+                "rv"    : multivariate_normal(self.Mu[k], self.Sigma[k], allow_singular=True)
+            })
+        self.gaussian_list = gaussian_list
+
+        gamma = self.logProb(self.x)
+        self.assignment_arr = np.argmax(gamma, axis = 0)
+
+
+        return self.x, self.x_dot, self.assignment_arr, gamma
 
 
 
@@ -244,3 +271,16 @@ class damm_class:
         if len(js_path) == 0:
             js_path =  os.path.join(os.path.dirname(self.dir_path), 'output.json')
         write_json(json_output, js_path)
+
+
+    
+    # def _regress(self):
+    #     """Vectorize later"""
+    #     reg_assignment_array = np.zeros((self.M, ), dtype=int)
+    #     for i in range(self.M):
+    #         prob_array = np.zeros((self.K, ))
+    #         for k in range(self.K):
+    #             prob_array[k] = self.gaussian_list[k]['rv'].pdf(self.x[i, :])
+    #         reg_assignment_array[i] = np.argmax(prob_array)
+
+    #     return reg_assignment_array
