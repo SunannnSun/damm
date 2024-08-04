@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse, subprocess, os, sys, json
 from scipy.stats import multivariate_normal
+from scipy.special import logsumexp
 
 
 
@@ -256,6 +257,18 @@ class damm_class:
 
         return postProb
     
+
+
+    def totalProb(self, x):
+        logProb = np.zeros((self.K, x.shape[0]))
+
+        for k in range(self.K):
+            prior_k, _, _, normal_k = tuple(self.gaussian_list[k].values())
+
+            logProb[k, :] = np.log(prior_k) + normal_k.logpdf(x)
+
+        return logsumexp(logProb)
+
 
 
     def _logOut(self, *args):
