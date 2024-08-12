@@ -267,7 +267,7 @@ class damm_class:
 
             logProb[k, :] = np.log(prior_k) + normal_k.logpdf(x)
 
-        return logsumexp(logProb)
+        return logsumexp(logProb, axis=0)
 
 
 
