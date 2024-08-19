@@ -85,8 +85,8 @@ class damm_class:
         parser.add_argument('-t', '--iter' , type=int, default=30,  help='Number of iterations')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor')
 
-
-        args = parser.parse_args()
+        args, unknown = parser.parse_known_args()
+        # args = parser.parse_args()
         self.base      = args.base
         self.init      = args.init
         self.iter      = args.iter
