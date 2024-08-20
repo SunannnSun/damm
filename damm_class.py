@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import argparse, subprocess, os, sys, json
 from scipy.stats import multivariate_normal
 from scipy.special import logsumexp
+from collections import OrderedDict
 
 
 
@@ -37,6 +38,7 @@ def adjust_cov(cov, tot_scale_fact=2, rel_scale_fact=0.15):
     Sigma = eigenvectors @ L @ eigenvectors.T
 
     return Sigma
+
 
 
 
@@ -187,7 +189,9 @@ class damm_class:
         Mu      = np.zeros((K, N)) 
         Sigma   = np.zeros((K, N, N), dtype=np.float32)
         gaussian_list = []
-        for k in range(K):
+
+        rearrange_K_idx  = list(OrderedDict.fromkeys(assignment_arr))
+        for k in rearrange_K_idx:
             x_k                = self.x_concat[assignment_arr==k, :N]
 
             Prior[k]           = x_k.shape[0] / M
@@ -196,7 +200,6 @@ class damm_class:
 
             Sigma[k, :, :]     = adjust_cov(Sigma_k)
             # Sigma[k, :, :]     = Sigma_k
-            
 
             gaussian_list.append({   
                 "prior" : Prior[k],
