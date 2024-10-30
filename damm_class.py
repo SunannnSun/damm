@@ -14,7 +14,7 @@ def write_json(data, path):
 
 
 def adjust_cov(cov, tot_scale_fact=2, rel_scale_fact=0.15):
-
+    # print(cov)
     eigenvalues, eigenvectors = np.linalg.eig(cov)
 
     idxs = eigenvalues.argsort()
@@ -83,7 +83,7 @@ class damm_class:
                             description = 'C++ Implementaion with Python Interface')
 
         parser.add_argument('-b', '--base' , type=int, default=0,   help='0: Damm, 1: GMM-P, 2: GMM-PV')
-        parser.add_argument('-i', '--init' , type=int, default=15,  help='Number of initial clusters')
+        parser.add_argument('-i', '--init' , type=int, default=10,  help='Number of initial clusters')
         parser.add_argument('-t', '--iter' , type=int, default=30,  help='Number of iterations')
         parser.add_argument('-a', '--alpha', type=float, default=1, help='Concentration Factor')
 
@@ -174,6 +174,11 @@ class damm_class:
             else:
                 assignment_arr[idx] = rearrange_list.index(entry)
         
+        unique_elements, counts = np.unique(assignment_arr, return_counts=True)
+        for element, count in zip(unique_elements, counts):
+            print("Current element", element)
+            print("has number", count)
+
         self.K = assignment_arr.max()+1
         self.assignment_arr = assignment_arr
 
@@ -193,11 +198,10 @@ class damm_class:
         rearrange_K_idx  = list(OrderedDict.fromkeys(assignment_arr))
         for k in rearrange_K_idx:
             x_k                = self.x_concat[assignment_arr==k, :N]
-
+            print(x_k.shape)
             Prior[k]           = x_k.shape[0] / M
             Mu[k, :]           = np.mean(x_k, axis=0)
             Sigma_k            = np.cov(x_k.T)            
-
             Sigma[k, :, :]     = adjust_cov(Sigma_k)
             # Sigma[k, :, :]     = Sigma_k
 
@@ -237,9 +241,13 @@ class damm_class:
         self.gaussian_list = gaussian_list
 
         gamma = self.logProb(self.x)
-        self.assignment_arr = np.argmax(gamma, axis = 0)
-
-
+        self.assignment_arr = np.argmax(gamma, axis = 0) # reverse order that we are assigning given the new gmm parameters; hence there's chance some component being empty
+        unique_elements, counts = np.unique(self.assignment_arr, return_counts=True)
+        for element, count in zip(unique_elements, counts):
+            print("Current element", element)
+            print("has number", count)
+            if count == 0:
+                input("Elastic update gamma gives zero count")
         return self.x, self.x_dot, self.assignment_arr, gamma
 
 
