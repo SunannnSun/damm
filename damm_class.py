@@ -182,7 +182,6 @@ class damm_class:
         self.K = assignment_arr.max()+1
         self.assignment_arr = assignment_arr
 
-    
             
     def _extract_gaussian(self):
         assignment_arr = self.assignment_arr
@@ -202,8 +201,8 @@ class damm_class:
             Prior[k]           = x_k.shape[0] / M
             Mu[k, :]           = np.mean(x_k, axis=0)
             Sigma_k            = np.cov(x_k.T)            
-            Sigma[k, :, :]     = adjust_cov(Sigma_k)
-            # Sigma[k, :, :]     = Sigma_k
+            # Sigma[k, :, :]     = adjust_cov(Sigma_k)
+            Sigma[k, :, :]     = Sigma_k
 
             gaussian_list.append({   
                 "prior" : Prior[k],

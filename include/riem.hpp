@@ -28,6 +28,49 @@ double unsigned_angle(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynamic, 1>&y
 
 
 template <typename T>
+Eigen::VectorXd unsigned_angle(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynamic, Dynamic>&y)
+{
+  int numRows = y.rows();
+  Eigen::VectorXd dotProduct = (x.transpose().replicate(numRows, 1).array() * y.array()).rowwise().sum();
+  Eigen::VectorXd angles = dotProduct.cwiseMax(-1.0).cwiseMin(1.0).unaryExpr([](double val) { return std::acos(val); });
+
+  // Eigen::MatrixXd x_rep = x.transpose().replicate(numRows, 1);
+  // Eigen::VectorXd dotProduct = (x_rep.array() * y.array()).rowwise().sum();
+  // dotProduct = dotProduct.cwiseMax(-1.0).cwiseMin(1.0);
+  // Eigen::VectorXd angles = dotProduct.unaryExpr([](double val) { return std::acos(val); });
+  return angles;
+}
+
+
+template <typename T>
+Matrix<T,Dynamic, Dynamic> rie_log(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynamic, Dynamic>&y)
+{   
+  // vectorized
+
+  int numRows = y.rows();
+  int numCols = y.cols();
+  
+  Eigen::VectorXd u_sca = unsigned_angle(x, y).unaryExpr([](double val) { return val== M_PI ? M_PI -0.0001: val; });
+  Eigen::MatrixXd x_rep = x.transpose().replicate(numRows, 1);
+  Eigen::MatrixXd y_x_T_y_x = y.array() - (x_rep.array() * y.array()).rowwise().sum().replicate(1, numCols).array() * x_rep.array();
+  y_x_T_y_x = y_x_T_y_x.array() / y_x_T_y_x.rowwise().norm().replicate(1, numCols).array();
+  Eigen::MatrixXd u = u_sca.replicate(1, numCols).array() * y_x_T_y_x.unaryExpr([](double val) { return std::isnan(val) ? 0.0 : val; }).array();
+
+
+  // Eigen::VectorXd u_sca = unsigned_angle(x, y);
+  // u_sca = u_sca.unaryExpr([](double val) { return val== M_PI ? M_PI -0.0001: val; });
+  // Eigen::MatrixXd x_rep = x.transpose().replicate(numRows, 1);
+  // Eigen::VectorXd x_T_y = (x_rep.array() * y.array()).rowwise().sum();
+  // Eigen::MatrixXd y_x_T_y_x = y.array() - x_T_y.replicate(1, numCols).array() * x_rep.array();
+  // y_x_T_y_x = y_x_T_y_x.array() / y_x_T_y_x.rowwise().norm().replicate(1, numCols).array();
+  // y_x_T_y_x = y_x_T_y_x.unaryExpr([](double val) { return std::isnan(val) ? 0.0 : val; });
+  // Eigen::MatrixXd u = u_sca.replicate(1, numCols).array() * y_x_T_y_x.array();
+  
+  return u;
+}
+
+
+template <typename T>
 Matrix<T,Dynamic, 1> rie_log(const Matrix<T,Dynamic, 1>&x, const Matrix<T,Dynamic, 1>&y)
 {   
   /**
@@ -101,21 +144,28 @@ Matrix<T, Dynamic, 1> karcherMean(const Matrix<T,Dynamic, Dynamic>& xDir_k)
 
   float tolerance = 0.01;
 
-  Matrix<T, Dynamic, 1> xTan = xDir_k(0, all).transpose();
+  // Matrix<T, Dynamic, 1> xTan = xDir_k(0, all).transpose();   // may subject to non-convergence
+
+  // better initialization
+  Eigen::Matrix<T, 1, Eigen::Dynamic> mean_vector = xDir_k.colwise().sum() / num;
+  mean_vector /= mean_vector.norm();
+  Eigen::Matrix<T, Eigen::Dynamic, 1> xTan = mean_vector.transpose();
+
   Matrix<T, Dynamic, 1> xDir(dim);
   Matrix<T, Dynamic, 1> sumDir(dim);
   Matrix<T, Dynamic, 1> meanDir(dim);
 
-
   while (1)  { 
     sumDir.setZero();
+    sumDir = rie_log(xTan, xDir_k).colwise().sum().transpose(); //vectorized operation (no clear speed diff)
 
-    for (int i=0; i<num; ++i){
-      xDir = xDir_k(i, all).transpose();
-      sumDir = sumDir + rie_log(xTan, xDir);
-    }
+    // for (int i=0; i<num; ++i){
+    //   xDir = xDir_k(i, all).transpose();
+    //   sumDir = sumDir + rie_log(xTan, xDir);
+    // }
 
     meanDir = sumDir / num;
+
     if (meanDir.norm() < tolerance)
       return xTan;
 

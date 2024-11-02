@@ -40,8 +40,8 @@ Damm<dist_t>::Damm(const MatrixXd &x, int init_cluster, double alpha, const dist
 
   z_ = z;
   K_ = z_.maxCoeff() + 1; 
-  logZ_.push_back(z_);
-  logNum_.push_back(K_);
+  // logZ_.push_back(z_);
+  // logNum_.push_back(K_);
   this ->updateIndexLists();
 };
 
@@ -75,8 +75,8 @@ Damm<dist_t>::Damm(const MatrixXd &x, int init_cluster, double alpha, const dist
   }
 
 
-  std::cout << K_old << std::endl;
-  std::cout << indexList_new_.size() << std::endl;
+  // std::cout << K_old << std::endl;
+  // std::cout << indexList_new_.size() << std::endl;
 
   boost::random::uniform_int_distribution<> uni_(1+K_old, K_old+init_cluster);
   for (int ii=0; ii<indexList_new_.size(); ++ii){
@@ -100,16 +100,22 @@ void Damm<dist_t>::sampleCoefficientsParameters()
 { 
   parameters_.clear();
   components_.clear();
-  VectorXd Pi(K_);
+  vector<double> Pi;
 
   for (uint32_t kk=0; kk<K_; ++kk)  {
-    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1);
-    Pi(kk) = gamma_(rndGen_);
+    if (indexLists_[kk].size() == 1) {}
+    else{
+    boost::random::gamma_distribution<> gamma_(indexLists_[kk].size(), 1); //size cannot be zero; shouldnt be 1 either for single data component
+    Pi.push_back(gamma_(rndGen_));
     parameters_.push_back(H_.posterior(x_(indexLists_[kk], all)));
-    components_.push_back(parameters_[kk].sampleParameter());
+    components_.push_back(parameters_.back().sampleParameter());
+    }
   }
-  Pi_ = Pi / Pi.sum();
+  K_ = Pi.size();
+  Pi_ = Eigen::Map<Eigen::VectorXd>(Pi.data(), K_);
+  Pi_ = Pi_ / Pi_.sum();
 }
+
 
 template <class dist_t> 
 void Damm<dist_t>::sampleLabels_increm()
@@ -147,18 +153,18 @@ void Damm<dist_t>::sampleLabels_increm()
 template <class dist_t> 
 void Damm<dist_t>::sampleLabels()
 {
-  double logLik = 0;
+  // double logLik = 0;
   #pragma omp parallel for num_threads(8) schedule(dynamic, 300) private(rndGen_)
   for(uint32_t ii=0; ii<N_; ++ii) {
     VectorXd prob(K_);
-    double logLik_i = 0;
+    // double logLik_i = 0;
 
     for (uint32_t kk=0; kk<K_; ++kk) { 
       double logProb =  components_[kk].logProb(x_(ii, all));
       prob[kk] = log(Pi_[kk]) + logProb;
-      logLik_i += Pi_[kk] * exp(logProb);
+      // logLik_i += Pi_[kk] * exp(logProb);
     }
-    logLik += log(logLik_i);
+    // logLik += log(logLik_i);
     double max_prob = prob.maxCoeff();
     prob = (prob.array() - max_prob).exp() / (prob.array() - max_prob).exp().sum();
     // prob = (prob.array()-(prob.maxCoeff() + log((prob.array() - prob.maxCoeff()).exp().sum()))).exp().matrix();
@@ -173,8 +179,8 @@ void Damm<dist_t>::sampleLabels()
       kk++;
     z_[ii] = kk;
   } 
-  logLogLik_.push_back(logLik);
-  logZ_.push_back(z_);
+  // logLogLik_.push_back(logLik);
+  // logZ_.push_back(z_);
 }
 
 
@@ -219,9 +225,9 @@ int Damm<dist_t>::splitProposal(const vector<int> &indexList)
     z_(indexList_i) = VectorXi::Constant(indexList_i.size(), z_split_i);
     z_(indexList_j) = VectorXi::Constant(indexList_j.size(), z_split_j);
 
-    logZ_.push_back(z_);
+    // logZ_.push_back(z_);
     K_ += 1;
-    logNum_.push_back(K_);
+    // logNum_.push_back(K_);
     std::cout << "Component " << z_split_j + 1 <<": Split proposal Aceepted with Log Acceptance Ratio " << logAcceptanceRatio << std::endl;
     return 0;
   }
@@ -311,7 +317,7 @@ void Damm<dist_t>::reorderAssignments()  //mainly called after clusters vanish d
     }
   }
   K_ = z_.maxCoeff() + 1;
-  logNum_.push_back(K_);
+  // logNum_.push_back(K_);
 }
 
 

@@ -58,8 +58,8 @@ void NiwDamm<T>::getSufficientStatistics(const Matrix<T,Dynamic, Dynamic>& x_k)
   x_k_mean = xPos_k.rowwise() - meanPos_.transpose(); 
   scatterPos_ = (x_k_mean.adjoint() * x_k_mean); 
 
-
   meanDir_ = karcherMean(xDir_k);
+
   scatterDir_ = riemScatter(xDir_k, meanDir_); 
 
   count_ = x_k.rows();
@@ -70,6 +70,7 @@ template<typename T>
 NiwDamm<T> NiwDamm<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
 {
   getSufficientStatistics(x_k);
+
   return NiwDamm<T>(
     sigmaPos_+scatterPos_ + ((kappa_*count_)/(kappa_+count_))*(meanPos_-muPos_)*(meanPos_-muPos_).transpose(),
     (kappa_*muPos_+ count_*meanPos_)/(kappa_+count_),
@@ -77,7 +78,6 @@ NiwDamm<T> NiwDamm<T>::posterior(const Matrix<T,Dynamic, Dynamic>& x_k)
     kappa_+count_,
     (nu_ * sigmaDir_ + scatterDir_)/(nu_+count_),
     meanDir_,
-
     count_, 
     rndGen_);
 };

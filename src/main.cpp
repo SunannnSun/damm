@@ -146,36 +146,37 @@ int main(int argc, char **argv)
     // vector<double> logLogLik;
 
     if (base==0)  {
-        boost::random::uniform_int_distribution<> uni(0, 3);  
+        boost::random::uniform_int_distribution<> uni(0, 3);
         NiwDamm<double> niwDamm(sigma_0, mu_0, nu_0, kappa_0, sigmaDir_0, rndGen);
         Damm<NiwDamm<double>> damm(Data, init, alpha, niwDamm, rndGen);
         for (int t=1; t<iter+1; ++t)    {
             std::cout<<"------------ t="<<t<<" -------------"<<std::endl;
             std::cout << "Number of components: " << damm.getK() << endl;    
   
-            if (t%30==0 && t> 15 && t<150){
+            if (t%50==0 && t> 49 && t<250){
                 vector<vector<int>> indexLists = damm.getIndexLists();
-
-                for (int l=0; l<indexLists.size(); ++l)  
-                    damm.splitProposal(indexLists[l]);
-                damm.updateIndexLists();
-            }
-            else if (t%3==0 && t>30 && t<175){ 
-                vector<vector<int>> indexLists = damm.getIndexLists();
-                vector<array<int, 2>>  mergeIndexLists = damm.computeSimilarity(int(damm.getK()), uni(rndGen));
-                for (int i =0; i < mergeIndexLists.size(); ++i){
-                    if (!damm.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
-                        break;
+                for (int l=0; l<indexLists.size(); ++l){  
+                    if (indexLists[l].size() > 5)
+                        damm.splitProposal(indexLists[l]);
                 }
-                damm.reorderAssignments();
                 damm.updateIndexLists();
             }
-            else{
+            // else if (t%3==0 && t>30 && t<175){ 
+            //     vector<vector<int>> indexLists = damm.getIndexLists();
+            //     vector<array<int, 2>>  mergeIndexLists = damm.computeSimilarity(int(damm.getK()), uni(rndGen));
+            //     for (int i =0; i < mergeIndexLists.size(); ++i){
+            //         if (!damm.mergeProposal(indexLists[mergeIndexLists[i][0]], indexLists[mergeIndexLists[i][1]]))
+            //             break;
+            //     }
+            //     damm.reorderAssignments();
+            //     damm.updateIndexLists();
+            // }
+            // else{
             damm.sampleCoefficientsParameters();
             damm.sampleLabels();
             damm.reorderAssignments();
             damm.updateIndexLists();
-            }
+            // }
         }
         z = damm.getLabels();
 
